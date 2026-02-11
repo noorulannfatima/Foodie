@@ -57,10 +57,11 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "wolte-video",
+          "project": "foodie",
           "organization": "galaxies"
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,

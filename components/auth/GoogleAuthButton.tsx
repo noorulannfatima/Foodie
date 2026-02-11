@@ -12,7 +12,7 @@ const GoogleAuthButton = () => {
 
 const styles = StyleSheet.create({
   googleButton: {
-    backgroundColor: "#4285F4",
+    backgroundColor: "#f33030",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
