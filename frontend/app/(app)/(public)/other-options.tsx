@@ -21,7 +21,7 @@ const Page = () => {
       <TouchableOpacity style={styles.closeBtn} onPress={() => router.dismiss()}>
         <Ionicons name="close" size={24} />
       </TouchableOpacity>
-      <Text style={styles.title}>Log in or create a Wolt account</Text>
+      <Text style={styles.title}>Log in or create a Foodie account</Text>
 
       <View style={styles.buttonContainer}>
         <Animated.View entering={FadeInDown.delay(100)}>

@@ -1,8 +1,8 @@
-import type { Dish } from '@/data/restaurant_menu';
-import type { Restaurant } from '@/data/restaurants';
-import zustandStorage from '@/utils/zustandStorage';
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import type { Dish } from "@/version101/data/restaurant_menu";
+import type { Restaurant } from "@/version101/data/restaurants";
+import zustandStorage from "@/version101/utils/zustandStorage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface CartItem {
   dish: Dish;
@@ -46,13 +46,17 @@ export const useCartStore = create<CartStore>()(
       addItem: (dish: Dish, quantity = 1) =>
         set((state) => {
           if (quantity <= 0) return state;
-          const existingItem = state.items.find((item) => item.dish.id === dish.id);
+          const existingItem = state.items.find(
+            (item) => item.dish.id === dish.id,
+          );
 
           let newItems: CartItem[];
           if (existingItem) {
             // Increase quantity if item exists
             newItems = state.items.map((item) =>
-              item.dish.id === dish.id ? { ...item, quantity: item.quantity + quantity } : item
+              item.dish.id === dish.id
+                ? { ...item, quantity: item.quantity + quantity }
+                : item,
             );
           } else {
             // Add new item
@@ -68,7 +72,9 @@ export const useCartStore = create<CartStore>()(
 
       removeItem: (dishId: number) =>
         set((state) => {
-          const newItems = state.items.filter((item) => item.dish.id !== dishId);
+          const newItems = state.items.filter(
+            (item) => item.dish.id !== dishId,
+          );
           return {
             items: newItems,
             total: calculateTotal(newItems),
@@ -79,7 +85,9 @@ export const useCartStore = create<CartStore>()(
       incrementItem: (dishId: number) =>
         set((state) => {
           const newItems = state.items.map((item) =>
-            item.dish.id === dishId ? { ...item, quantity: item.quantity + 1 } : item
+            item.dish.id === dishId
+              ? { ...item, quantity: item.quantity + 1 }
+              : item,
           );
           return {
             items: newItems,
@@ -90,7 +98,9 @@ export const useCartStore = create<CartStore>()(
 
       decrementItem: (dishId: number) =>
         set((state) => {
-          const existingItem = state.items.find((item) => item.dish.id === dishId);
+          const existingItem = state.items.find(
+            (item) => item.dish.id === dishId,
+          );
           if (!existingItem) return state;
 
           let newItems: CartItem[];
@@ -100,7 +110,9 @@ export const useCartStore = create<CartStore>()(
           } else {
             // Decrease quantity
             newItems = state.items.map((item) =>
-              item.dish.id === dishId ? { ...item, quantity: item.quantity - 1 } : item
+              item.dish.id === dishId
+                ? { ...item, quantity: item.quantity - 1 }
+                : item,
             );
           }
 
@@ -111,7 +123,8 @@ export const useCartStore = create<CartStore>()(
           };
         }),
 
-      clearCart: () => set({ items: [], total: 0, totalItems: 0, selectedRestaurant: null }),
+      clearCart: () =>
+        set({ items: [], total: 0, totalItems: 0, selectedRestaurant: null }),
 
       getItemQuantity: (dishId: number) => {
         const item = get().items.find((item) => item.dish.id === dishId);
@@ -119,8 +132,8 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: 'cart',
+      name: "cart",
       storage: createJSONStorage(() => zustandStorage),
-    }
-  )
+    },
+  ),
 );

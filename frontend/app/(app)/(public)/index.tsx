@@ -36,7 +36,7 @@ export default function Index() {
       </View>
 
       <View style={styles.contentContainer}>
-        <Image source={require('@/assets/images/wolt-logo.png')} style={styles.brandLogo} />
+        <Image source={require('@/assets/images/logo.png')} style={styles.brandLogo} />
         <Animated.Text entering={FadeInDown} style={styles.tagline}>
           Almost everything delivered
         </Animated.Text>
@@ -62,9 +62,9 @@ export default function Index() {
           <Text style={styles.privacyText}>
             Please visit{' '}
             <Text style={styles.privacyLink} onPress={openWebBrowser}>
-              Wolt Privacy Statement
+              Foodie Privacy Statement
             </Text>{' '}
-            to learn about personal data processing at Wolt.
+            to learn about personal data processing at Foodie.
           </Text>
         </Animated.View>
       </View>

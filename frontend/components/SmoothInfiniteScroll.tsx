@@ -11,25 +11,25 @@ import Animated, {
 
 const iconDataSets = {
   set1: [
-    { emoji: "🍕", color: "#FFE5CC" },
-    { emoji: "🍔", color: "#F4D03F" },
-    { emoji: "🍟", color: "#F8D7DA" },
-    { emoji: "🌮", color: "#D5EDDA" },
+    { emoji: "🍕", color: "#79071a" },
+    { emoji: "🍔", color: "#f43f4e" },
+    { emoji: "🍟", color: "#110102" },
+    { emoji: "🌮", color: "#750e0e" },
     { emoji: "🍗", color: "#FADBD8" },
   ],
   set2: [
-    { emoji: "🎮", color: "#D1ECF1" },
-    { emoji: "🎧", color: "#E2E3E5" },
-    { emoji: "☕", color: "#F4D03F" },
-    { emoji: "🍿", color: "#FFE5CC" },
-    { emoji: "🥤", color: "#F8D7DA" },
+    { emoji: "🌮", color: "#d66969" },
+    { emoji: "🥤", color: "#4e0202" },
+    { emoji: "☕", color: "#310608" },
+    { emoji: "🍿", color: "#8f2e2e" },
+    { emoji: "🍔", color: "#851d26" },
   ],
   set3: [
-    { emoji: "🍰", color: "#FADBD8" },
-    { emoji: "🍦", color: "#D1ECF1" },
-    { emoji: "🍪", color: "#FFE5CC" },
-    { emoji: "🎲", color: "#D5EDDA" },
-    { emoji: "🕹️", color: "#E2E3E5" },
+    { emoji: "🍰", color: "#9e190d" },
+    { emoji: "🍦", color: "#130101" },
+    { emoji: "🍪", color: "#4b0707" },
+    { emoji: "🍟", color: "#999292" },
+    { emoji: "🍕", color: "#6b1216" },
   ],
 };
 

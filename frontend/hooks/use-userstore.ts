@@ -1,6 +1,6 @@
-import zustandStorage from '@/utils/zustandStorage';
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import zustandStorage from "@/version101/utils/zustandStorage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 interface UserStore {
   isGuest: boolean;
@@ -18,10 +18,10 @@ const useUserStore = create<UserStore>()(
       setUser: (user: any) => set({ user }),
     }),
     {
-      name: 'user',
+      name: "user",
       storage: createJSONStorage(() => zustandStorage),
-    }
-  )
+    },
+  ),
 );
 
 export default useUserStore;

@@ -1,5 +1,5 @@
-import type { Dish, MenuCategory } from '@/data/restaurant_menu';
-import { pizzaPerfettoMenu } from '@/data/restaurant_menu';
+import type { Dish, MenuCategory } from "@/version101/data/restaurant_menu";
+import { pizzaPerfettoMenu } from "@/version101/data/restaurant_menu";
 
 export const menuService = {
   /**
@@ -10,7 +10,7 @@ export const menuService = {
     // return fetch(`/api/restaurants/${restaurantId}/menu`).then(res => res.json());
 
     // For now, we only have menu data for Pizza Perfetto
-    if (restaurantId === 'rest_001') {
+    if (restaurantId === "rest_001") {
       return Promise.resolve(pizzaPerfettoMenu);
     }
     return Promise.resolve([]);

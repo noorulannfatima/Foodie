@@ -1,7 +1,7 @@
-import { restaurants } from '@/data/restaurants';
-import { restaurantMarkers } from '@/data/restaurant_markers';
-import type { Restaurant } from '@/data/restaurants';
-import type { RestaurantMarker } from '@/data/restaurant_markers';
+import type { RestaurantMarker } from "@/version101/data/restaurant_markers";
+import { restaurantMarkers } from "@/version101/data/restaurant_markers";
+import type { Restaurant } from "@/version101/data/restaurants";
+import { restaurants } from "@/version101/data/restaurants";
 
 export const restaurantService = {
   /**
@@ -43,8 +43,8 @@ export const restaurantService = {
         (r) =>
           r.name.toLowerCase().includes(lowerQuery) ||
           r.description.toLowerCase().includes(lowerQuery) ||
-          r.cuisine.some((c) => c.toLowerCase().includes(lowerQuery))
-      )
+          r.cuisine.some((c) => c.toLowerCase().includes(lowerQuery)),
+      ),
     );
   },
 
@@ -54,6 +54,8 @@ export const restaurantService = {
   filterByCuisine: async (cuisine: string): Promise<Restaurant[]> => {
     // TODO: Replace with API call when backend is ready
     // return fetch(`/api/restaurants?cuisine=${cuisine}`).then(res => res.json());
-    return Promise.resolve(restaurants.filter((r) => r.cuisine.includes(cuisine)));
+    return Promise.resolve(
+      restaurants.filter((r) => r.cuisine.includes(cuisine)),
+    );
   },
 };
