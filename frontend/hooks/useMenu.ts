@@ -1,4 +1,4 @@
-import { menuService } from "@/version101/services/menuService";
+import { menuService } from "@/services/menuService";
 import { useQuery } from "@tanstack/react-query";
 
 /**

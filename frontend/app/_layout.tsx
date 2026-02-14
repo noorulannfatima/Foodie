@@ -33,7 +33,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default Sentry.wrap(function RootLayout() {
+function RootLayout() {
   let [fontsLoaded] = useFonts({
     Nunito_400Regular,
     Nunito_700Bold,
@@ -49,4 +49,6 @@ export default Sentry.wrap(function RootLayout() {
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
-});
+}
+
+export default Sentry.wrap(RootLayout);

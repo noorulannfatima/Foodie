@@ -1,6 +1,6 @@
-import type { Dish } from "@/version101/data/restaurant_menu";
-import type { Restaurant } from "@/version101/data/restaurants";
-import zustandStorage from "@/version101/utils/zustandStorage";
+import type { Dish } from "@/data/restaurant_menu";
+import type { Restaurant } from "@/data/restaurants";
+import zustandStorage from "@/utils/zustandStorage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 

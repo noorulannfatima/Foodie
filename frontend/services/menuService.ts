@@ -1,5 +1,5 @@
-import type { Dish, MenuCategory } from "@/version101/data/restaurant_menu";
-import { pizzaPerfettoMenu } from "@/version101/data/restaurant_menu";
+import type { Dish, MenuCategory } from "@/data/restaurant_menu";
+import { pizzaPerfettoMenu } from "@/data/restaurant_menu";
 
 export const menuService = {
   /**

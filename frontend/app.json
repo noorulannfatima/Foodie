@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "foodie",
+    "slug": "foodie",
+    "newArchEnabled": false,
+    "plugins": [
+      "@sentry/react-native"
+    ]
+  }
+}

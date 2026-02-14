@@ -1,7 +1,7 @@
-import type { RestaurantMarker } from "@/version101/data/restaurant_markers";
-import { restaurantMarkers } from "@/version101/data/restaurant_markers";
-import type { Restaurant } from "@/version101/data/restaurants";
-import { restaurants } from "@/version101/data/restaurants";
+import type { RestaurantMarker } from "@/data/restaurant_markers";
+import { restaurantMarkers } from "@/data/restaurant_markers";
+import type { Restaurant } from "@/data/restaurants";
+import { restaurants } from "@/data/restaurants";
 
 export const restaurantService = {
   /**
