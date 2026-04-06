@@ -1,45 +1,43 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import AuthButton from '@/components/auth/AuthButton';
 import RoleSelector from '@/components/auth/RoleSelector';
-import Logo from '@/components/auth/Logo';
 
 export default function LandingScreen() {
   const [showRoleSheet, setShowRoleSheet] = useState(false);
 
   return (
-    <LinearGradient colors={['#FF6B6B', '#FF8E53']} style={styles.container}>
-      <Logo />
-      
-      <View style={styles.content}>
-        <Text style={styles.title}>Foodie</Text>
-        <Text style={styles.subtitle}>Delicious food at your doorstep</Text>
+    <View style={styles.container}>
+      <View style={styles.logoArea}>
+        <Image
+          source={require('@/assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </View>
 
       <View style={styles.buttonContainer}>
-        <AuthButton 
-          title="Login as Customer" 
+        <AuthButton
+          title="Login"
           onPress={() => router.push('/(auth)/customer/login')}
           variant="primary"
         />
-        
-        <AuthButton 
-          title="Sign Up as Customer" 
+
+        <AuthButton
+          title="Sign Up"
           onPress={() => router.push('/(auth)/customer/signup')}
-          variant="secondary"
+          variant="primary"
         />
 
-        <AuthButton 
-          title="Business Login" 
+        <AuthButton
+          title="Others"
           onPress={() => setShowRoleSheet(true)}
           variant="outline"
-          icon="briefcase"
         />
       </View>
 
-      <RoleSelector 
+      <RoleSelector
         visible={showRoleSheet}
         onClose={() => setShowRoleSheet(false)}
         onSelectRole={(role) => {
@@ -47,28 +45,25 @@ export default function LandingScreen() {
           router.push(`/(auth)/${role}/login`);
         }}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#ffffff',
     justifyContent: 'space-between',
     paddingVertical: 60,
   },
-  content: {
+  logoArea: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
   },
-  title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  subtitle: {
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.9)',
+  logo: {
+    width: 240,
+    height: 70,
   },
   buttonContainer: {
     paddingHorizontal: 24,

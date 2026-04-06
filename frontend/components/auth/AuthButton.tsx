@@ -53,15 +53,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primary: {
-    backgroundColor: 'white',
+    backgroundColor: '#c21407',
   },
   secondary: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.12)',
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: '#333',
   },
   disabled: {
     opacity: 0.5,
@@ -83,12 +83,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   primaryText: {
-    color: '#FF6B6B',
+    color: 'white',
   },
   secondaryText: {
-    color: 'white',
+    color: '#333',
   },
   outlineText: {
-    color: 'white',
+    color: '#333',
   },
 });

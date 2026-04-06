@@ -2,6 +2,23 @@
   "expo": {
     "name": "foodie",
     "slug": "foodie",
-    "newArchEnabled": false
+    "scheme": "foodie",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5C518"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.foodie.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#F5C518"
+      },
+      "package": "com.foodie.app"
+    }
   }
 }

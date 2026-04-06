@@ -1,11 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 
 export default function Logo() {
   return (
     <View style={styles.container}>
-      <Text style={styles.emoji}>🍔</Text>
-      <Text style={styles.tagline}>Taste the difference</Text>
+      <Image
+        source={require('@/assets/images/logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -15,14 +18,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 20,
   },
-  emoji: {
-    fontSize: 72,
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '500',
-    letterSpacing: 0.5,
+  logo: {
+    width: 200,
+    height: 60,
   },
 });

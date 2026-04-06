@@ -44,7 +44,7 @@ export default function RoleSelector({ visible, onClose, onSelectRole }: RoleSel
           <TouchableWithoutFeedback>
             <View style={styles.sheet}>
               <View style={styles.handle} />
-              <Text style={styles.title}>Select your role</Text>
+              <Text style={styles.title}>Continue as</Text>
               <Text style={styles.subtitle}>Choose how you want to use Foodie</Text>
 
               <View style={styles.options}>
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: '#030303',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 20,
