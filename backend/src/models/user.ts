@@ -1,6 +1,11 @@
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 
+/**
+ * Interface representing a User document in MongoDB.
+ * Defines the structure for basic info, addresses, preferences, and loyalty data.
+ */
+
 export interface IUser extends Document {
   // Basic Information
   name: string;
@@ -60,10 +65,11 @@ export interface IUser extends Document {
   deductLoyaltyPoints(points: number): Promise<IUser>;
 }
 
-// User Schema Definition
+// User Schema Definition - defines data constraints and validation
 const userSchema = new mongoose.Schema<IUser>(
   {
     // ========== Basic Information ==========
+    // Used for initial registration and profile management
     name: {
       type: String,
       required: [true, "Name is required"],
@@ -232,16 +238,19 @@ const userSchema = new mongoose.Schema<IUser>(
 );
 
 // ========== Indexes for Performance ==========
-userSchema.index({ email: 1 });
+
 userSchema.index({ phone: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: -1 });
 
-// ========== Pre-Save Middleware ==========
+// ========== Pre-Save Middleware (Hooks) ==========
 
-// Hash password before saving
+/**
+ * Automatically hashes the password before saving a new user 
+ * or updating an existing user's password.
+ */
 userSchema.pre("save", async function () {
-  // Only hash if password is modified
+  // Only hash if password is newly created or modified
   if (!this.isModified("password")) return;
   
   const salt = await bcrypt.genSalt(12);
@@ -270,7 +279,8 @@ userSchema.pre("save", function () {
 // ========== Instance Methods ==========
 
 /**
- * Compare provided password with hashed password
+ * Compare provided plain text password with the hashed password in DB.
+ * Used during login flow.
  */
 userSchema.methods.comparePassword = async function (
   candidatePassword: string
@@ -401,7 +411,8 @@ userSchema.virtual("addressCount").get(function () {
 });
 
 /**
- * User profile (public data only)
+ * Virtual property to get a simplified public profile of the user.
+ * Excludes sensitive data and internal fields.
  */
 userSchema.virtual("profile").get(function () {
   return {

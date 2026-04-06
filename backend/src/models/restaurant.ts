@@ -16,9 +16,13 @@ export interface IRestaurant extends Document {
     zipCode: string;
     country: string;
   };
+  /**
+   * Geographic coordinates stored in GeoJSON format.
+   * Required for spatial indexing (2dsphere).
+   */
   coordinates: {
-    latitude: number;
-    longitude: number;
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
   };
   
   // Restaurant Details
@@ -155,18 +159,33 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
       },
     },
     
+    /**
+     * GeoJSON Point field for location-based searching.
+     * Required for MongoDB's 2dsphere index (e.g., finding nearby restaurants).
+     * Format: { type: "Point", coordinates: [longitude, latitude] }
+     */
     coordinates: {
-      latitude: {
-        type: Number,
-        required: [true, "Latitude is required"],
-        min: -90,
-        max: 90,
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
       },
-      longitude: {
-        type: Number,
-        required: [true, "Longitude is required"],
-        min: -180,
-        max: 180,
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: [true, "Coordinates are required"],
+        default: [0, 0],
+        validate: {
+          validator: function (v: number[]) {
+            return (
+              v.length === 2 &&
+              v[0] >= -180 &&
+              v[0] <= 180 &&
+              v[1] >= -90 &&
+              v[1] <= 90
+            );
+          },
+          message: "Invalid coordinates - [longitude, latitude] expected",
+        },
       },
     },
     
@@ -377,7 +396,7 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
 );
 
 // ========== Indexes for Performance ==========
-restaurantSchema.index({ email: 1 });
+
 restaurantSchema.index({ "address.city": 1 });
 restaurantSchema.index({ "address.zipCode": 1 });
 restaurantSchema.index({ cuisineTypes: 1 });
@@ -388,7 +407,7 @@ restaurantSchema.index({ coordinates: "2dsphere" }); // For geospatial queries
 // ========== Pre-Save Middleware ==========
 
 // Hash password before saving
-restaurantSchema.pre("save", async function () {
+restaurantSchema.pre("save", async function (this: IRestaurant) {
   if (!this.isModified("password")) return;
   
   const salt = await bcrypt.genSalt(12);
@@ -396,7 +415,7 @@ restaurantSchema.pre("save", async function () {
 });
 
 // Update review count when reviews change
-restaurantSchema.pre("save", function () {
+restaurantSchema.pre("save", function (this: IRestaurant) {
   if (this.isModified("reviews")) {
     this.totalReviews = this.reviews.length;
   }
@@ -567,16 +586,16 @@ restaurantSchema.statics.findTopRated = function (limit: number = 10) {
 // ========== Virtual Properties ==========
 
 /**
- * Full address
+ * Full address string virtual
  */
-restaurantSchema.virtual("fullAddress").get(function () {
+restaurantSchema.virtual("fullAddress").get(function (this: IRestaurant) {
   return `${this.address.street}, ${this.address.city}, ${this.address.zipCode}, ${this.address.country}`;
 });
 
 /**
- * Is open now
+ * Is open now status virtual
  */
-restaurantSchema.virtual("isOpenNow").get(function () {
+restaurantSchema.virtual("isOpenNow").get(function (this: IRestaurant) {
   return this.isCurrentlyOpen();
 });
 

@@ -16,7 +16,7 @@ export interface SignupData {
   email: string;
   password: string;
   phone?: string;
-  // Restaurant-specific
+  // Restaurant-specific fields
   description?: string;
   address?: { street: string; city: string; zipCode: string; country: string };
   cuisineTypes?: string[];
@@ -26,7 +26,7 @@ export interface SignupData {
   deliveryFee?: number;
   deliveryRadius?: number;
   estimatedDeliveryTime?: number;
-  // Delivery-specific
+  // Delivery-specific fields
   vehicle?: { type: string; plateNumber: string; model?: string; color?: string };
   licenseNumber?: string;
   licenseExpiry?: Date;
@@ -57,12 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authAPI.login(email, password, role);
       await AsyncStorage.setItem('token', response.token);
       await AsyncStorage.setItem('userRole', role);
-      set({
-        user: response.user,
-        token: response.token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+      set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -75,12 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authAPI.signup(data, role);
       await AsyncStorage.setItem('token', response.token);
       await AsyncStorage.setItem('userRole', role);
-      set({
-        user: response.user,
-        token: response.token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+      set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -99,16 +89,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       const token = await AsyncStorage.getItem('token');
       if (token) {
         const response = await authAPI.verifyToken();
-        set({
-          user: response.user,
-          token,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+        set({ user: response.user, token, isAuthenticated: true, isLoading: false });
       } else {
         set({ isLoading: false });
       }
     } catch {
+      // Token invalid or expired — clear storage and reset state
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('userRole');
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });

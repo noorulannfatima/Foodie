@@ -457,8 +457,7 @@ const deliveryPersonSchema = new mongoose.Schema<IDeliveryPerson>(
 );
 
 // ========== Indexes for Performance ==========
-deliveryPersonSchema.index({ email: 1 });
-deliveryPersonSchema.index({ phone: 1 });
+
 deliveryPersonSchema.index({ isAvailable: 1, isOnline: 1, isActive: 1 });
 deliveryPersonSchema.index({ "stats.averageRating": -1 });
 deliveryPersonSchema.index({ currentLocation: "2dsphere" }); // For geospatial queries
@@ -466,7 +465,7 @@ deliveryPersonSchema.index({ currentLocation: "2dsphere" }); // For geospatial q
 // ========== Pre-Save Middleware ==========
 
 // Hash password before saving
-deliveryPersonSchema.pre("save", async function () {
+deliveryPersonSchema.pre("save", async function (this: IDeliveryPerson) {
   if (!this.isModified("password")) return;
   
   const salt = await bcrypt.genSalt(12);
@@ -474,7 +473,7 @@ deliveryPersonSchema.pre("save", async function () {
 });
 
 // Update total deliveries when history changes
-deliveryPersonSchema.pre("save", function () {
+deliveryPersonSchema.pre("save", function (this: IDeliveryPerson) {
   if (this.isModified("deliveryHistory")) {
     this.stats.totalDeliveries = this.deliveryHistory.length;
     this.stats.completedDeliveries = this.deliveryHistory.filter(
