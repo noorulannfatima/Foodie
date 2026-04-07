@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function CustomerSignup() {
@@ -21,6 +20,8 @@ export default function CustomerSignup() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { signup, isLoading } = useAuthStore();
 
   const handleSignup = async () => {
@@ -36,10 +37,19 @@ export default function CustomerSignup() {
       Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
+    if (!agreedToTerms) {
+      Alert.alert('Error', 'Please agree to Terms of Service and Privacy Policy');
+      return;
+    }
 
     try {
       await signup(
-        { name: name.trim(), email: email.trim().toLowerCase(), password, phone: phone.trim() || undefined },
+        {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          phone: phone.trim() || undefined,
+        },
         'customer',
       );
       router.replace('/(customer)/(tabs)/home');
@@ -49,7 +59,7 @@ export default function CustomerSignup() {
   };
 
   return (
-    <LinearGradient colors={['#a71215', '#e27373']} style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -58,9 +68,18 @@ export default function CustomerSignup() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
-          </Pressable>
+          {/* Top bar */}
+          <View style={styles.topBar}>
+            <View style={styles.logoRow}>
+              <View style={styles.logoIcon}>
+                <Text style={styles.logoX}>✕</Text>
+              </View>
+              <Text style={styles.logoText}>FOODIE</Text>
+            </View>
+            <Pressable onPress={() => router.back()} style={styles.menuButton}>
+              <Text style={styles.menuDots}>⋮</Text>
+            </Pressable>
+          </View>
 
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
@@ -73,7 +92,7 @@ export default function CustomerSignup() {
               <TextInput
                 style={styles.input}
                 placeholder="Enter your full name"
-                placeholderTextColor="#999"
+                placeholderTextColor="#aab"
                 value={name}
                 onChangeText={setName}
                 autoComplete="name"
@@ -81,11 +100,11 @@ export default function CustomerSignup() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email *</Text>
+              <Text style={styles.label}>Email Address *</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Enter your email"
-                placeholderTextColor="#999"
+                placeholderTextColor="#aab"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -95,41 +114,39 @@ export default function CustomerSignup() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your phone number"
-                placeholderTextColor="#999"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
               <Text style={styles.label}>Password *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Min 8 characters"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Min 8 characters"
+                  placeholderTextColor="#aab"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                >
+                  <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                </Pressable>
+              </View>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter your password"
-                placeholderTextColor="#999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
-            </View>
+            {/* Terms checkbox */}
+            <Pressable
+              style={styles.termsRow}
+              onPress={() => setAgreedToTerms(!agreedToTerms)}
+            >
+              <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.termsText}>
+                By signing up, you agree to our{' '}
+                <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+                <Text style={styles.termsLink}>Privacy Policy</Text>.
+              </Text>
+            </Pressable>
 
             <Pressable
               style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -137,11 +154,28 @@ export default function CustomerSignup() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#FF6B6B" />
+                <ActivityIndicator color="white" />
               ) : (
                 <Text style={styles.buttonText}>Sign Up</Text>
               )}
             </Pressable>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.socialRow}>
+              <Pressable style={styles.socialButton}>
+                <Text style={styles.googleG}>G</Text>
+                <Text style={styles.socialText}>Google</Text>
+              </Pressable>
+              <Pressable style={styles.socialButton}>
+                <Text style={styles.appleIcon}></Text>
+                <Text style={styles.socialText}>Apple</Text>
+              </Pressable>
+            </View>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account? </Text>
@@ -152,49 +186,157 @@ export default function CustomerSignup() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#eef0f8' },
   flex: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 52,
     paddingBottom: 40,
   },
-  backButton: { marginBottom: 20 },
-  backText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  header: { marginBottom: 32 },
-  title: { fontSize: 32, fontWeight: 'bold', color: 'white', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.85)' },
-  form: { gap: 18 },
-  inputGroup: { gap: 6 },
-  label: { color: 'white', fontSize: 14, fontWeight: '600' },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#c0392b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoX: { color: 'white', fontSize: 14, fontWeight: '900' },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#0d1b2a',
+    letterSpacing: 2,
+  },
+  menuButton: { padding: 4 },
+  menuDots: { fontSize: 22, color: '#0d1b2a' },
+  header: { marginBottom: 28 },
+  title: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#0d1b2a',
+    marginBottom: 6,
+    letterSpacing: -0.5,
+  },
+  subtitle: { fontSize: 16, color: '#6b7280' },
+  form: { gap: 16 },
+  inputGroup: { gap: 7 },
+  label: {
+    color: '#0d1b2a',
+    fontSize: 13,
+    fontWeight: '700',
+  },
   input: {
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2e5ef',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#1a1a2e',
   },
-  button: {
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'white',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2e5ef',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#1a1a2e',
+  },
+  eyeButton: { paddingHorizontal: 14 },
+  eyeIcon: { fontSize: 18 },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginTop: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: '#c0392b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  checkboxChecked: {
+    backgroundColor: '#c0392b',
+  },
+  checkmark: { color: 'white', fontSize: 12, fontWeight: '900' },
+  termsText: { flex: 1, fontSize: 13, color: '#6b7280', lineHeight: 19 },
+  termsLink: { color: '#c0392b', fontWeight: '600' },
+  button: {
+    backgroundColor: '#c0392b',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
+    shadowColor: '#c0392b',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: '#FF6B6B', fontSize: 18, fontWeight: '700' },
+  buttonText: { color: 'white', fontSize: 16, fontWeight: '700' },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: 4,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#d1d5e0' },
+  dividerText: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  socialRow: { flexDirection: 'row', gap: 12 },
+  socialButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e2e5ef',
+    paddingVertical: 13,
+  },
+  googleG: { fontSize: 16, fontWeight: '800', color: '#4285F4' },
+  appleIcon: { fontSize: 18, color: '#1a1a2e' },
+  socialText: { color: '#1a1a2e', fontSize: 14, fontWeight: '600' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
-  footerText: { color: 'rgba(255,255,255,0.85)', fontSize: 14 },
-  linkText: { color: 'white', fontSize: 14, fontWeight: '700' },
+  footerText: { color: '#6b7280', fontSize: 14 },
+  linkText: { color: '#c0392b', fontSize: 14, fontWeight: '700' },
 });

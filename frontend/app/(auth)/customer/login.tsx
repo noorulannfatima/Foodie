@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function CustomerLogin() {
@@ -25,7 +24,6 @@ export default function CustomerLogin() {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     try {
       await login(email.trim().toLowerCase(), password, 'customer');
       router.replace('/(customer)/(tabs)/home');
@@ -35,7 +33,7 @@ export default function CustomerLogin() {
   };
 
   return (
-    <LinearGradient colors={['#a71215', '#e27373']} style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -50,16 +48,16 @@ export default function CustomerLogin() {
 
           <View style={styles.header}>
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Text style={styles.subtitle}>Sign in to your account to continue</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Enter your email"
-                placeholderTextColor="#999"
+                placeholderTextColor="#aab"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -69,11 +67,16 @@ export default function CustomerLogin() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>PASSWORD</Text>
+                <Pressable onPress={() => Alert.alert('Forgot Password', 'Reset link coming soon.')}>
+                  <Text style={styles.forgotText}>Forgot?</Text>
+                </Pressable>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
-                placeholderTextColor="#999"
+                placeholderTextColor="#aab"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -87,11 +90,28 @@ export default function CustomerLogin() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#FF6B6B" />
+                <ActivityIndicator color="white" />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.buttonText}>LOGIN</Text>
               )}
             </Pressable>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.socialRow}>
+              <Pressable style={styles.socialButton}>
+                <Text style={styles.googleG}>G</Text>
+                <Text style={styles.socialText}>Google</Text>
+              </Pressable>
+              <Pressable style={styles.socialButton}>
+                <Text style={styles.appleIcon}></Text>
+                <Text style={styles.socialText}>Apple</Text>
+              </Pressable>
+            </View>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account? </Text>
@@ -102,12 +122,12 @@ export default function CustomerLogin() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#eef0f8' },
   flex: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
@@ -115,36 +135,102 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
   },
-  backButton: { marginBottom: 20 },
-  backText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  backButton: { marginBottom: 24 },
+  backText: { color: '#555', fontSize: 16, fontWeight: '600' },
   header: { marginBottom: 40 },
-  title: { fontSize: 32, fontWeight: 'bold', color: 'white', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.85)' },
+  title: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#0d1b2a',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  subtitle: { fontSize: 16, color: '#6b7280' },
   form: { gap: 20 },
-  inputGroup: { gap: 6 },
-  label: { color: 'white', fontSize: 14, fontWeight: '600' },
+  inputGroup: { gap: 8 },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  label: {
+    color: '#0d1b2a',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  forgotText: { color: '#c0392b', fontSize: 13, fontWeight: '600' },
   input: {
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2e5ef',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#1a1a2e',
   },
   button: {
-    backgroundColor: 'white',
+    backgroundColor: '#c0392b',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
+    shadowColor: '#c0392b',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: '#11100e', fontSize: 18, fontWeight: '700' },
+  buttonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: 4,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#d1d5e0' },
+  dividerText: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  socialRow: { flexDirection: 'row', gap: 12 },
+  socialButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e2e5ef',
+    paddingVertical: 13,
+  },
+  googleG: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#4285F4',
+  },
+  appleIcon: {
+    fontSize: 18,
+    color: '#1a1a2e',
+  },
+  socialText: { color: '#1a1a2e', fontSize: 14, fontWeight: '600' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
-  footerText: { color: 'rgba(255,255,255,0.85)', fontSize: 14 },
-  linkText: { color: 'white', fontSize: 14, fontWeight: '700' },
+  footerText: { color: '#6b7280', fontSize: 14 },
+  linkText: { color: '#c0392b', fontSize: 14, fontWeight: '700' },
 });
