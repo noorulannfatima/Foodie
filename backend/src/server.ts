@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.routes';
+import restaurantRoutes from './routes/restaurant.routes';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(cookieParser());
 
 app.use('/auth', authRoutes);
+app.use('/restaurant', restaurantRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
