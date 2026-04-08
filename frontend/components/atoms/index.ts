@@ -11,6 +11,7 @@ export { default as Input } from './Input/Input';
 export { default as Label } from './Label/Label';
 export { default as Link } from './Link/Link';
 export { default as Logo } from './Logo/Logo';
+export { default as MenuItemTag } from './MenuItemTag/MenuItemTag';
 export { default as Loader } from './Loader/Loader';
 export { default as Spinner } from './Loader/Spinner';
 export { default as Skeleton } from './Loader/Skeleton';

@@ -1,3 +1,5 @@
+// app/(customer)/restaurant/[id].tsx
+// This screen displays the details of a restaurant and its menu
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,

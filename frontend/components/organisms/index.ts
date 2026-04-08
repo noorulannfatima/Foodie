@@ -25,6 +25,10 @@ export { default as RestaurantHeader } from './Header/RestaurantHeader';
 export { default as MenuList } from './MenuList/MenuList';
 export { default as MenuCategory } from './MenuList/MenuCategory';
 
+export { default as RestaurantMenuItemCard } from './RestaurantMenuItemCard/RestaurantMenuItemCard';
+export { default as AddEditMenuItemModal } from './AddEditMenuItemModal/AddEditMenuItemModal';
+export { default as AddCategoryModal } from './AddCategoryModal/AddCategoryModal';
+
 export { default as AlertModal } from './Modals/AlertModal';
 export { default as ConfirmModal } from './Modals/ConfirmModal';
 export { default as ReviewModal } from './Modals/ReviewModal';

@@ -13,6 +13,7 @@ export { default as PaymentOption } from './PaymentOption/PaymentOption';
 export { default as PriceBreakdown } from './PriceBreakdown/PriceBreakdown';
 export { default as QuantitySelector } from './QuantitySelector/QuantitySelector';
 export { default as RestaurantCard } from './RestaurantCard/RestaurantCard';
+export { default as RestaurantFilterPill } from './RestaurantFilterPill/RestaurantFilterPill';
 export { default as ReviewCard } from './ReviewCard/ReviewCard';
 export { default as SearchBar } from './SearchBar/SearchBar';
 export { default as SocialButton } from './SocialButton/SocialButton';
