@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { OrderItem } from '@/stores/restaurantStore';
 import { Colors, Fonts } from '@/constants/theme';
-import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/restaurant-shared/orderStatus';
+import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 
 export interface DashboardRecentOrderCardProps {
   order: OrderItem;

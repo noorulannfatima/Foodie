@@ -18,7 +18,7 @@ import {
   RestaurantOrderCard,
   RestaurantOrdersEmptyState,
   OrderDetailModal,
-} from '@/components/pages/restaurant/restaurant-orders';
+} from '@/components/pages/restaurant/orders';
 
 export default function RestaurantOrders() {
   const insets = useSafeAreaInsets();

@@ -3,8 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Colors, Fonts } from '@/constants/theme';
 import { OrderItem } from '@/stores/restaurantStore';
-import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/restaurant-shared/orderStatus';
-import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/restaurant-shared/orderUtils';
+import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
+import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
 import { NEXT_STATUS } from './constants';
 
 export interface RestaurantOrderCardProps {

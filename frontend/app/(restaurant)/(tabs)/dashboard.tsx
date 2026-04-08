@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { Colors, Fonts } from '@/constants/theme';
 import { Loader } from '@/components/atoms';
-import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/restaurant-shared/orderUtils';
+import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
 import {
   RestaurantDashboardHeader,
   KitchenOverviewHero,
@@ -14,7 +14,7 @@ import {
   DashboardQuickActions,
   DashboardRecentOrderCard,
   DashboardRecentOrdersEmpty,
-} from '@/components/pages/restaurant/restaurant-dashboard';
+} from '@/components/pages/restaurant/dashboard';
 
 export default function RestaurantDashboard() {
   const insets = useSafeAreaInsets();

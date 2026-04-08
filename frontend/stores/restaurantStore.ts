@@ -9,7 +9,7 @@ interface OperatingDay {
   isClosed: boolean;
 }
 
-interface RestaurantProfile {
+export interface RestaurantProfile {
   _id: string;
   name: string;
   email: string;
