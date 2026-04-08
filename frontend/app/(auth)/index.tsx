@@ -1,5 +1,6 @@
 import { View, Image, StyleSheet } from 'react-native';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AuthButton from '@/components/auth/AuthButton';
 import RoleSelector from '@/components/auth/RoleSelector';
@@ -8,7 +9,7 @@ export default function LandingScreen() {
   const [showRoleSheet, setShowRoleSheet] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.logoArea}>
         <Image
           source={require('@/assets/images/logo.png')}
@@ -45,7 +46,7 @@ export default function LandingScreen() {
           router.push(`/(auth)/${role}/login`);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
     justifyContent: 'space-between',
-    paddingVertical: 60,
+    paddingVertical: 24,
   },
   logoArea: {
     flex: 1,

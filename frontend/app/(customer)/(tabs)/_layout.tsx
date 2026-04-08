@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '@/constants/theme';
 
 export default function CustomerTabsLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 8);
   return (
     <Tabs
       screenOptions={{
@@ -14,6 +17,8 @@ export default function CustomerTabsLayout() {
           borderTopColor: '#F0F0F0',
           backgroundColor: '#fff',
           paddingTop: 4,
+          paddingBottom: bottomPad,
+          minHeight: 52 + bottomPad,
         },
       }}
     >

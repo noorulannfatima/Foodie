@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -33,6 +34,7 @@ const C = {
 };
 
 export default function DeliveryLogin() {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -56,7 +58,7 @@ export default function DeliveryLogin() {
       <StatusBar barStyle="light-content" backgroundColor={C.navy} />
 
       {/* ── Nav bar ── */}
-      <View style={s.navbar}>
+      <View style={[s.navbar, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Text style={s.navBack}>← Back</Text>
         </Pressable>
@@ -180,7 +182,7 @@ export default function DeliveryLogin() {
       </KeyboardAvoidingView>
 
       {/* ── Bottom bar ── */}
-      <View style={s.bottomBar}>
+      <View style={[s.bottomBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <Pressable style={s.bbItem}>
           <Text style={s.bbIcon}>💬</Text>
           <Text style={s.bbLabel}>Help</Text>
@@ -197,7 +199,7 @@ export default function DeliveryLogin() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.pageBg },
-  navbar: { backgroundColor: C.navy, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 54 : 14, paddingBottom: 14 },
+  navbar: { backgroundColor: C.navy, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 14 },
   navBack: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '500' },
   navTitle: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '600' },
   navBrand: { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 2 },
@@ -232,7 +234,7 @@ const s = StyleSheet.create({
   promoTag: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, color: C.gold, textTransform: 'uppercase', marginBottom: 6 },
   promoTitle: { fontSize: 18, fontWeight: '800', color: '#fff', lineHeight: 24, marginBottom: 6 },
   promoSub: { fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
-  bottomBar: { backgroundColor: C.cardBg, borderTopWidth: 1, borderTopColor: C.border, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 10, paddingBottom: Platform.OS === 'ios' ? 24 : 10 },
+  bottomBar: { backgroundColor: C.cardBg, borderTopWidth: 1, borderTopColor: C.border, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 10 },
   bbItem: { alignItems: 'center', gap: 3 },
   bbIcon: { fontSize: 18 },
   bbLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', color: C.muted },
