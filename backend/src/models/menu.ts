@@ -197,8 +197,7 @@ const menuSchema = new mongoose.Schema<IMenu>(
   }
 );
 
-// Indexes
-menuSchema.index({ restaurant: 1 });
+// Indexes (restaurant index already created by unique: true)
 menuSchema.index({ "items.category": 1 });
 menuSchema.index({ "items.isAvailable": 1 });
 

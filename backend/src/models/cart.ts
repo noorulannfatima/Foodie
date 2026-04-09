@@ -122,8 +122,8 @@ const cartSchema = new mongoose.Schema<ICart>(
 );
 
 // ========== Indexes ==========
+// restaurant index created by index: true on the field
 cartSchema.index({ customer: 1, status: 1 });
-cartSchema.index({ restaurant: 1 });
 cartSchema.index({ lastUpdated: 1 });
 
 // ========== Pre-Save Middleware ==========
