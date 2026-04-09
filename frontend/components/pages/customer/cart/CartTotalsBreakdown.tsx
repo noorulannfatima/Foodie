@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 export interface CartTotalsBreakdownProps {
   subtotal: number;
@@ -16,6 +17,8 @@ export default function CartTotalsBreakdown({
   total,
   formatCurrency,
 }: CartTotalsBreakdownProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.priceCard}>
       <View style={styles.priceRow}>
@@ -39,41 +42,45 @@ export default function CartTotalsBreakdown({
   );
 }
 
-const styles = StyleSheet.create({
-  priceCard: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 24,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  priceLabel: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.muted,
-  },
-  priceValue: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 14,
-    color: Colors.dark,
-  },
-  priceDivider: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    marginVertical: 10,
-  },
-  totalLabel: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: Colors.dark,
-  },
-  totalValue: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 20,
-    color: Colors.primary,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    priceCard: {
+      backgroundColor: c.isDark ? c.card : '#F8F9FA',
+      borderRadius: 16,
+      padding: 20,
+      marginTop: 24,
+      borderWidth: c.isDark ? 1 : 0,
+      borderColor: c.border,
+    },
+    priceRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    priceLabel: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.muted,
+    },
+    priceValue: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 14,
+      color: c.text,
+    },
+    priceDivider: {
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      marginVertical: 10,
+    },
+    totalLabel: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: c.text,
+    },
+    totalValue: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 20,
+      color: c.primary,
+    },
+  });
+}

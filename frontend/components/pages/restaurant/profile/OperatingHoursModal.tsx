@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { Switch } from '@/components/atoms';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -24,6 +24,8 @@ export interface OperatingHoursModalProps {
 }
 
 export default function OperatingHoursModal({ hours, onClose, onSave }: OperatingHoursModalProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [editHours, setEditHours] = useState({ ...hours });
   const [saving, setSaving] = useState(false);
 
@@ -50,7 +52,7 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={24} color={Colors.dark} />
+          <Ionicons name="close" size={24} color={c.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Operating Hours</Text>
         <TouchableOpacity onPress={handleSave} disabled={saving}>
@@ -78,7 +80,7 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
                   value={editHours[day]?.open ?? '09:00'}
                   onChangeText={(val) => updateDay(day, 'open', val)}
                   placeholder="09:00"
-                  placeholderTextColor={Colors.muted}
+                  placeholderTextColor={c.muted}
                 />
                 <Text style={styles.timeSep}>to</Text>
                 <TextInput
@@ -86,7 +88,7 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
                   value={editHours[day]?.close ?? '22:00'}
                   onChangeText={(val) => updateDay(day, 'close', val)}
                   placeholder="22:00"
-                  placeholderTextColor={Colors.muted}
+                  placeholderTextColor={c.muted}
                 />
               </View>
             ) : null}
@@ -97,82 +99,85 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  title: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 18,
-    color: Colors.dark,
-  },
-  saveText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: Colors.primary,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  dayRow: {
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-    paddingBottom: 16,
-  },
-  dayInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dayName: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: Colors.dark,
-  },
-  closedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  closedLabel: {
-    fontFamily: Fonts.brand,
-    fontSize: 13,
-    color: Colors.muted,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  timeInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontFamily: Fonts.brand,
-    fontSize: 15,
-    color: Colors.dark,
-    textAlign: 'center',
-  },
-  timeSep: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.muted,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    title: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 18,
+      color: c.text,
+    },
+    saveText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: c.primary,
+    },
+    content: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    dayRow: {
+      marginBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      paddingBottom: 16,
+    },
+    dayInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    dayName: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: c.text,
+    },
+    closedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    closedLabel: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.muted,
+    },
+    timeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    timeInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontFamily: Fonts.brand,
+      fontSize: 15,
+      color: c.text,
+      textAlign: 'center',
+      backgroundColor: c.card,
+    },
+    timeSep: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.muted,
+    },
+  });
+}

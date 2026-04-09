@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     View,
     Text,
@@ -12,27 +12,13 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
-    Pressable,
 } from 'react-native';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useAppThemeColors, type AppColors } from '@/constants/theme';
 
-const Colors = {
-    primary: '#D62828',
-    secondary: '#F77F00',
-    tertiary: '#FCBF49',
-    neutral: '#003049',
-    background: '#EEF2F7',
-    surface: '#FFFFFF',
-    border: '#E2E8F0',
-    textPrimary: '#003049',
-    textSecondary: '#5A7184',
-    textMuted: '#94A3B8',
-    error: '#EF4444',
-    success: '#10B981',
-};
+const STATUS = { error: '#EF4444', success: '#10B981' } as const;
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
 type PaymentType = 'cash' | 'card' | 'wallet';
 
 interface PaymentMethod {
@@ -48,22 +34,20 @@ const INITIAL_METHODS: PaymentMethod[] = [
     { id: '2', type: 'wallet', label: 'Foodie Wallet', detail: 'Balance: PKR 0.00', isDefault: false },
 ];
 
-// ─── Payment card icons ────────────────────────────────────────────────────────
-function PaymentIcon({ type, size = 24 }: { type: PaymentType; size?: number }) {
-    if (type === 'cash')
-        return <MaterialIcons name="payments" size={size} color={Colors.success} />;
-    if (type === 'wallet')
-        return <MaterialCommunityIcons name="wallet" size={size} color={Colors.secondary} />;
-    return <MaterialIcons name="credit-card" size={size} color={Colors.neutral} />;
+function typeIconBg(type: PaymentType, c: AppColors): string {
+    if (type === 'cash') return c.isDark ? 'rgba(16,185,129,0.2)' : '#ECFDF5';
+    if (type === 'wallet') return c.isDark ? 'rgba(247,127,12,0.18)' : '#FFF7ED';
+    return c.isDark ? c.card : '#EEF2F7';
 }
 
-const TYPE_BG: Record<PaymentType, string> = {
-    cash: '#ECFDF5',
-    wallet: '#FFF7ED',
-    card: '#EEF2F7',
-};
+function PaymentIcon({ type, size = 24, c }: { type: PaymentType; size?: number; c: AppColors }) {
+    if (type === 'cash')
+        return <MaterialIcons name="payments" size={size} color={STATUS.success} />;
+    if (type === 'wallet')
+        return <MaterialCommunityIcons name="wallet" size={size} color={c.customerSecondary} />;
+    return <MaterialIcons name="credit-card" size={size} color={c.customerNeutral} />;
+}
 
-// ─── Single method card ────────────────────────────────────────────────────────
 function MethodCard({
     method,
     onSetDefault,
@@ -73,17 +57,21 @@ function MethodCard({
     onSetDefault: (id: string) => void;
     onDelete: (id: string) => void;
 }) {
+    const c = useAppThemeColors();
+    const cardStyles = useMemo(() => createCardStyles(c), [c]);
+    const defaultHighlight = c.isDark ? 'rgba(250,25,25,0.08)' : '#FFFBF5';
+
     return (
-        <View style={[cardStyles.card, method.isDefault && cardStyles.cardDefault]}>
-            <View style={[cardStyles.iconBox, { backgroundColor: TYPE_BG[method.type] }]}>
-                <PaymentIcon type={method.type} size={22} />
+        <View style={[cardStyles.card, method.isDefault && { backgroundColor: defaultHighlight }]}>
+            <View style={[cardStyles.iconBox, { backgroundColor: typeIconBg(method.type, c) }]}>
+                <PaymentIcon type={method.type} size={22} c={c} />
             </View>
             <View style={cardStyles.info}>
                 <Text style={cardStyles.label}>{method.label}</Text>
                 <Text style={cardStyles.detail}>{method.detail}</Text>
                 {method.isDefault && (
                     <View style={cardStyles.defaultBadge}>
-                        <Ionicons name="checkmark-circle" size={12} color={Colors.primary} />
+                        <Ionicons name="checkmark-circle" size={12} color={c.primary} />
                         <Text style={cardStyles.defaultText}>Default</Text>
                     </View>
                 )}
@@ -95,7 +83,7 @@ function MethodCard({
                         onPress={() => onSetDefault(method.id)}
                         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
-                        <Ionicons name="star-outline" size={18} color={Colors.textSecondary} />
+                        <Ionicons name="star-outline" size={18} color={c.customerTextSecondary} />
                     </TouchableOpacity>
                 )}
                 {method.type !== 'cash' && method.type !== 'wallet' && (
@@ -109,7 +97,7 @@ function MethodCard({
                         }
                         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
-                        <Ionicons name="trash-outline" size={18} color={Colors.error} />
+                        <Ionicons name="trash-outline" size={18} color={STATUS.error} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -117,20 +105,20 @@ function MethodCard({
     );
 }
 
-const cardStyles = StyleSheet.create({
-    card: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
-    cardDefault: { backgroundColor: '#FFFBF5' },
-    iconBox: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-    info: { flex: 1, gap: 3 },
-    label: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-    detail: { fontSize: 13, color: Colors.textSecondary },
-    defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-    defaultText: { fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 0.5 },
-    actions: { flexDirection: 'row', alignItems: 'center' },
-    actionBtn: { padding: 4 },
-});
+function createCardStyles(c: AppColors) {
+    return StyleSheet.create({
+        card: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
+        iconBox: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+        info: { flex: 1, gap: 3 },
+        label: { fontSize: 15, fontWeight: '600', color: c.customerTextPrimary },
+        detail: { fontSize: 13, color: c.customerTextSecondary },
+        defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+        defaultText: { fontSize: 11, fontWeight: '700', color: c.primary, letterSpacing: 0.5 },
+        actions: { flexDirection: 'row', alignItems: 'center' },
+        actionBtn: { padding: 4 },
+    });
+}
 
-// ─── Add Card Modal ────────────────────────────────────────────────────────────
 function AddCardModal({
     visible,
     onClose,
@@ -140,6 +128,8 @@ function AddCardModal({
     onClose: () => void;
     onAdd: (m: PaymentMethod) => void;
 }) {
+    const c = useAppThemeColors();
+    const modalStyles = useMemo(() => createModalStyles(c), [c]);
     const [cardNumber, setCardNumber] = useState('');
     const [expiry, setExpiry] = useState('');
     const [cvv, setCvv] = useState('');
@@ -184,7 +174,7 @@ function AddCardModal({
                     <View style={modalStyles.header}>
                         <Text style={modalStyles.title}>Add New Card</Text>
                         <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                            <Ionicons name="close" size={24} color={Colors.textPrimary} />
+                            <Ionicons name="close" size={24} color={c.customerTextPrimary} />
                         </TouchableOpacity>
                     </View>
 
@@ -192,7 +182,6 @@ function AddCardModal({
                         contentContainerStyle={modalStyles.body}
                         keyboardShouldPersistTaps="handled"
                     >
-                        {/* Preview */}
                         <View style={modalStyles.cardPreview}>
                             <View style={modalStyles.cardPreviewTop}>
                                 <Text style={modalStyles.cardPreviewLabel}>FOODIE CARD</Text>
@@ -214,51 +203,51 @@ function AddCardModal({
                         </View>
 
                         <View style={modalStyles.fields}>
-                            <ModalField label="Card Number">
+                            <ModalField label="Card Number" modalStyles={modalStyles}>
                                 <TextInput
                                     style={modalStyles.input}
                                     value={cardNumber}
                                     onChangeText={v => setCardNumber(formatCardNumber(v))}
                                     placeholder="1234 5678 9012 3456"
-                                    placeholderTextColor={Colors.textMuted}
+                                    placeholderTextColor={c.customerTextMuted}
                                     keyboardType="number-pad"
                                     maxLength={19}
                                 />
                             </ModalField>
 
-                            <ModalField label="Card Holder Name">
+                            <ModalField label="Card Holder Name" modalStyles={modalStyles}>
                                 <TextInput
                                     style={modalStyles.input}
                                     value={holder}
                                     onChangeText={setHolder}
                                     placeholder="As shown on card"
-                                    placeholderTextColor={Colors.textMuted}
+                                    placeholderTextColor={c.customerTextMuted}
                                     autoCapitalize="characters"
                                 />
                             </ModalField>
 
                             <View style={modalStyles.row}>
                                 <View style={{ flex: 1 }}>
-                                    <ModalField label="Expiry Date">
+                                    <ModalField label="Expiry Date" modalStyles={modalStyles}>
                                         <TextInput
                                             style={modalStyles.input}
                                             value={expiry}
                                             onChangeText={v => setExpiry(formatExpiry(v))}
                                             placeholder="MM/YY"
-                                            placeholderTextColor={Colors.textMuted}
+                                            placeholderTextColor={c.customerTextMuted}
                                             keyboardType="number-pad"
                                             maxLength={5}
                                         />
                                     </ModalField>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <ModalField label="CVV">
+                                    <ModalField label="CVV" modalStyles={modalStyles}>
                                         <TextInput
                                             style={modalStyles.input}
                                             value={cvv}
                                             onChangeText={v => setCvv(v.replace(/\D/g, '').slice(0, 4))}
                                             placeholder="•••"
-                                            placeholderTextColor={Colors.textMuted}
+                                            placeholderTextColor={c.customerTextMuted}
                                             keyboardType="number-pad"
                                             secureTextEntry
                                             maxLength={4}
@@ -268,7 +257,7 @@ function AddCardModal({
                             </View>
 
                             <View style={modalStyles.secureRow}>
-                                <Ionicons name="lock-closed" size={14} color={Colors.success} />
+                                <Ionicons name="lock-closed" size={14} color={STATUS.success} />
                                 <Text style={modalStyles.secureText}>Your card details are encrypted and secure</Text>
                             </View>
 
@@ -283,7 +272,15 @@ function AddCardModal({
     );
 }
 
-function ModalField({ label, children }: { label: string; children: React.ReactNode }) {
+function ModalField({
+    label,
+    children,
+    modalStyles,
+}: {
+    label: string;
+    children: React.ReactNode;
+    modalStyles: ReturnType<typeof createModalStyles>;
+}) {
     return (
         <View style={{ gap: 6 }}>
             <Text style={modalStyles.fieldLabel}>{label}</Text>
@@ -292,52 +289,56 @@ function ModalField({ label, children }: { label: string; children: React.ReactN
     );
 }
 
-const modalStyles = StyleSheet.create({
-    safe: { flex: 1, backgroundColor: Colors.surface },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12,
-        borderBottomWidth: 1, borderBottomColor: Colors.border
-    },
-    title: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-    body: { padding: 20, gap: 20, paddingBottom: 40 },
+function createModalStyles(c: AppColors) {
+    return StyleSheet.create({
+        safe: { flex: 1, backgroundColor: c.customerSurface },
+        header: {
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12,
+            borderBottomWidth: 1, borderBottomColor: c.customerBorder,
+        },
+        title: { fontSize: 18, fontWeight: '700', color: c.customerTextPrimary },
+        body: { padding: 20, gap: 20, paddingBottom: 40 },
 
-    cardPreview: {
-        backgroundColor: Colors.neutral, borderRadius: 20, padding: 24, gap: 16,
-        shadowColor: Colors.neutral, shadowOpacity: 0.35,
-        shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 8
-    },
-    cardPreviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    cardPreviewLabel: { fontSize: 13, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 2 },
-    cardPreviewNumber: { fontSize: 20, fontWeight: '700', color: '#fff', letterSpacing: 3 },
-    cardPreviewBottom: { flexDirection: 'row', justifyContent: 'space-between' },
-    cardPreviewSmall: { fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 0.8, marginBottom: 2 },
-    cardPreviewMed: { fontSize: 14, fontWeight: '600', color: '#fff' },
+        cardPreview: {
+            backgroundColor: c.customerNeutral, borderRadius: 20, padding: 24, gap: 16,
+            shadowColor: c.customerNeutral, shadowOpacity: 0.35,
+            shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 8,
+        },
+        cardPreviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+        cardPreviewLabel: { fontSize: 13, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 2 },
+        cardPreviewNumber: { fontSize: 20, fontWeight: '700', color: '#fff', letterSpacing: 3 },
+        cardPreviewBottom: { flexDirection: 'row', justifyContent: 'space-between' },
+        cardPreviewSmall: { fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 0.8, marginBottom: 2 },
+        cardPreviewMed: { fontSize: 14, fontWeight: '600', color: '#fff' },
 
-    fields: { gap: 16 },
-    fieldLabel: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
-    input: {
-        backgroundColor: Colors.background, borderRadius: 12, borderWidth: 1.5,
-        borderColor: Colors.border, paddingHorizontal: 14, paddingVertical: 13,
-        fontSize: 15, color: Colors.textPrimary, fontWeight: '500'
-    },
-    row: { flexDirection: 'row', gap: 12 },
-    secureRow: {
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: '#ECFDF5', borderRadius: 10, padding: 10
-    },
-    secureText: { fontSize: 12, color: Colors.success, fontWeight: '500', flex: 1 },
-    addBtn: {
-        backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16,
-        alignItems: 'center', shadowColor: Colors.primary,
-        shadowOpacity: 0.4, shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 }, elevation: 5
-    },
-    addBtnText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.3 },
-});
+        fields: { gap: 16 },
+        fieldLabel: { fontSize: 13, fontWeight: '600', color: c.customerTextSecondary },
+        input: {
+            backgroundColor: c.customerBodyBg, borderRadius: 12, borderWidth: 1.5,
+            borderColor: c.customerBorder, paddingHorizontal: 14, paddingVertical: 13,
+            fontSize: 15, color: c.customerTextPrimary, fontWeight: '500',
+        },
+        row: { flexDirection: 'row', gap: 12 },
+        secureRow: {
+            flexDirection: 'row', alignItems: 'center', gap: 6,
+            backgroundColor: c.isDark ? 'rgba(16,185,129,0.15)' : '#ECFDF5',
+            borderRadius: 10, padding: 10,
+        },
+        secureText: { fontSize: 12, color: STATUS.success, fontWeight: '500', flex: 1 },
+        addBtn: {
+            backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16,
+            alignItems: 'center', shadowColor: c.primary,
+            shadowOpacity: 0.4, shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 }, elevation: 5,
+        },
+        addBtnText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.3 },
+    });
+}
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function PaymentMethods() {
+    const c = useAppThemeColors();
+    const styles = useMemo(() => createMainStyles(c), [c]);
     const [methods, setMethods] = useState<PaymentMethod[]>(INITIAL_METHODS);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -348,7 +349,6 @@ export default function PaymentMethods() {
     const deleteMethod = (id: string) => {
         setMethods(prev => {
             const filtered = prev.filter(m => m.id !== id);
-            // if deleted was default, set first as default
             if (prev.find(m => m.id === id)?.isDefault && filtered.length > 0)
                 filtered[0].isDefault = true;
             return filtered;
@@ -361,7 +361,7 @@ export default function PaymentMethods() {
 
     return (
         <SafeAreaView style={styles.safe}>
-            <StatusBar barStyle="light-content" backgroundColor={Colors.neutral} />
+            <StatusBar barStyle="light-content" backgroundColor={c.customerNeutral} />
 
             <View style={styles.header}>
                 <TouchableOpacity
@@ -379,7 +379,6 @@ export default function PaymentMethods() {
                 contentContainerStyle={styles.scrollInner}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Saved methods */}
                 <Text style={styles.sectionLabel}>SAVED METHODS</Text>
                 <View style={styles.listCard}>
                     {methods.map((m, i) => (
@@ -390,7 +389,6 @@ export default function PaymentMethods() {
                     ))}
                 </View>
 
-                {/* Add new card */}
                 <Text style={[styles.sectionLabel, { marginTop: 24 }]}>ADD NEW</Text>
                 <TouchableOpacity
                     style={styles.addCardBtn}
@@ -398,18 +396,17 @@ export default function PaymentMethods() {
                     activeOpacity={0.8}
                 >
                     <View style={styles.addCardIconBox}>
-                        <Ionicons name="add" size={22} color={Colors.primary} />
+                        <Ionicons name="add" size={22} color={c.primary} />
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.addCardLabel}>Add Credit / Debit Card</Text>
                         <Text style={styles.addCardSub}>Visa, Mastercard, and more</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+                    <Ionicons name="chevron-forward" size={18} color={c.customerTextMuted} />
                 </TouchableOpacity>
 
-                {/* Info */}
                 <View style={styles.infoCard}>
-                    <Ionicons name="shield-checkmark-outline" size={20} color={Colors.neutral} />
+                    <Ionicons name="shield-checkmark-outline" size={20} color={c.customerNeutral} />
                     <Text style={styles.infoText}>
                         Your payment info is protected with industry-standard encryption. We never store
                         your full card number.
@@ -426,45 +423,49 @@ export default function PaymentMethods() {
     );
 }
 
-const styles = StyleSheet.create({
-    safe: { flex: 1, backgroundColor: Colors.neutral },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14
-    },
-    headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
-    scroll: { flex: 1, backgroundColor: Colors.background },
-    scrollInner: { padding: 16, paddingBottom: 40 },
+function createMainStyles(c: AppColors) {
+    return StyleSheet.create({
+        safe: { flex: 1, backgroundColor: c.customerNeutral },
+        header: {
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14,
+        },
+        headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
+        scroll: { flex: 1, backgroundColor: c.customerBodyBg },
+        scrollInner: { padding: 16, paddingBottom: 40 },
 
-    sectionLabel: {
-        fontSize: 11, fontWeight: '700', color: Colors.primary,
-        letterSpacing: 1.4, marginBottom: 10, marginLeft: 4
-    },
-    listCard: {
-        backgroundColor: Colors.surface, borderRadius: 16, overflow: 'hidden',
-        shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 }, elevation: 3
-    },
-    divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: 16 },
+        sectionLabel: {
+            fontSize: 11, fontWeight: '700', color: c.primary,
+            letterSpacing: 1.4, marginBottom: 10, marginLeft: 4,
+        },
+        listCard: {
+            backgroundColor: c.customerSurface, borderRadius: 16, overflow: 'hidden',
+            shadowColor: '#000', shadowOpacity: c.isDark ? 0.2 : 0.06, shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 }, elevation: 3,
+            borderWidth: c.isDark ? 1 : 0,
+            borderColor: c.customerBorder,
+        },
+        divider: { height: 1, backgroundColor: c.customerBorder, marginHorizontal: 16 },
 
-    addCardBtn: {
-        backgroundColor: Colors.surface, borderRadius: 16, flexDirection: 'row',
-        alignItems: 'center', padding: 16, gap: 14,
-        borderWidth: 1.5, borderColor: Colors.border, borderStyle: 'dashed',
-        shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4,
-        shadowOffset: { width: 0, height: 1 }, elevation: 1
-    },
-    addCardIconBox: {
-        width: 46, height: 46, borderRadius: 14, backgroundColor: '#FEF2F2',
-        alignItems: 'center', justifyContent: 'center'
-    },
-    addCardLabel: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-    addCardSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
+        addCardBtn: {
+            backgroundColor: c.customerSurface, borderRadius: 16, flexDirection: 'row',
+            alignItems: 'center', padding: 16, gap: 14,
+            borderWidth: 1.5, borderColor: c.customerBorder, borderStyle: 'dashed',
+            shadowColor: '#000', shadowOpacity: c.isDark ? 0.15 : 0.04, shadowRadius: 4,
+            shadowOffset: { width: 0, height: 1 }, elevation: 1,
+        },
+        addCardIconBox: {
+            width: 46, height: 46, borderRadius: 14, backgroundColor: c.primaryLight,
+            alignItems: 'center', justifyContent: 'center',
+        },
+        addCardLabel: { fontSize: 15, fontWeight: '600', color: c.customerTextPrimary },
+        addCardSub: { fontSize: 13, color: c.customerTextSecondary, marginTop: 2 },
 
-    infoCard: {
-        flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-        backgroundColor: Colors.surface, borderRadius: 14, padding: 16,
-        marginTop: 20, borderLeftWidth: 3, borderLeftColor: Colors.neutral
-    },
-    infoText: { flex: 1, fontSize: 13, color: Colors.textSecondary, lineHeight: 19 },
-});
+        infoCard: {
+            flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+            backgroundColor: c.customerSurface, borderRadius: 14, padding: 16,
+            marginTop: 20, borderLeftWidth: 3, borderLeftColor: c.customerNeutral,
+        },
+        infoText: { flex: 1, fontSize: 13, color: c.customerTextSecondary, lineHeight: 19 },
+    });
+}

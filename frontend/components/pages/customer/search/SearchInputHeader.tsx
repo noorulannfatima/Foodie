@@ -1,7 +1,7 @@
-import type { RefObject } from 'react';
+import { useMemo, type RefObject } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 export interface SearchInputHeaderProps {
   inputRef: RefObject<TextInput | null>;
@@ -18,15 +18,17 @@ export default function SearchInputHeader({
   onSubmit,
   onClear,
 }: SearchInputHeaderProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.searchHeader}>
       <View style={styles.searchInputContainer}>
-        <Ionicons name="search" size={18} color={Colors.muted} />
+        <Ionicons name="search" size={18} color={c.muted} />
         <TextInput
           ref={inputRef}
           style={styles.searchInput}
           placeholder="Search for restaurants and groceries"
-          placeholderTextColor={Colors.muted}
+          placeholderTextColor={c.muted}
           value={query}
           onChangeText={onChangeText}
           autoFocus
@@ -35,7 +37,7 @@ export default function SearchInputHeader({
         />
         {query.length > 0 ? (
           <TouchableOpacity onPress={onClear}>
-            <Ionicons name="close-circle" size={18} color={Colors.muted} />
+            <Ionicons name="close-circle" size={18} color={c.muted} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -43,27 +45,31 @@ export default function SearchInputHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  searchHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: Fonts.brand,
-    fontSize: 15,
-    color: Colors.dark,
-    padding: 0,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    searchHeader: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    searchInputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.isDark ? c.card : '#F5F5F5',
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      gap: 10,
+      borderWidth: c.isDark ? 1 : 0,
+      borderColor: c.border,
+    },
+    searchInput: {
+      flex: 1,
+      fontFamily: Fonts.brand,
+      fontSize: 15,
+      color: c.text,
+      padding: 0,
+    },
+  });
+}

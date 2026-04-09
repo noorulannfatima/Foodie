@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
-import { NAV_COLOR } from './constants';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 const PAYMENTS = [
   { key: 'Card', icon: 'card-outline' as const, label: 'Credit Card' },
@@ -29,6 +28,8 @@ export interface CheckoutModalProps {
 }
 
 export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [zipCode, setZipCode] = useState('');
@@ -71,7 +72,7 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="location" size={18} color={Colors.primary} />
+            <Ionicons name="location" size={18} color={c.primary} />
             <Text style={styles.sectionTitle}>Delivery Address</Text>
           </View>
           <TextInput
@@ -79,7 +80,7 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
             placeholder="Street address"
             value={street}
             onChangeText={setStreet}
-            placeholderTextColor={Colors.muted}
+            placeholderTextColor={c.muted}
           />
           <View style={styles.inputRow}>
             <TextInput
@@ -87,21 +88,21 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
               placeholder="City"
               value={city}
               onChangeText={setCity}
-              placeholderTextColor={Colors.muted}
+              placeholderTextColor={c.muted}
             />
             <TextInput
               style={[styles.input, styles.inputFlex]}
               placeholder="Zip Code"
               value={zipCode}
               onChangeText={setZipCode}
-              placeholderTextColor={Colors.muted}
+              placeholderTextColor={c.muted}
             />
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="card" size={18} color={Colors.primary} />
+            <Ionicons name="card" size={18} color={c.primary} />
             <Text style={styles.sectionTitle}>Payment Method</Text>
           </View>
           {PAYMENTS.map((p) => (
@@ -113,13 +114,13 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
               <Ionicons
                 name={p.icon}
                 size={20}
-                color={paymentMethod === p.key ? Colors.dark : Colors.muted}
+                color={paymentMethod === p.key ? c.text : c.muted}
               />
               <Text style={[styles.paymentLabel, paymentMethod === p.key && styles.paymentLabelActive]}>
                 {p.label}
               </Text>
               {paymentMethod === p.key ? (
-                <Ionicons name="checkmark-circle" size={20} color={Colors.primary} style={styles.checkIcon} />
+                <Ionicons name="checkmark-circle" size={20} color={c.primary} style={styles.checkIcon} />
               ) : null}
             </TouchableOpacity>
           ))}
@@ -127,7 +128,7 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="chatbox-outline" size={18} color={Colors.primary} />
+            <Ionicons name="chatbox-outline" size={18} color={c.primary} />
             <Text style={styles.sectionTitle}>Delivery Notes</Text>
           </View>
           <TextInput
@@ -136,7 +137,7 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
             value={instructions}
             onChangeText={setInstructions}
             multiline
-            placeholderTextColor={Colors.muted}
+            placeholderTextColor={c.muted}
           />
         </View>
 
@@ -154,125 +155,129 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    backgroundColor: NAV_COLOR,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    paddingTop: 50,
-  },
-  headerSpacer: {
-    width: 24,
-  },
-  headerLogo: {
-    fontSize: 18,
-    fontFamily: Fonts.brandBlack,
-    color: '#FFFFFF',
-    letterSpacing: 3,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 28,
-    color: Colors.dark,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.muted,
-    marginBottom: 24,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: Colors.dark,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.dark,
-    marginBottom: 10,
-  },
-  inputFlex: {
-    flex: 1,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  notesInput: {
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  paymentOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    marginBottom: 8,
-  },
-  paymentOptionActive: {
-    borderColor: Colors.dark,
-    borderWidth: 2,
-  },
-  paymentLabel: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.muted,
-  },
-  paymentLabelActive: {
-    fontFamily: Fonts.brandBold,
-    color: Colors.dark,
-  },
-  checkIcon: {
-    marginLeft: 'auto',
-  },
-  placeBtn: {
-    backgroundColor: Colors.secondary,
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  placeBtnText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: '#fff',
-  },
-  secureText: {
-    fontFamily: Fonts.brand,
-    fontSize: 10,
-    color: Colors.muted,
-    textAlign: 'center',
-    marginTop: 12,
-    letterSpacing: 1,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.customerBodyBg,
+    },
+    header: {
+      backgroundColor: c.navBar,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+      paddingTop: 50,
+    },
+    headerSpacer: {
+      width: 24,
+    },
+    headerLogo: {
+      fontSize: 18,
+      fontFamily: Fonts.brandBlack,
+      color: '#FFFFFF',
+      letterSpacing: 3,
+    },
+    content: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    title: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 28,
+      color: c.text,
+      marginBottom: 4,
+    },
+    subtitle: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.muted,
+      marginBottom: 24,
+    },
+    section: {
+      marginBottom: 24,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: c.text,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.text,
+      marginBottom: 10,
+      backgroundColor: c.customerSurface,
+    },
+    inputFlex: {
+      flex: 1,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    notesInput: {
+      minHeight: 60,
+      textAlignVertical: 'top',
+    },
+    paymentOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      marginBottom: 8,
+      backgroundColor: c.customerSurface,
+    },
+    paymentOptionActive: {
+      borderColor: c.text,
+      borderWidth: 2,
+    },
+    paymentLabel: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.muted,
+    },
+    paymentLabelActive: {
+      fontFamily: Fonts.brandBold,
+      color: c.text,
+    },
+    checkIcon: {
+      marginLeft: 'auto',
+    },
+    placeBtn: {
+      backgroundColor: c.secondary,
+      borderRadius: 14,
+      paddingVertical: 18,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    placeBtnText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: '#fff',
+    },
+    secureText: {
+      fontFamily: Fonts.brand,
+      fontSize: 10,
+      color: c.muted,
+      textAlign: 'center',
+      marginTop: 12,
+      letterSpacing: 1,
+    },
+  });
+}

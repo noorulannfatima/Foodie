@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 export interface RestaurantFilterPillProps {
   label: string;
@@ -8,6 +9,8 @@ export interface RestaurantFilterPillProps {
 }
 
 export default function RestaurantFilterPill({ label, active, onPress }: RestaurantFilterPillProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <TouchableOpacity style={[styles.pill, active && styles.pillActive]} onPress={onPress}>
       <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
@@ -15,25 +18,28 @@ export default function RestaurantFilterPill({ label, active, onPress }: Restaur
   );
 }
 
-const styles = StyleSheet.create({
-  pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  pillActive: {
-    backgroundColor: Colors.dark,
-    borderColor: Colors.dark,
-  },
-  text: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 13,
-    color: Colors.muted,
-  },
-  textActive: {
-    color: '#fff',
-  },
-});
+function createStyles(c: AppColors) {
+  const activeBg = c.chromeDark;
+  return StyleSheet.create({
+    pill: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: c.customerSurface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    pillActive: {
+      backgroundColor: activeBg,
+      borderColor: activeBg,
+    },
+    text: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      color: c.muted,
+    },
+    textActive: {
+      color: '#fff',
+    },
+  });
+}

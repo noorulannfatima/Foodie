@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 export default function MenuBuilderTitle() {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.titleRow}>
       <View>
@@ -14,22 +17,24 @@ export default function MenuBuilderTitle() {
   );
 }
 
-const styles = StyleSheet.create({
-  titleRow: {
-    marginBottom: 16,
-  },
-  titleMain: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 26,
-    color: Colors.dark,
-  },
-  titleAccent: {
-    color: Colors.primary,
-  },
-  titleSub: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.muted,
-    marginTop: 4,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    titleRow: {
+      marginBottom: 16,
+    },
+    titleMain: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 26,
+      color: c.text,
+    },
+    titleAccent: {
+      color: c.primary,
+    },
+    titleSub: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.muted,
+      marginTop: 4,
+    },
+  });
+}

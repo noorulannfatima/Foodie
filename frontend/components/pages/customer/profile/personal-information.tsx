@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     View,
     Text,
@@ -16,20 +16,9 @@ import {
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import { useAppThemeColors, type AppColors } from '@/constants/theme';
 
-const Colors = {
-    primary: '#D62828',
-    neutral: '#003049',
-    background: '#EEF2F7',
-    surface: '#FFFFFF',
-    border: '#E2E8F0',
-    borderFocus: '#D62828',
-    textPrimary: '#003049',
-    textSecondary: '#5A7184',
-    textMuted: '#94A3B8',
-    error: '#EF4444',
-    success: '#10B981',
-};
+const STATUS = { error: '#EF4444', success: '#10B981' } as const;
 
 interface FieldProps {
     label: string;
@@ -56,6 +45,8 @@ function Field({
     error,
     iconName,
 }: FieldProps) {
+    const c = useAppThemeColors();
+    const fieldStyles = useMemo(() => createFieldStyles(c), [c]);
     const [focused, setFocused] = useState(false);
 
     return (
@@ -73,7 +64,7 @@ function Field({
                     <Ionicons
                         name={iconName}
                         size={18}
-                        color={focused ? Colors.primary : Colors.textMuted}
+                        color={focused ? c.primary : c.customerTextMuted}
                         style={fieldStyles.inputIcon}
                     />
                 )}
@@ -82,7 +73,7 @@ function Field({
                     value={value}
                     onChangeText={onChangeText}
                     placeholder={placeholder}
-                    placeholderTextColor={Colors.textMuted}
+                    placeholderTextColor={c.customerTextMuted}
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
                     editable={editable}
@@ -93,7 +84,7 @@ function Field({
             {!!hint && !error && <Text style={fieldStyles.hint}>{hint}</Text>}
             {!!error && (
                 <View style={fieldStyles.errorRow}>
-                    <Ionicons name="alert-circle" size={13} color={Colors.error} />
+                    <Ionicons name="alert-circle" size={13} color={STATUS.error} />
                     <Text style={fieldStyles.errorText}>{error}</Text>
                 </View>
             )}
@@ -101,34 +92,100 @@ function Field({
     );
 }
 
-const fieldStyles = StyleSheet.create({
-    wrapper: { gap: 6 },
-    label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, letterSpacing: 0.3 },
-    inputRow: {
-        flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,
-        borderRadius: 12, borderWidth: 1.5, borderColor: Colors.border,
-        paddingHorizontal: 14
-    },
-    inputRowFocused: {
-        borderColor: Colors.borderFocus, shadowColor: Colors.primary,
-        shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
-        elevation: 2
-    },
-    inputRowError: { borderColor: Colors.error },
-    inputRowDisabled: { backgroundColor: '#F8FAFC' },
-    inputIcon: { marginRight: 10 },
-    input: {
-        flex: 1, fontSize: 15, color: Colors.textPrimary,
-        paddingVertical: 14, fontWeight: '500'
-    },
-    inputDisabled: { color: Colors.textMuted },
-    hint: { fontSize: 12, color: Colors.textMuted, marginTop: -2 },
-    errorRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    errorText: { fontSize: 12, color: Colors.error },
-});
+function createFieldStyles(c: AppColors) {
+    return StyleSheet.create({
+        wrapper: { gap: 6 },
+        label: { fontSize: 13, fontWeight: '600', color: c.customerTextSecondary, letterSpacing: 0.3 },
+        inputRow: {
+            flexDirection: 'row', alignItems: 'center', backgroundColor: c.customerSurface,
+            borderRadius: 12, borderWidth: 1.5, borderColor: c.customerBorder,
+            paddingHorizontal: 14,
+        },
+        inputRowFocused: {
+            borderColor: c.primary, shadowColor: c.primary,
+            shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+            elevation: 2,
+        },
+        inputRowError: { borderColor: STATUS.error },
+        inputRowDisabled: { backgroundColor: c.isDark ? c.card : '#F8FAFC' },
+        inputIcon: { marginRight: 10 },
+        input: {
+            flex: 1, fontSize: 15, color: c.customerTextPrimary,
+            paddingVertical: 14, fontWeight: '500',
+        },
+        inputDisabled: { color: c.customerTextMuted },
+        hint: { fontSize: 12, color: c.customerTextMuted, marginTop: -2 },
+        errorRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+        errorText: { fontSize: 12, color: STATUS.error },
+    });
+}
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+function VerificationRow({
+    label,
+    verified,
+    icon,
+    action,
+    onAction,
+}: {
+    label: string;
+    verified: boolean;
+    icon: keyof typeof Ionicons.glyphMap;
+    action?: string;
+    onAction?: () => void;
+}) {
+    const c = useAppThemeColors();
+    const vStyles = useMemo(() => createVerificationStyles(c), [c]);
+    return (
+        <View style={vStyles.row}>
+            <View style={vStyles.left}>
+                <Ionicons name={icon} size={18} color={c.customerTextSecondary} />
+                <Text style={vStyles.label}>{label}</Text>
+            </View>
+            <View style={vStyles.right}>
+                {verified ? (
+                    <View style={vStyles.verifiedChip}>
+                        <Ionicons name="checkmark-circle" size={14} color={STATUS.success} />
+                        <Text style={vStyles.verifiedText}>Verified</Text>
+                    </View>
+                ) : (
+                    <TouchableOpacity style={vStyles.unverifiedChip} onPress={onAction}>
+                        <Text style={vStyles.unverifiedText}>{action ?? 'Unverified'}</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+    );
+}
+
+function createVerificationStyles(c: AppColors) {
+    return StyleSheet.create({
+        row: {
+            flexDirection: 'row', alignItems: 'center',
+            justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16,
+        },
+        left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+        label: { fontSize: 14, fontWeight: '500', color: c.customerTextPrimary },
+        right: {},
+        verifiedChip: {
+            flexDirection: 'row', alignItems: 'center', gap: 4,
+            backgroundColor: c.isDark ? 'rgba(16,185,129,0.2)' : '#ECFDF5',
+            borderRadius: 20,
+            paddingHorizontal: 10, paddingVertical: 4,
+        },
+        verifiedText: { fontSize: 12, fontWeight: '600', color: STATUS.success },
+        unverifiedChip: {
+            backgroundColor: c.isDark ? 'rgba(239,68,68,0.15)' : '#FEF2F2',
+            borderRadius: 20,
+            paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1,
+            borderColor: '#FCA5A5',
+        },
+        unverifiedText: { fontSize: 12, fontWeight: '600', color: STATUS.error },
+    });
+}
+
 export default function PersonalInformation() {
+    const c = useAppThemeColors();
+    const styles = useMemo(() => createMainStyles(c), [c]);
     const { user } = useAuthStore();
 
     const [name, setName] = useState(user?.name ?? '');
@@ -151,7 +208,6 @@ export default function PersonalInformation() {
     const handleSave = async () => {
         if (!validate()) return;
         setIsSaving(true);
-        // TODO: wire up to your PATCH /auth/profile endpoint
         await new Promise(r => setTimeout(r, 900));
         setIsSaving(false);
         setSaved(true);
@@ -161,9 +217,8 @@ export default function PersonalInformation() {
 
     return (
         <SafeAreaView style={styles.safe}>
-            <StatusBar barStyle="light-content" backgroundColor={Colors.neutral} />
+            <StatusBar barStyle="light-content" backgroundColor={c.customerNeutral} />
 
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -185,7 +240,6 @@ export default function PersonalInformation() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Avatar section */}
                     <View style={styles.avatarSection}>
                         <View style={styles.avatarBig}>
                             <Text style={styles.avatarBigInitials}>
@@ -195,12 +249,11 @@ export default function PersonalInformation() {
                             </Text>
                         </View>
                         <TouchableOpacity style={styles.changePhotoBtn} activeOpacity={0.7}>
-                            <MaterialIcons name="photo-camera" size={15} color={Colors.primary} />
+                            <MaterialIcons name="photo-camera" size={15} color={c.primary} />
                             <Text style={styles.changePhotoText}>Change Photo</Text>
                         </TouchableOpacity>
                     </View>
 
-                    {/* Form */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>BASIC DETAILS</Text>
                         <View style={styles.fieldGroup}>
@@ -236,7 +289,6 @@ export default function PersonalInformation() {
                         </View>
                     </View>
 
-                    {/* Verification status */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>VERIFICATION STATUS</Text>
                         <View style={styles.verificationCard}>
@@ -256,7 +308,6 @@ export default function PersonalInformation() {
                         </View>
                     </View>
 
-                    {/* Save button */}
                     <TouchableOpacity
                         style={[styles.saveBtn, (isSaving || saved) && styles.saveBtnAlt]}
                         onPress={handleSave}
@@ -280,110 +331,57 @@ export default function PersonalInformation() {
     );
 }
 
-function VerificationRow({
-    label,
-    verified,
-    icon,
-    action,
-    onAction,
-}: {
-    label: string;
-    verified: boolean;
-    icon: keyof typeof Ionicons.glyphMap;
-    action?: string;
-    onAction?: () => void;
-}) {
-    return (
-        <View style={vStyles.row}>
-            <View style={vStyles.left}>
-                <Ionicons name={icon} size={18} color={Colors.textSecondary} />
-                <Text style={vStyles.label}>{label}</Text>
-            </View>
-            <View style={vStyles.right}>
-                {verified ? (
-                    <View style={vStyles.verifiedChip}>
-                        <Ionicons name="checkmark-circle" size={14} color={Colors.success} />
-                        <Text style={vStyles.verifiedText}>Verified</Text>
-                    </View>
-                ) : (
-                    <TouchableOpacity style={vStyles.unverifiedChip} onPress={onAction}>
-                        <Text style={vStyles.unverifiedText}>{action ?? 'Unverified'}</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-        </View>
-    );
+function createMainStyles(c: AppColors) {
+    return StyleSheet.create({
+        safe: { flex: 1, backgroundColor: c.customerNeutral },
+        flex: { flex: 1 },
+        header: {
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14,
+        },
+        headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
+        scroll: { flex: 1, backgroundColor: c.customerBodyBg },
+        scrollInner: { padding: 16, paddingBottom: 40 },
+
+        avatarSection: { alignItems: 'center', paddingVertical: 24, gap: 12 },
+        avatarBig: {
+            width: 96, height: 96, borderRadius: 48, backgroundColor: c.customerNeutral,
+            alignItems: 'center', justifyContent: 'center',
+            shadowColor: c.customerNeutral, shadowOpacity: 0.3,
+            shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+        },
+        avatarBigInitials: { fontSize: 34, fontWeight: '800', color: '#fff' },
+        changePhotoBtn: {
+            flexDirection: 'row', alignItems: 'center', gap: 6,
+            paddingHorizontal: 16, paddingVertical: 8,
+            backgroundColor: c.customerSurface, borderRadius: 20,
+            borderWidth: 1.5, borderColor: c.primary,
+        },
+        changePhotoText: { fontSize: 13, fontWeight: '600', color: c.primary },
+
+        section: { marginBottom: 20 },
+        sectionTitle: {
+            fontSize: 11, fontWeight: '700', color: c.primary,
+            letterSpacing: 1.4, marginBottom: 10, marginLeft: 4,
+        },
+        fieldGroup: { gap: 14 },
+        verificationCard: {
+            backgroundColor: c.customerSurface, borderRadius: 16, overflow: 'hidden',
+            shadowColor: '#000', shadowOpacity: c.isDark ? 0.2 : 0.05, shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 }, elevation: 2,
+            borderWidth: c.isDark ? 1 : 0,
+            borderColor: c.customerBorder,
+        },
+        vDivider: { height: 1, backgroundColor: c.customerBorder, marginHorizontal: 16 },
+
+        saveBtn: {
+            backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16,
+            alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
+            gap: 8, marginTop: 8, shadowColor: c.primary,
+            shadowOpacity: 0.4, shadowRadius: 10,
+            shadowOffset: { width: 0, height: 4 }, elevation: 6,
+        },
+        saveBtnAlt: { backgroundColor: STATUS.success },
+        saveBtnText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.3 },
+    });
 }
-
-const vStyles = StyleSheet.create({
-    row: {
-        flexDirection: 'row', alignItems: 'center',
-        justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16
-    },
-    left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    label: { fontSize: 14, fontWeight: '500', color: Colors.textPrimary },
-    right: {},
-    verifiedChip: {
-        flexDirection: 'row', alignItems: 'center', gap: 4,
-        backgroundColor: '#ECFDF5', borderRadius: 20,
-        paddingHorizontal: 10, paddingVertical: 4
-    },
-    verifiedText: { fontSize: 12, fontWeight: '600', color: Colors.success },
-    unverifiedChip: {
-        backgroundColor: '#FEF2F2', borderRadius: 20,
-        paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1,
-        borderColor: '#FCA5A5'
-    },
-    unverifiedText: { fontSize: 12, fontWeight: '600', color: Colors.error },
-});
-
-const styles = StyleSheet.create({
-    safe: { flex: 1, backgroundColor: Colors.neutral },
-    flex: { flex: 1 },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14
-    },
-    headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
-    scroll: { flex: 1, backgroundColor: Colors.background },
-    scrollInner: { padding: 16, paddingBottom: 40 },
-
-    avatarSection: { alignItems: 'center', paddingVertical: 24, gap: 12 },
-    avatarBig: {
-        width: 96, height: 96, borderRadius: 48, backgroundColor: Colors.neutral,
-        alignItems: 'center', justifyContent: 'center',
-        shadowColor: Colors.neutral, shadowOpacity: 0.3,
-        shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6
-    },
-    avatarBigInitials: { fontSize: 34, fontWeight: '800', color: '#fff' },
-    changePhotoBtn: {
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        paddingHorizontal: 16, paddingVertical: 8,
-        backgroundColor: Colors.surface, borderRadius: 20,
-        borderWidth: 1.5, borderColor: Colors.primary
-    },
-    changePhotoText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
-
-    section: { marginBottom: 20 },
-    sectionTitle: {
-        fontSize: 11, fontWeight: '700', color: Colors.primary,
-        letterSpacing: 1.4, marginBottom: 10, marginLeft: 4
-    },
-    fieldGroup: { gap: 14 },
-    verificationCard: {
-        backgroundColor: Colors.surface, borderRadius: 16, overflow: 'hidden',
-        shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 }, elevation: 2
-    },
-    vDivider: { height: 1, backgroundColor: Colors.border, marginHorizontal: 16 },
-
-    saveBtn: {
-        backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16,
-        alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
-        gap: 8, marginTop: 8, shadowColor: Colors.primary,
-        shadowOpacity: 0.4, shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 }, elevation: 6
-    },
-    saveBtnAlt: { backgroundColor: Colors.success },
-    saveBtnText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.3 },
-});

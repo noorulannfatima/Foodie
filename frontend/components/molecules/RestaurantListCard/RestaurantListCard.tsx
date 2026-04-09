@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -9,7 +9,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -38,6 +38,8 @@ export default function RestaurantListCard({
     isOpen = true,
     onPress,
 }: RestaurantListCardProps) {
+    const c = useAppThemeColors();
+    const styles = useMemo(() => createStyles(c), [c]);
     const scaleRef = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
@@ -70,7 +72,6 @@ export default function RestaurantListCard({
                 onPressOut={handlePressOut}
                 style={styles.card}
             >
-                {/* Thumbnail */}
                 <View style={styles.thumbWrapper}>
                     <Image
                         source={{ uri: imageUri }}
@@ -84,7 +85,6 @@ export default function RestaurantListCard({
                     )}
                 </View>
 
-                {/* Info */}
                 <View style={styles.info}>
                     <View style={styles.topRow}>
                         <Text style={styles.name} numberOfLines={1}>
@@ -105,13 +105,13 @@ export default function RestaurantListCard({
                         <Ionicons name="star" size={12} color="#FBBF24" />
                         <Text style={styles.rating}>{averageRating.toFixed(1)}</Text>
                         <View style={styles.dot} />
-                        <Ionicons name="time-outline" size={12} color={Colors.muted} />
+                        <Ionicons name="time-outline" size={12} color={c.muted} />
                         <Text style={styles.metaText}>{estimatedDeliveryTime} min</Text>
                         <View style={styles.dot} />
                         <MaterialCommunityIcons
                             name="moped-outline"
                             size={13}
-                            color={deliveryFee === 0 ? '#16A34A' : Colors.muted}
+                            color={deliveryFee === 0 ? '#16A34A' : c.muted}
                         />
                         <Text
                             style={[
@@ -124,107 +124,110 @@ export default function RestaurantListCard({
                     </View>
                 </View>
 
-                {/* Chevron */}
-                <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+                <Ionicons name="chevron-forward" size={16} color={c.customerTextMuted} />
             </Pressable>
         </Animated.View>
     );
 }
 
-const styles = StyleSheet.create({
-    card: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 3,
-        marginHorizontal: 16,
-    },
-    thumbWrapper: {
-        width: 72,
-        height: 72,
-        borderRadius: 14,
-        overflow: 'hidden',
-        marginRight: 12,
-        position: 'relative',
-    },
-    thumb: {
-        width: '100%',
-        height: '100%',
-    },
-    closedBadge: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    closedBadgeText: {
-        color: '#fff',
-        fontSize: 10,
-        fontFamily: Fonts.brandBold,
-    },
-    info: {
-        flex: 1,
-        gap: 3,
-    },
-    topRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    name: {
-        fontSize: 14,
-        fontFamily: Fonts.brandBold,
-        color: Colors.text,
-        flex: 1,
-    },
-    premiumBadge: {
-        backgroundColor: '#FEF3C7',
-        borderRadius: 6,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-    },
-    premiumText: {
-        fontSize: 9,
-        fontFamily: Fonts.brandBold,
-        color: '#B45309',
-        letterSpacing: 0.3,
-    },
-    cuisine: {
-        fontSize: 12,
-        fontFamily: Fonts.brand,
-        color: Colors.muted,
-    },
-    metaRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginTop: 2,
-    },
-    rating: {
-        fontSize: 12,
-        fontFamily: Fonts.brandBold,
-        color: Colors.text,
-    },
-    dot: {
-        width: 3,
-        height: 3,
-        borderRadius: 2,
-        backgroundColor: '#CBD5E1',
-    },
-    metaText: {
-        fontSize: 11,
-        fontFamily: Fonts.brand,
-        color: Colors.muted,
-    },
-    freeText: {
-        color: '#16A34A',
-        fontFamily: Fonts.brandBold,
-    },
-});
+function createStyles(c: AppColors) {
+    return StyleSheet.create({
+        card: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: c.customerSurface,
+            borderRadius: 16,
+            padding: 12,
+            marginBottom: 12,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: c.isDark ? 0.35 : 0.06,
+            shadowRadius: 8,
+            elevation: 3,
+            marginHorizontal: 16,
+            borderWidth: c.isDark ? 1 : 0,
+            borderColor: c.customerBorder,
+        },
+        thumbWrapper: {
+            width: 72,
+            height: 72,
+            borderRadius: 14,
+            overflow: 'hidden',
+            marginRight: 12,
+            position: 'relative',
+        },
+        thumb: {
+            width: '100%',
+            height: '100%',
+        },
+        closedBadge: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        closedBadgeText: {
+            color: '#fff',
+            fontSize: 10,
+            fontFamily: Fonts.brandBold,
+        },
+        info: {
+            flex: 1,
+            gap: 3,
+        },
+        topRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+        },
+        name: {
+            fontSize: 14,
+            fontFamily: Fonts.brandBold,
+            color: c.customerTextPrimary,
+            flex: 1,
+        },
+        premiumBadge: {
+            backgroundColor: '#FEF3C7',
+            borderRadius: 6,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+        },
+        premiumText: {
+            fontSize: 9,
+            fontFamily: Fonts.brandBold,
+            color: '#B45309',
+            letterSpacing: 0.3,
+        },
+        cuisine: {
+            fontSize: 12,
+            fontFamily: Fonts.brand,
+            color: c.muted,
+        },
+        metaRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            marginTop: 2,
+        },
+        rating: {
+            fontSize: 12,
+            fontFamily: Fonts.brandBold,
+            color: c.customerTextPrimary,
+        },
+        dot: {
+            width: 3,
+            height: 3,
+            borderRadius: 2,
+            backgroundColor: c.customerBorder,
+        },
+        metaText: {
+            fontSize: 11,
+            fontFamily: Fonts.brand,
+            color: c.muted,
+        },
+        freeText: {
+            color: '#16A34A',
+            fontFamily: Fonts.brandBold,
+        },
+    });
+}

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32;
@@ -41,6 +41,8 @@ export default function RestaurantCard({
   isOpen = true,
   onPress,
 }: RestaurantCardProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const scaleRef = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -75,7 +77,6 @@ export default function RestaurantCard({
         onPressOut={handlePressOut}
         style={styles.card}
       >
-        {/* Restaurant Image */}
         <View style={styles.imageWrapper}>
           <Image
             source={{ uri: imageUri }}
@@ -83,13 +84,11 @@ export default function RestaurantCard({
             resizeMode="cover"
           />
 
-          {/* Rating Badge */}
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={12} color="#FBBF24" />
             <Text style={styles.ratingText}>{averageRating.toFixed(1)}</Text>
           </View>
 
-          {/* Closed Overlay */}
           {!isOpen && (
             <View style={styles.closedOverlay}>
               <Text style={styles.closedText}>Closed</Text>
@@ -97,9 +96,7 @@ export default function RestaurantCard({
           )}
         </View>
 
-        {/* Card Body */}
         <View style={styles.body}>
-          {/* Name + Price Row */}
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>
               {name}
@@ -110,10 +107,9 @@ export default function RestaurantCard({
             </Text>
           </View>
 
-          {/* Meta Row */}
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
-              <Ionicons name="time-outline" size={13} color={Colors.muted} />
+              <Ionicons name="time-outline" size={13} color={c.muted} />
               <Text style={styles.metaText}>{estimatedDeliveryTime} min</Text>
             </View>
             <View style={styles.metaDot} />
@@ -121,13 +117,12 @@ export default function RestaurantCard({
               <MaterialCommunityIcons
                 name="moped-outline"
                 size={14}
-                color={Colors.muted}
+                color={c.muted}
               />
               <Text style={styles.metaText}>{feeLabel}</Text>
             </View>
           </View>
 
-          {/* Tags */}
           <View style={styles.tagsRow}>
             {cuisineTypes.map((tag) => (
               <View key={tag} style={styles.tag}>
@@ -155,136 +150,140 @@ export default function RestaurantCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.09,
-    shadowRadius: 12,
-    elevation: 5,
-    alignSelf: 'center',
-  },
-  imageWrapper: {
-    width: '100%',
-    height: 190,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  ratingBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.72)',
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    gap: 4,
-  },
-  ratingText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontFamily: Fonts.brandBold,
-  },
-  closedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closedText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontFamily: Fonts.brandBold,
-  },
-  body: {
-    padding: 14,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  name: {
-    fontSize: 16,
-    fontFamily: Fonts.brandBold,
-    color: Colors.text,
-    flex: 1,
-    marginRight: 8,
-  },
-  minOrder: {
-    fontSize: 14,
-    fontFamily: Fonts.brandBold,
-  },
-  primaryText: {
-    color: Colors.primary,
-    fontFamily: Fonts.brandBold,
-    fontSize: 14,
-  },
-  mutedSm: {
-    color: Colors.muted,
-    fontSize: 13,
-    fontFamily: Fonts.brand,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    gap: 6,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Colors.muted,
-  },
-  metaText: {
-    fontSize: 12,
-    fontFamily: Fonts.brand,
-    color: Colors.muted,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  tagText: {
-    fontSize: 10,
-    fontFamily: Fonts.brandBold,
-    color: '#64748B',
-    letterSpacing: 0.4,
-  },
-  premiumTag: {
-    backgroundColor: '#FEF3C7',
-  },
-  premiumTagText: {
-    color: '#B45309',
-  },
-  freeTag: {
-    backgroundColor: '#DCFCE7',
-  },
-  freeTagText: {
-    color: '#166534',
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    card: {
+      width: CARD_WIDTH,
+      backgroundColor: c.customerSurface,
+      borderRadius: 20,
+      overflow: 'hidden',
+      marginBottom: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: c.isDark ? 0.4 : 0.09,
+      shadowRadius: 12,
+      elevation: 5,
+      alignSelf: 'center',
+      borderWidth: c.isDark ? 1 : 0,
+      borderColor: c.customerBorder,
+    },
+    imageWrapper: {
+      width: '100%',
+      height: 190,
+      position: 'relative',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    ratingBadge: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      backgroundColor: 'rgba(0,0,0,0.72)',
+      borderRadius: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      gap: 4,
+    },
+    ratingText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontFamily: Fonts.brandBold,
+    },
+    closedOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closedText: {
+      color: '#FFFFFF',
+      fontSize: 18,
+      fontFamily: Fonts.brandBold,
+    },
+    body: {
+      padding: 14,
+    },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 6,
+    },
+    name: {
+      fontSize: 16,
+      fontFamily: Fonts.brandBold,
+      color: c.customerTextPrimary,
+      flex: 1,
+      marginRight: 8,
+    },
+    minOrder: {
+      fontSize: 14,
+      fontFamily: Fonts.brandBold,
+    },
+    primaryText: {
+      color: c.primary,
+      fontFamily: Fonts.brandBold,
+      fontSize: 14,
+    },
+    mutedSm: {
+      color: c.muted,
+      fontSize: 13,
+      fontFamily: Fonts.brand,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+      gap: 6,
+    },
+    metaItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    metaDot: {
+      width: 3,
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: c.muted,
+    },
+    metaText: {
+      fontSize: 12,
+      fontFamily: Fonts.brand,
+      color: c.muted,
+    },
+    tagsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    tag: {
+      backgroundColor: c.isDark ? c.card : '#F1F5F9',
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    tagText: {
+      fontSize: 10,
+      fontFamily: Fonts.brandBold,
+      color: c.customerTextSecondary,
+      letterSpacing: 0.4,
+    },
+    premiumTag: {
+      backgroundColor: '#FEF3C7',
+    },
+    premiumTagText: {
+      color: '#B45309',
+    },
+    freeTag: {
+      backgroundColor: '#DCFCE7',
+    },
+    freeTagText: {
+      color: '#166534',
+    },
+  });
+}

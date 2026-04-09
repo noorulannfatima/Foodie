@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 export interface DashboardRevenueCardProps {
   totalRevenue: number;
@@ -13,6 +14,8 @@ export default function DashboardRevenueCard({
   totalOrders,
   formatCurrency,
 }: DashboardRevenueCardProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.revenueCard}>
       <Text style={styles.revenueLabel}>TODAY'S REVENUE</Text>
@@ -25,34 +28,36 @@ export default function DashboardRevenueCard({
   );
 }
 
-const styles = StyleSheet.create({
-  revenueCard: {
-    backgroundColor: Colors.secondary,
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 16,
-  },
-  revenueLabel: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  revenueAmount: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 36,
-    color: '#fff',
-    marginBottom: 12,
-  },
-  revenueSubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  revenueSubText: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    revenueCard: {
+      backgroundColor: c.secondary,
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 16,
+    },
+    revenueLabel: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: 'rgba(255,255,255,0.7)',
+      letterSpacing: 1,
+      marginBottom: 8,
+    },
+    revenueAmount: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 36,
+      color: '#fff',
+      marginBottom: 12,
+    },
+    revenueSubRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    revenueSubText: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: 'rgba(255,255,255,0.8)',
+    },
+  });
+}

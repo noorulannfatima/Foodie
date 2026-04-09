@@ -1,6 +1,6 @@
 // app/(customer)/restaurant/[id].tsx
 // This screen displays the details of a restaurant and its menu
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { customerAPI } from '@/services/api/customer.api';
 import { useCartStore } from '@/stores/cartStore';
 import { Loader } from '@/components/atoms';
@@ -73,6 +73,8 @@ export default function RestaurantDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { addToCart, cart, itemCount } = useCartStore();
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createRestaurantDetailStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
   const [restaurant, setRestaurant] = useState<RestaurantData | null>(null);
@@ -143,7 +145,7 @@ export default function RestaurantDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={c.isDark ? 'light-content' : 'dark-content'} />
 
       {/* Banner */}
       <View style={styles.bannerContainer}>
@@ -185,17 +187,17 @@ export default function RestaurantDetailScreen() {
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={14} color={Colors.muted} />
+            <Ionicons name="time-outline" size={14} color={c.muted} />
             <Text style={styles.metaText}>{restaurant.estimatedDeliveryTime} min</Text>
           </View>
           <View style={styles.metaItem}>
-            <Ionicons name="bicycle-outline" size={14} color={Colors.muted} />
+            <Ionicons name="bicycle-outline" size={14} color={c.muted} />
             <Text style={styles.metaText}>
               {restaurant.deliveryFee === 0 ? 'Free' : formatCurrency(restaurant.deliveryFee)}
             </Text>
           </View>
           <View style={styles.metaItem}>
-            <Ionicons name="receipt-outline" size={14} color={Colors.muted} />
+            <Ionicons name="receipt-outline" size={14} color={c.muted} />
             <Text style={styles.metaText}>Min {formatCurrency(restaurant.minimumOrder)}</Text>
           </View>
         </View>
@@ -283,7 +285,7 @@ export default function RestaurantDetailScreen() {
 
         {categories.length === 0 && (
           <View style={styles.emptyMenu}>
-            <Ionicons name="restaurant-outline" size={48} color="#ccc" />
+            <Ionicons name="restaurant-outline" size={48} color={c.muted} />
             <Text style={styles.emptyMenuText}>No menu items available</Text>
           </View>
         )}
@@ -310,21 +312,22 @@ export default function RestaurantDetailScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+function createRestaurantDetailStyles(c: AppColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: c.customerBodyBg,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: c.customerBodyBg,
   },
   errorText: {
     fontFamily: Fonts.brand,
     fontSize: 16,
-    color: Colors.muted,
+    color: c.muted,
   },
   bannerContainer: {
     height: BANNER_HEIGHT,
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   premiumBadge: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: c.secondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
@@ -390,18 +393,19 @@ const styles = StyleSheet.create({
   infoSection: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: c.border,
+    backgroundColor: c.customerSurface,
   },
   restaurantName: {
     fontFamily: Fonts.brandBlack,
     fontSize: 24,
-    color: Colors.dark,
+    color: c.text,
     marginBottom: 6,
   },
   restaurantDesc: {
     fontFamily: Fonts.brand,
     fontSize: 13,
-    color: Colors.muted,
+    color: c.muted,
     lineHeight: 18,
     marginBottom: 12,
   },
@@ -417,12 +421,13 @@ const styles = StyleSheet.create({
   metaText: {
     fontFamily: Fonts.brand,
     fontSize: 12,
-    color: Colors.muted,
+    color: c.muted,
   },
   categoryBar: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: c.border,
     maxHeight: 48,
+    backgroundColor: c.customerSurface,
   },
   categoryBarContent: {
     paddingHorizontal: 16,
@@ -436,20 +441,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   categoryTabActive: {
-    borderBottomColor: Colors.primary,
+    borderBottomColor: c.primary,
   },
   categoryTabText: {
     fontFamily: Fonts.brand,
     fontSize: 14,
-    color: Colors.muted,
+    color: c.muted,
   },
   categoryTabTextActive: {
     fontFamily: Fonts.brandBold,
-    color: Colors.primary,
+    color: c.primary,
   },
   menuContent: {
     padding: 16,
     paddingBottom: 100,
+    backgroundColor: c.customerBodyBg,
   },
   categoryHeader: {
     marginBottom: 16,
@@ -458,26 +464,26 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontFamily: Fonts.brandBlack,
     fontSize: 22,
-    color: Colors.dark,
+    color: c.text,
   },
   categorySubtitle: {
     fontFamily: Fonts.brand,
     fontSize: 12,
-    color: Colors.muted,
+    color: c.muted,
     marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   menuItem: {
-    backgroundColor: '#fff',
+    backgroundColor: c.customerSurface,
     borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: c.isDark ? 0.25 : 0.06,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -498,19 +504,19 @@ const styles = StyleSheet.create({
   menuItemName: {
     fontFamily: Fonts.brandBold,
     fontSize: 16,
-    color: Colors.dark,
+    color: c.text,
     flex: 1,
     marginRight: 8,
   },
   menuItemPrice: {
     fontFamily: Fonts.brandBold,
     fontSize: 16,
-    color: Colors.primary,
+    color: c.primary,
   },
   menuItemDesc: {
     fontFamily: Fonts.brand,
     fontSize: 13,
-    color: Colors.muted,
+    color: c.muted,
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -535,13 +541,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: c.primary,
     borderRadius: 10,
     paddingVertical: 10,
     gap: 6,
   },
   addBtnDisabled: {
-    backgroundColor: Colors.muted,
+    backgroundColor: c.muted,
   },
   addBtnText: {
     fontFamily: Fonts.brandBold,
@@ -556,7 +562,7 @@ const styles = StyleSheet.create({
   emptyMenuText: {
     fontFamily: Fonts.brand,
     fontSize: 15,
-    color: Colors.muted,
+    color: c.muted,
   },
   cartFooter: {
     position: 'absolute',
@@ -565,7 +571,7 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.secondary,
+    backgroundColor: c.secondary,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingTop: 14,
@@ -597,4 +603,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
   },
-});
+  });
+}
+

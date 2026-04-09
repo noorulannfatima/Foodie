@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { MenuItem } from '@/stores/restaurantStore';
 import { SPICE_LEVELS } from './constants';
 
@@ -28,6 +28,8 @@ export default function AddEditMenuItemModal({
   onClose,
   onSave,
 }: AddEditMenuItemModalProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [name, setName] = useState(item?.name ?? '');
   const [description, setDescription] = useState(item?.description ?? '');
   const [price, setPrice] = useState(item?.price?.toString() ?? '');
@@ -72,7 +74,7 @@ export default function AddEditMenuItemModal({
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="arrow-back" size={24} color={Colors.dark} />
+          <Ionicons name="arrow-back" size={24} color={c.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{item ? 'Edit Item' : 'Add Item'}</Text>
         <View style={styles.headerSpacer} />
@@ -80,7 +82,7 @@ export default function AddEditMenuItemModal({
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.imageArea}>
-          <Ionicons name="camera-outline" size={32} color={Colors.muted} />
+          <Ionicons name="camera-outline" size={32} color={c.muted} />
           <Text style={styles.imageLabel}>Upload Dish Image</Text>
           <Text style={styles.imageHint}>High-resolution JPG or PNG. Max 5MB.</Text>
         </View>
@@ -99,7 +101,7 @@ export default function AddEditMenuItemModal({
           placeholder="e.g. Truffle Infused Tagliatelle"
           value={name}
           onChangeText={setName}
-          placeholderTextColor={Colors.muted}
+          placeholderTextColor={c.muted}
         />
 
         <View style={styles.row}>
@@ -111,7 +113,7 @@ export default function AddEditMenuItemModal({
               value={price}
               onChangeText={setPrice}
               keyboardType="numeric"
-              placeholderTextColor={Colors.muted}
+              placeholderTextColor={c.muted}
             />
           </View>
           <View style={styles.halfField}>
@@ -146,7 +148,7 @@ export default function AddEditMenuItemModal({
           onChangeText={setDescription}
           multiline
           numberOfLines={3}
-          placeholderTextColor={Colors.muted}
+          placeholderTextColor={c.muted}
         />
 
         <Text style={styles.fieldLabel}>PREPARATION TIME (minutes)</Text>
@@ -156,7 +158,7 @@ export default function AddEditMenuItemModal({
           value={prepTime}
           onChangeText={setPrepTime}
           keyboardType="numeric"
-          placeholderTextColor={Colors.muted}
+          placeholderTextColor={c.muted}
         />
 
         <Text style={styles.fieldLabel}>IMAGE URL</Text>
@@ -165,7 +167,7 @@ export default function AddEditMenuItemModal({
           placeholder="https://..."
           value={imageUrl}
           onChangeText={setImageUrl}
-          placeholderTextColor={Colors.muted}
+          placeholderTextColor={c.muted}
           autoCapitalize="none"
         />
 
@@ -229,194 +231,198 @@ export default function AddEditMenuItemModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  headerSpacer: {
-    width: 24,
-  },
-  headerTitle: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 18,
-    color: Colors.dark,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  imageArea: {
-    backgroundColor: '#F0F4F8',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E0E8F0',
-    borderStyle: 'dashed',
-  },
-  imageLabel: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 15,
-    color: Colors.dark,
-  },
-  imageHint: {
-    fontFamily: Fonts.brand,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  proTip: {
-    backgroundColor: '#FFF7ED',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  proTipTitle: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 14,
-    color: Colors.dark,
-    marginBottom: 4,
-  },
-  proTipText: {
-    fontFamily: Fonts.brand,
-    fontSize: 13,
-    color: Colors.muted,
-    lineHeight: 18,
-  },
-  proTipHighlight: {
-    color: Colors.primary,
-    fontFamily: Fonts.brandBold,
-  },
-  fieldLabel: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 11,
-    color: Colors.muted,
-    letterSpacing: 1,
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: Fonts.brand,
-    fontSize: 15,
-    color: Colors.dark,
-  },
-  textarea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  halfField: {
-    flex: 1,
-  },
-  categoryPicker: {
-    maxHeight: 40,
-  },
-  catOption: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-    marginRight: 8,
-  },
-  catOptionActive: {
-    backgroundColor: Colors.dark,
-  },
-  catOptionText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  catOptionTextActive: {
-    color: '#fff',
-  },
-  optionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
-  },
-  optionChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  optionChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  optionChipText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  optionChipTextActive: {
-    color: '#fff',
-  },
-  dietChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  dietChipActive: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#16A34A',
-  },
-  dietChipText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  dietChipTextActive: {
-    color: '#16A34A',
-  },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-    marginTop: 24,
-  },
-  saveBtnText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: '#fff',
-  },
-  cancelLink: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  cancelLinkText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 14,
-    color: Colors.primary,
-  },
-});
+function createStyles(c: AppColors) {
+  const catActiveBg = c.chromeDark;
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    headerSpacer: {
+      width: 24,
+    },
+    headerTitle: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 18,
+      color: c.text,
+    },
+    content: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    imageArea: {
+      backgroundColor: c.isDark ? c.card : '#F0F4F8',
+      borderRadius: 16,
+      padding: 32,
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderStyle: 'dashed',
+    },
+    imageLabel: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: c.text,
+    },
+    imageHint: {
+      fontFamily: Fonts.brand,
+      fontSize: 12,
+      color: c.muted,
+    },
+    proTip: {
+      backgroundColor: c.isDark ? '#3D2E18' : '#FFF7ED',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 20,
+    },
+    proTipTitle: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 14,
+      color: c.text,
+      marginBottom: 4,
+    },
+    proTipText: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.muted,
+      lineHeight: 18,
+    },
+    proTipHighlight: {
+      color: c.primary,
+      fontFamily: Fonts.brandBold,
+    },
+    fieldLabel: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 11,
+      color: c.muted,
+      letterSpacing: 1,
+      marginBottom: 6,
+      marginTop: 12,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontFamily: Fonts.brand,
+      fontSize: 15,
+      color: c.text,
+      backgroundColor: c.card,
+    },
+    textarea: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    row: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    halfField: {
+      flex: 1,
+    },
+    categoryPicker: {
+      maxHeight: 40,
+    },
+    catOption: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: c.isDark ? c.screenBackground : '#F5F5F5',
+      marginRight: 8,
+    },
+    catOptionActive: {
+      backgroundColor: catActiveBg,
+    },
+    catOptionText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: c.muted,
+    },
+    catOptionTextActive: {
+      color: '#fff',
+    },
+    optionRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 8,
+    },
+    optionChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: c.isDark ? c.screenBackground : '#F5F5F5',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    optionChipActive: {
+      backgroundColor: c.primary,
+      borderColor: c.primary,
+    },
+    optionChipText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: c.muted,
+    },
+    optionChipTextActive: {
+      color: '#fff',
+    },
+    dietChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: c.isDark ? c.screenBackground : '#F5F5F5',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    dietChipActive: {
+      backgroundColor: '#DCFCE7',
+      borderColor: '#16A34A',
+    },
+    dietChipText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: c.muted,
+    },
+    dietChipTextActive: {
+      color: '#16A34A',
+    },
+    saveBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+      borderRadius: 12,
+      paddingVertical: 16,
+      gap: 8,
+      marginTop: 24,
+    },
+    saveBtnText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: '#fff',
+    },
+    cancelLink: {
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    cancelLinkText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 14,
+      color: c.primary,
+    },
+  });
+}

@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
+import { useAppThemeColors, type AppColors } from '@/constants/theme';
 import { RestaurantFilterPill } from '@/components/molecules';
 
 export interface RestaurantCategoryFilterRowProps {
@@ -16,6 +17,8 @@ export default function RestaurantCategoryFilterRow({
   onSelectCategory,
   onPressAddCategory,
 }: RestaurantCategoryFilterRowProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <ScrollView
       horizontal
@@ -32,29 +35,31 @@ export default function RestaurantCategoryFilterRow({
         />
       ))}
       <TouchableOpacity style={styles.addCategoryPill} onPress={onPressAddCategory}>
-        <Ionicons name="add" size={16} color={Colors.primary} />
+        <Ionicons name="add" size={16} color={c.primary} />
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  categoryBar: {
-    marginBottom: 20,
-    maxHeight: 40,
-  },
-  categoryBarContent: {
-    gap: 8,
-    alignItems: 'center',
-  },
-  addCategoryPill: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    categoryBar: {
+      marginBottom: 20,
+      maxHeight: 40,
+    },
+    categoryBarContent: {
+      gap: 8,
+      alignItems: 'center',
+    },
+    addCategoryPill: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.card,
+      borderWidth: 1,
+      borderColor: c.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+}

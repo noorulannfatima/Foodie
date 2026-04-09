@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import SearchResultRow from './SearchResultRow';
 import type { SearchRestaurantResult } from './types';
 
@@ -14,6 +15,8 @@ export default function SearchResultsSection({
   formatCurrency,
   onSelectRestaurant,
 }: SearchResultsSectionProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View>
       <Text style={styles.sectionTitle}>Results ({results.length})</Text>
@@ -29,12 +32,14 @@ export default function SearchResultsSection({
   );
 }
 
-const styles = StyleSheet.create({
-  sectionTitle: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: Colors.dark,
-    marginBottom: 12,
-    marginTop: 16,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    sectionTitle: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: c.text,
+      marginBottom: 12,
+      marginTop: 16,
+    },
+  });
+}

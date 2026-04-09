@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { OrderItem } from '@/stores/restaurantStore';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 import { formatRestaurantCurrency } from '@/components/pages/restaurant/shared/orderUtils';
@@ -13,16 +14,19 @@ export interface OrderDetailModalProps {
 }
 
 export default function OrderDetailModal({ order, onClose, onStatusUpdate }: OrderDetailModalProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   if (!order) return null;
 
   const nextAction = NEXT_STATUS[order.status];
-  const statusColor = ORDER_STATUS_COLORS[order.status] || Colors.muted;
+  const statusColor = ORDER_STATUS_COLORS[order.status] || c.muted;
 
   return (
     <View style={styles.modalContainer}>
       <View style={styles.modalHeader}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="arrow-back" size={24} color={Colors.dark} />
+          <Ionicons name="arrow-back" size={24} color={c.text} />
         </TouchableOpacity>
         <Text style={styles.modalTitle}>Order #{order.orderNumber}</Text>
         <View style={styles.headerSpacer} />
@@ -125,206 +129,208 @@ export default function OrderDetailModal({ order, onClose, onStatusUpdate }: Ord
   );
 }
 
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  headerSpacer: {
-    width: 24,
-  },
-  modalTitle: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 18,
-    color: Colors.dark,
-  },
-  modalContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  modalSection: {
-    marginBottom: 24,
-  },
-  modalSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalSectionLabel: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 11,
-    color: Colors.muted,
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  statusBadgeLg: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusBadgeLgText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 13,
-    textTransform: 'uppercase',
-  },
-  itemCountBadge: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  itemCountText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 10,
-    color: Colors.secondary,
-    letterSpacing: 0.5,
-  },
-  modalItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  modalItemInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  modalItemName: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 15,
-    color: Colors.dark,
-    marginBottom: 2,
-  },
-  modalItemNote: {
-    fontFamily: Fonts.brand,
-    fontSize: 12,
-    color: Colors.muted,
-    fontStyle: 'italic',
-    marginBottom: 2,
-  },
-  modalItemQty: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 11,
-    color: Colors.muted,
-    letterSpacing: 0.5,
-    marginTop: 4,
-  },
-  modalItemPrice: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 15,
-    color: Colors.dark,
-  },
-  pricingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  pricingLabel: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.muted,
-  },
-  pricingValue: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.dark,
-  },
-  pricingDivider: {
-    borderBottomWidth: 1,
-    borderStyle: 'dashed',
-    borderBottomColor: '#E0E0E0',
-    marginVertical: 8,
-  },
-  pricingTotal: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 16,
-    color: Colors.primary,
-  },
-  pricingTotalValue: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 16,
-    color: Colors.primary,
-  },
-  customerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Colors.secondary,
-    borderRadius: 12,
-    padding: 16,
-  },
-  customerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  customerInitial: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: '#fff',
-  },
-  customerName2: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 15,
-    color: '#fff',
-  },
-  customerEmail: {
-    fontFamily: Fonts.brand,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  addressText: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.text,
-    lineHeight: 20,
-  },
-  driverNote: {
-    backgroundColor: '#FFF7ED',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 10,
-  },
-  driverNoteLabel: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 10,
-    color: '#F59E0B',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  driverNoteText: {
-    fontFamily: Fonts.brand,
-    fontSize: 13,
-    color: Colors.text,
-  },
-  modalAction: {
-    marginTop: 8,
-  },
-  modalActionBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  modalActionBtnText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 16,
-    color: '#fff',
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    modalContainer: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    headerSpacer: {
+      width: 24,
+    },
+    modalTitle: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 18,
+      color: c.text,
+    },
+    modalContent: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    modalSection: {
+      marginBottom: 24,
+    },
+    modalSectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    modalSectionLabel: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 11,
+      color: c.muted,
+      letterSpacing: 1,
+      marginBottom: 8,
+    },
+    statusBadgeLg: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    statusBadgeLgText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      textTransform: 'uppercase',
+    },
+    itemCountBadge: {
+      backgroundColor: c.primaryLight,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 10,
+    },
+    itemCountText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 10,
+      color: c.secondary,
+      letterSpacing: 0.5,
+    },
+    modalItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    modalItemInfo: {
+      flex: 1,
+      marginRight: 12,
+    },
+    modalItemName: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: c.text,
+      marginBottom: 2,
+    },
+    modalItemNote: {
+      fontFamily: Fonts.brand,
+      fontSize: 12,
+      color: c.muted,
+      fontStyle: 'italic',
+      marginBottom: 2,
+    },
+    modalItemQty: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 11,
+      color: c.muted,
+      letterSpacing: 0.5,
+      marginTop: 4,
+    },
+    modalItemPrice: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: c.text,
+    },
+    pricingRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    pricingLabel: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.muted,
+    },
+    pricingValue: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.text,
+    },
+    pricingDivider: {
+      borderBottomWidth: 1,
+      borderStyle: 'dashed',
+      borderBottomColor: c.border,
+      marginVertical: 8,
+    },
+    pricingTotal: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 16,
+      color: c.primary,
+    },
+    pricingTotalValue: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 16,
+      color: c.primary,
+    },
+    customerCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: c.secondary,
+      borderRadius: 12,
+      padding: 16,
+    },
+    customerAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    customerInitial: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: '#fff',
+    },
+    customerName2: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: '#fff',
+    },
+    customerEmail: {
+      fontFamily: Fonts.brand,
+      fontSize: 12,
+      color: 'rgba(255,255,255,0.7)',
+    },
+    addressText: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.text,
+      lineHeight: 20,
+    },
+    driverNote: {
+      backgroundColor: c.isDark ? '#3D2E18' : '#FFF7ED',
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 10,
+    },
+    driverNoteLabel: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 10,
+      color: '#F59E0B',
+      letterSpacing: 0.5,
+      marginBottom: 4,
+    },
+    driverNoteText: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.text,
+    },
+    modalAction: {
+      marginTop: 8,
+    },
+    modalActionBtn: {
+      backgroundColor: c.primary,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: 'center',
+    },
+    modalActionBtnText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 16,
+      color: '#fff',
+    },
+  });
+}

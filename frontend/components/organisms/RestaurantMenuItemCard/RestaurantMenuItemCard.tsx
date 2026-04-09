@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { MenuItem } from '@/stores/restaurantStore';
 import { MenuItemTag, Switch } from '@/components/atoms';
 
@@ -19,6 +20,8 @@ export default function RestaurantMenuItemCard({
   onDelete,
   onToggleAvailable,
 }: RestaurantMenuItemCardProps) {
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.menuCard}>
       {item.image && item.image.length > 0 && (
@@ -46,12 +49,12 @@ export default function RestaurantMenuItemCard({
 
         <View style={styles.menuCardMeta}>
           <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={14} color={Colors.muted} />
+            <Ionicons name="time-outline" size={14} color={c.muted} />
             <Text style={styles.metaItemText}>{item.preparationTime}m</Text>
           </View>
           {item.calories ? (
             <View style={styles.metaItem}>
-              <Ionicons name="flame-outline" size={14} color={Colors.muted} />
+              <Ionicons name="flame-outline" size={14} color={c.muted} />
               <Text style={styles.metaItemText}>{item.calories} cal</Text>
             </View>
           ) : null}
@@ -64,11 +67,11 @@ export default function RestaurantMenuItemCard({
 
         <View style={styles.menuCardActions}>
           <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
-            <Ionicons name="pencil" size={14} color={Colors.primary} />
+            <Ionicons name="pencil" size={14} color={c.primary} />
             <Text style={styles.editBtnText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-            <Ionicons name="trash-outline" size={18} color={Colors.muted} />
+            <Ionicons name="trash-outline" size={18} color={c.muted} />
           </TouchableOpacity>
           <View style={styles.availSwitch}>
             <Switch value={item.isAvailable} onValueChange={onToggleAvailable} />
@@ -79,96 +82,98 @@ export default function RestaurantMenuItemCard({
   );
 }
 
-const styles = StyleSheet.create({
-  menuCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  menuCardImage: {
-    width: '100%',
-    height: 180,
-    resizeMode: 'cover',
-  },
-  menuCardBody: {
-    padding: 16,
-  },
-  menuCardTags: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 8,
-    flexWrap: 'wrap',
-  },
-  menuCardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  menuCardInfo: {
-    flex: 1,
-  },
-  menuCardName: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 20,
-    color: Colors.dark,
-    marginBottom: 4,
-  },
-  menuCardPrice: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 18,
-    color: Colors.primary,
-    marginBottom: 8,
-  },
-  menuCardDesc: {
-    fontFamily: Fonts.brand,
-    fontSize: 13,
-    color: Colors.muted,
-    lineHeight: 18,
-    marginBottom: 10,
-  },
-  menuCardMeta: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaItemText: {
-    fontFamily: Fonts.brand,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  menuCardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FEE2E2',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  editBtnText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 13,
-    color: Colors.primary,
-  },
-  deleteBtn: {
-    padding: 8,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-  },
-  availSwitch: {
-    marginLeft: 'auto',
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    menuCard: {
+      backgroundColor: c.card,
+      borderRadius: 16,
+      marginBottom: 16,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    menuCardImage: {
+      width: '100%',
+      height: 180,
+      resizeMode: 'cover',
+    },
+    menuCardBody: {
+      padding: 16,
+    },
+    menuCardTags: {
+      flexDirection: 'row',
+      gap: 6,
+      marginBottom: 8,
+      flexWrap: 'wrap',
+    },
+    menuCardRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    menuCardInfo: {
+      flex: 1,
+    },
+    menuCardName: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 20,
+      color: c.text,
+      marginBottom: 4,
+    },
+    menuCardPrice: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 18,
+      color: c.primary,
+      marginBottom: 8,
+    },
+    menuCardDesc: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.muted,
+      lineHeight: 18,
+      marginBottom: 10,
+    },
+    menuCardMeta: {
+      flexDirection: 'row',
+      gap: 16,
+      marginBottom: 12,
+    },
+    metaItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    metaItemText: {
+      fontFamily: Fonts.brand,
+      fontSize: 12,
+      color: c.muted,
+    },
+    menuCardActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    editBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: c.primaryLight,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+    },
+    editBtnText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      color: c.primary,
+    },
+    deleteBtn: {
+      padding: 8,
+      backgroundColor: c.isDark ? c.screenBackground : '#F5F5F5',
+      borderRadius: 8,
+    },
+    availSwitch: {
+      marginLeft: 'auto',
+    },
+  });
+}

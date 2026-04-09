@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { OrderItem } from '@/stores/restaurantStore';
-import { Colors, Fonts } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 
 export interface DashboardRecentOrderCardProps {
@@ -16,14 +17,16 @@ export default function DashboardRecentOrderCard({
   timeAgo,
   onPress,
 }: DashboardRecentOrderCardProps) {
-  const c = ORDER_STATUS_COLORS[order.status] || Colors.muted;
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const statusTint = ORDER_STATUS_COLORS[order.status] || c.muted;
 
   return (
     <TouchableOpacity style={styles.orderCard} onPress={onPress}>
       <View style={styles.orderCardHeader}>
         <Text style={styles.orderNumber}>#{order.orderNumber}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: `${c}20` }]}>
-          <Text style={[styles.statusBadgeText, { color: c }]}>{order.status}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: `${statusTint}20` }]}>
+          <Text style={[styles.statusBadgeText, { color: statusTint }]}>{order.status}</Text>
         </View>
       </View>
       <Text style={styles.orderCustomer}>{order.customer?.name ?? 'Customer'}</Text>
@@ -38,64 +41,66 @@ export default function DashboardRecentOrderCard({
   );
 }
 
-const styles = StyleSheet.create({
-  orderCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  orderCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  orderNumber: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 15,
-    color: Colors.dark,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusBadgeText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 11,
-    textTransform: 'uppercase',
-  },
-  orderCustomer: {
-    fontFamily: Fonts.brand,
-    fontSize: 14,
-    color: Colors.text,
-    marginBottom: 6,
-  },
-  orderCardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  orderItems: {
-    fontFamily: Fonts.brand,
-    fontSize: 13,
-    color: Colors.muted,
-  },
-  orderDot: {
-    color: Colors.muted,
-    fontSize: 13,
-  },
-  orderTotal: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 13,
-    color: Colors.dark,
-  },
-  orderTime: {
-    fontFamily: Fonts.brand,
-    fontSize: 13,
-    color: Colors.primary,
-  },
-});
+function createStyles(c: AppColors) {
+  return StyleSheet.create({
+    orderCard: {
+      backgroundColor: c.card,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    orderCardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    orderNumber: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: c.text,
+    },
+    statusBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    statusBadgeText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 11,
+      textTransform: 'uppercase',
+    },
+    orderCustomer: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.text,
+      marginBottom: 6,
+    },
+    orderCardFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    orderItems: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.muted,
+    },
+    orderDot: {
+      color: c.muted,
+      fontSize: 13,
+    },
+    orderTotal: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      color: c.text,
+    },
+    orderTime: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.primary,
+    },
+  });
+}
