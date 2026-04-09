@@ -7,7 +7,7 @@ export interface IDeliveryPerson extends Document {
   email: string;
   password: string;
   phone: string;
-  profileImage?: string;
+  profileImage?: string | null;
   
   // Vehicle Information
   vehicle: {
@@ -100,6 +100,13 @@ export interface IDeliveryPerson extends Document {
     name: string;
     phone: string;
     relation: string;
+  };
+
+  /** App preferences (synced to client). */
+  preferences?: {
+    darkMode: boolean;
+    notificationsEnabled: boolean;
+    language: "en" | "es" | "fr" | "ur";
   };
   
   // Timestamps
@@ -441,6 +448,22 @@ const deliveryPersonSchema = new mongoose.Schema<IDeliveryPerson>(
       relation: {
         type: String,
         trim: true,
+      },
+    },
+
+    preferences: {
+      darkMode: {
+        type: Boolean,
+        default: false,
+      },
+      notificationsEnabled: {
+        type: Boolean,
+        default: true,
+      },
+      language: {
+        type: String,
+        enum: ["en", "es", "fr", "ur"],
+        default: "en",
       },
     },
     

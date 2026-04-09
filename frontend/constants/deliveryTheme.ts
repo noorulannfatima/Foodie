@@ -24,3 +24,22 @@ export const DeliveryLayout = {
   cardRadius: 14,
   sectionGap: 20,
 };
+
+/** Theme overrides for delivery tabs when dark mode preference is on (from API). */
+export function getDeliveryTabTheme(isDark: boolean) {
+  if (!isDark) return { ...DeliveryColors, isDark: false as const };
+  return {
+    ...DeliveryColors,
+    isDark: true as const,
+    pageBg: '#0B1526',
+    card: '#152535',
+    text: '#F1F5F9',
+    textMuted: '#94A3B8',
+    border: '#2A3F55',
+    sky: '#1A2838',
+    skyDeep: '#243449',
+    navy: '#E2E8F0',
+    navyMuted: '#CBD5E1',
+    white: '#F8FAFC',
+  };
+}

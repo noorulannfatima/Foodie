@@ -9,6 +9,32 @@ function estDriverPayout(pricing: { deliveryFee: number; tip: number }): number 
   return Math.round(raw * 100) / 100;
 }
 
+const DELIVERY_LANGS = ['en', 'es', 'fr', 'ur'] as const;
+type DeliveryLang = (typeof DELIVERY_LANGS)[number];
+
+function normalizePreferences(prefs: any) {
+  const lang = prefs?.language;
+  return {
+    darkMode: prefs?.darkMode === true,
+    notificationsEnabled: prefs?.notificationsEnabled !== false,
+    language: (DELIVERY_LANGS.includes(lang) ? lang : 'en') as DeliveryLang,
+  };
+}
+
+function enrichProfileResponse(dp: any) {
+  const stats = dp.stats as { totalDeliveries?: number; completedDeliveries?: number };
+  const completionRate =
+    stats.totalDeliveries && stats.totalDeliveries > 0
+      ? Math.round(((stats.completedDeliveries ?? 0) / stats.totalDeliveries) * 100)
+      : 100;
+  return {
+    ...dp,
+    preferences: normalizePreferences(dp.preferences),
+    completionRate,
+    tierLabel: (stats.totalDeliveries ?? 0) >= 500 ? 'MESSENGER TIER' : 'COURIER',
+  };
+}
+
 function serializeOrder(o: any) {
   const restaurant = o.restaurant;
   const street = restaurant?.address?.street ?? '';
@@ -48,20 +74,246 @@ export async function getMe(req: AuthRequest, res: Response): Promise<void> {
       res.status(404).json({ message: 'Delivery profile not found' });
       return;
     }
-    const stats = dp.stats as { totalDeliveries?: number; completedDeliveries?: number };
-    const completionRate =
-      stats.totalDeliveries && stats.totalDeliveries > 0
-        ? Math.round(((stats.completedDeliveries ?? 0) / stats.totalDeliveries) * 100)
-        : 100;
-    res.json({
-      profile: {
-        ...dp,
-        completionRate,
-        tierLabel: (stats.totalDeliveries ?? 0) >= 500 ? 'MESSENGER TIER' : 'COURIER',
-      },
-    });
+    res.json({ profile: enrichProfileResponse(dp) });
   } catch (e) {
     console.error('getMe delivery:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+const ACTIVE_DRIVER_STATUSES = [
+  'Confirmed',
+  'Preparing',
+  'Ready',
+  'PickedUp',
+  'OutForDelivery',
+] as const;
+
+/**
+ * PATCH /api/delivery/me/profile
+ */
+export async function patchProfile(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const body = req.body as {
+      name?: string;
+      email?: string;
+      phone?: string;
+      profileImage?: string | null;
+      vehicle?: {
+        type?: string;
+        model?: string;
+        plateNumber?: string;
+        color?: string;
+      };
+      licenseNumber?: string;
+      licenseExpiry?: string | null;
+      emergencyContact?: {
+        name?: string;
+        phone?: string;
+        relation?: string;
+      } | null;
+      passwordUpdate?: { current: string; next: string };
+    };
+
+    const dp = await DeliveryPerson.findById(req.user!.id).select('+password');
+    if (!dp) {
+      res.status(404).json({ message: 'Not found' });
+      return;
+    }
+
+    if (body.name !== undefined) {
+      const n = String(body.name).trim();
+      if (n.length < 2) {
+        res.status(400).json({ message: 'Name must be at least 2 characters' });
+        return;
+      }
+      dp.name = n;
+    }
+
+    if (body.email !== undefined) {
+      const e = String(body.email).trim().toLowerCase();
+      const taken = await DeliveryPerson.findOne({ email: e, _id: { $ne: req.user!.id } });
+      if (taken) {
+        res.status(400).json({ message: 'Email already in use' });
+        return;
+      }
+      dp.email = e;
+    }
+
+    if (body.phone !== undefined) {
+      const ph = String(body.phone).trim();
+      const taken = await DeliveryPerson.findOne({ phone: ph, _id: { $ne: req.user!.id } });
+      if (taken) {
+        res.status(400).json({ message: 'Phone number already in use' });
+        return;
+      }
+      dp.phone = ph;
+    }
+
+    if (body.profileImage !== undefined) {
+      (dp as { profileImage?: string | null }).profileImage = body.profileImage
+        ? String(body.profileImage).trim()
+        : null;
+    }
+
+    if (body.vehicle) {
+      const v = body.vehicle;
+      const vehTypes = ['Bike', 'Scooter', 'Car', 'Bicycle'];
+      if (v.type !== undefined) {
+        if (!vehTypes.includes(v.type)) {
+          res.status(400).json({ message: 'Invalid vehicle type' });
+          return;
+        }
+        dp.vehicle.type = v.type as 'Bike' | 'Scooter' | 'Car' | 'Bicycle';
+      }
+      if (v.model !== undefined) dp.vehicle.model = v.model?.trim() || undefined;
+      if (v.plateNumber !== undefined) {
+        const pl = String(v.plateNumber).trim().toUpperCase();
+        if (!pl) {
+          res.status(400).json({ message: 'Plate number cannot be empty' });
+          return;
+        }
+        dp.vehicle.plateNumber = pl;
+      }
+      if (v.color !== undefined) dp.vehicle.color = v.color?.trim() || undefined;
+    }
+
+    if (body.licenseExpiry !== undefined) {
+      if (body.licenseExpiry === null || body.licenseExpiry === '') {
+        dp.licenseExpiry = undefined;
+      } else {
+        const d = new Date(body.licenseExpiry);
+        if (Number.isNaN(d.getTime())) {
+          res.status(400).json({ message: 'Invalid license expiry date' });
+          return;
+        }
+        dp.licenseExpiry = d;
+      }
+    }
+
+    if (body.licenseNumber !== undefined) {
+      const ln = String(body.licenseNumber).trim().toUpperCase();
+      if (!ln) {
+        res.status(400).json({ message: 'License number cannot be empty' });
+        return;
+      }
+      dp.licenseNumber = ln;
+    }
+
+    if (body.emergencyContact !== undefined) {
+      if (body.emergencyContact === null) {
+        dp.set('emergencyContact', undefined);
+      } else {
+        dp.emergencyContact = {
+          name: body.emergencyContact.name?.trim() ?? '',
+          phone: body.emergencyContact.phone?.trim() ?? '',
+          relation: body.emergencyContact.relation?.trim() ?? '',
+        };
+      }
+    }
+
+    if (body.passwordUpdate) {
+      const { current, next } = body.passwordUpdate;
+      if (!current || !next || String(next).length < 8) {
+        res.status(400).json({
+          message: 'Current password required; new password must be at least 8 characters',
+        });
+        return;
+      }
+      const match = await dp.comparePassword(current);
+      if (!match) {
+        res.status(400).json({ message: 'Current password is incorrect' });
+        return;
+      }
+      dp.password = next;
+    }
+
+    await dp.save();
+
+    const fresh = await DeliveryPerson.findById(req.user!.id).select('-password').lean();
+    res.json({ profile: enrichProfileResponse(fresh) });
+  } catch (e: any) {
+    if (e.name === 'ValidationError') {
+      const messages = Object.values(e.errors).map((err: any) => err.message);
+      res.status(400).json({ message: messages.join(', ') });
+      return;
+    }
+    console.error('patchProfile:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+/**
+ * PATCH /api/delivery/me/preferences
+ */
+export async function patchPreferences(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { darkMode, notificationsEnabled, language } = req.body as {
+      darkMode?: boolean;
+      notificationsEnabled?: boolean;
+      language?: string;
+    };
+    const set: Record<string, boolean | string> = {};
+    if (typeof darkMode === 'boolean') set['preferences.darkMode'] = darkMode;
+    if (typeof notificationsEnabled === 'boolean') {
+      set['preferences.notificationsEnabled'] = notificationsEnabled;
+    }
+    if (language !== undefined && DELIVERY_LANGS.includes(language as DeliveryLang)) {
+      set['preferences.language'] = language;
+    }
+    if (Object.keys(set).length === 0) {
+      res.status(400).json({ message: 'Provide at least one preference field' });
+      return;
+    }
+
+    const dp = await DeliveryPerson.findByIdAndUpdate(req.user!.id, { $set: set }, { new: true })
+      .select('-password')
+      .lean();
+    if (!dp) {
+      res.status(404).json({ message: 'Not found' });
+      return;
+    }
+    res.json({ preferences: normalizePreferences((dp as any).preferences) });
+  } catch (e) {
+    console.error('patchPreferences:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+/**
+ * DELETE /api/delivery/me
+ * Body: { password: string }
+ */
+export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { password } = req.body as { password?: string };
+    if (!password || !String(password).length) {
+      res.status(400).json({ message: 'Password is required' });
+      return;
+    }
+
+    const dp = await DeliveryPerson.findById(req.user!.id).select('+password');
+    if (!dp || !(await dp.comparePassword(String(password)))) {
+      res.status(401).json({ message: 'Invalid password' });
+      return;
+    }
+
+    const uid = new mongoose.Types.ObjectId(req.user!.id);
+    const activeCount = await Order.countDocuments({
+      deliveryPerson: uid,
+      status: { $in: [...ACTIVE_DRIVER_STATUSES] },
+    });
+    if (activeCount > 0) {
+      res.status(400).json({
+        message: 'Complete or release active deliveries before deleting your account',
+      });
+      return;
+    }
+
+    await DeliveryPerson.findByIdAndDelete(req.user!.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('deleteAccount:', e);
     res.status(500).json({ message: 'Server error' });
   }
 }

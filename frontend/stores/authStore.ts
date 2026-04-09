@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '@/services/api/auth.api';
+import { useDeliveryPreferencesStore } from '@/stores/deliveryPreferencesStore';
 
 type UserRole = 'customer' | 'restaurant' | 'delivery';
 
@@ -80,6 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('userRole');
+    useDeliveryPreferencesStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false });
   },
 
@@ -97,6 +99,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Token invalid or expired — clear storage and reset state
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('userRole');
+      useDeliveryPreferencesStore.getState().reset();
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   },

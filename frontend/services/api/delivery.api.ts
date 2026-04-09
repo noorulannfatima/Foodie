@@ -1,4 +1,11 @@
 import { apiClient } from './client';
+import type { DeliveryLanguage } from '@/stores/deliveryPreferencesStore';
+
+export type DeliveryPreferences = {
+  darkMode: boolean;
+  notificationsEnabled: boolean;
+  language: DeliveryLanguage;
+};
 
 export type DeliveryProfile = {
   name: string;
@@ -17,6 +24,12 @@ export type DeliveryProfile = {
   licenseNumber: string;
   licenseExpiry?: string;
   documents?: Record<string, string | undefined>;
+  preferences?: DeliveryPreferences;
+  emergencyContact?: {
+    name?: string;
+    phone?: string;
+    relation?: string;
+  };
   stats: {
     totalDeliveries: number;
     completedDeliveries: number;
@@ -39,6 +52,27 @@ export type DeliveryProfile = {
   }>;
   completionRate: number;
   tierLabel: string;
+};
+
+export type PatchDeliveryProfileBody = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  profileImage?: string | null;
+  vehicle?: {
+    type?: string;
+    model?: string;
+    plateNumber?: string;
+    color?: string;
+  };
+  licenseNumber?: string;
+  licenseExpiry?: string | null;
+  emergencyContact?: {
+    name?: string;
+    phone?: string;
+    relation?: string;
+  } | null;
+  passwordUpdate?: { current: string; next: string };
 };
 
 export type DeliveryOrderPayload = {
@@ -113,6 +147,31 @@ export const deliveryAPI = {
       `/api/delivery/orders/${orderId}/status`,
       { status },
     );
+    return data;
+  },
+
+  async patchProfile(body: PatchDeliveryProfileBody): Promise<{ profile: DeliveryProfile }> {
+    const { data } = await apiClient.patch<{ profile: DeliveryProfile }>(
+      '/api/delivery/me/profile',
+      body,
+    );
+    return data;
+  },
+
+  async patchPreferences(
+    body: Partial<DeliveryPreferences>,
+  ): Promise<{ preferences: DeliveryPreferences }> {
+    const { data } = await apiClient.patch<{ preferences: DeliveryPreferences }>(
+      '/api/delivery/me/preferences',
+      body,
+    );
+    return data;
+  },
+
+  async deleteAccount(password: string): Promise<{ ok: boolean }> {
+    const { data } = await apiClient.delete<{ ok: boolean }>('/api/delivery/me', {
+      data: { password },
+    });
     return data;
   },
 };
