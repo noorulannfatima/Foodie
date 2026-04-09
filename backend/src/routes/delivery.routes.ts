@@ -8,6 +8,7 @@ import {
   getOrderRequests,
   getOrderHistory,
   acceptOrder,
+  patchOrderStatus,
 } from '../controllers/delivery.controller';
 
 const router = Router();
@@ -21,5 +22,6 @@ router.get('/orders/active', getActiveOrder);
 router.get('/orders/requests', getOrderRequests);
 router.get('/orders/history', getOrderHistory);
 router.post('/orders/:id/accept', acceptOrder);
+router.patch('/orders/:id/status', patchOrderStatus);
 
 export default router;

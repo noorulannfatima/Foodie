@@ -107,7 +107,9 @@ export async function getActiveOrder(req: AuthRequest, res: Response): Promise<v
     const uid = new mongoose.Types.ObjectId(req.user!.id);
     const order = await Order.findOne({
       deliveryPerson: uid,
-      status: { $in: ['Ready', 'PickedUp', 'OutForDelivery'] },
+      status: {
+        $in: ['Confirmed', 'Preparing', 'Ready', 'PickedUp', 'OutForDelivery'],
+      },
     })
       .populate('restaurant', 'name image logo address')
       .sort({ updatedAt: -1 })
@@ -199,10 +201,81 @@ export async function acceptOrder(req: AuthRequest, res: Response): Promise<void
       return;
     }
     await order.assignDeliveryPerson(req.user!.id);
-    await order.updateStatus('PickedUp', 'Courier accepted');
     res.json({ ok: true, orderId: String(order._id) });
   } catch (e) {
     console.error('acceptOrder:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+const NEXT_STATUS_FROM: Record<string, string[]> = {
+  PickedUp: ['Confirmed', 'Preparing', 'Ready'],
+  OutForDelivery: ['PickedUp'],
+  Delivered: ['OutForDelivery'],
+};
+
+/**
+ * PATCH /api/delivery/orders/:id/status
+ * Body: { status: 'PickedUp' | 'OutForDelivery' | 'Delivered' }
+ */
+export async function patchOrderStatus(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { status } = req.body as { status?: string };
+    const allowed = ['PickedUp', 'OutForDelivery', 'Delivered'] as const;
+    if (!status || !allowed.includes(status as (typeof allowed)[number])) {
+      res.status(400).json({ message: 'status must be PickedUp, OutForDelivery, or Delivered' });
+      return;
+    }
+
+    const order = await Order.findOne({
+      _id: id,
+      deliveryPerson: new mongoose.Types.ObjectId(req.user!.id),
+    });
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+
+    const prev = order.status;
+    const mustBe = NEXT_STATUS_FROM[status];
+    if (!mustBe.includes(prev)) {
+      res.status(400).json({ message: `Cannot move order to ${status} from ${prev}` });
+      return;
+    }
+
+    if (status === 'Delivered') {
+      const payout = estDriverPayout(order.pricing);
+      await order.updateStatus('Delivered', 'Delivered by courier');
+      let dp = await DeliveryPerson.findById(req.user!.id);
+      if (dp) {
+        await (dp as any).updateEarnings(payout);
+        dp = await DeliveryPerson.findById(req.user!.id);
+        if (dp) {
+          await (dp as any).addDelivery({
+            order: order._id,
+            restaurant: order.restaurant,
+            customer: order.customer,
+            earnings: payout,
+            distance: 1,
+            duration: Math.max(
+              1,
+              Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000),
+            ),
+            status: 'delivered',
+            deliveryTime: new Date(),
+          });
+        }
+      }
+    } else {
+      const note =
+        status === 'OutForDelivery' ? 'Courier en route to customer' : 'Picked up from restaurant';
+      await order.updateStatus(status, note);
+    }
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('patchOrderStatus:', e);
     res.status(500).json({ message: 'Server error' });
   }
 }

@@ -104,4 +104,15 @@ export const deliveryAPI = {
     );
     return data;
   },
+
+  async updateOrderStatus(
+    orderId: string,
+    status: 'PickedUp' | 'OutForDelivery' | 'Delivered',
+  ): Promise<{ ok: boolean }> {
+    const { data } = await apiClient.patch<{ ok: boolean }>(
+      `/api/delivery/orders/${orderId}/status`,
+      { status },
+    );
+    return data;
+  },
 };

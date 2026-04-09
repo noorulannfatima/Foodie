@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Linking,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +28,7 @@ export default function DeliveryDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [onlineBusy, setOnlineBusy] = useState(false);
+  const [orderActionBusy, setOrderActionBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -77,6 +80,35 @@ export default function DeliveryDashboard() {
     });
     if (url) Linking.openURL(url);
   };
+
+  const advanceOrder = async () => {
+    if (!active) return;
+    let next: 'PickedUp' | 'OutForDelivery' | 'Delivered' | null = null;
+    if (active.status === 'Confirmed' || active.status === 'Preparing' || active.status === 'Ready') {
+      next = 'PickedUp';
+    } else if (active.status === 'PickedUp') {
+      next = 'OutForDelivery';
+    } else if (active.status === 'OutForDelivery') {
+      next = 'Delivered';
+    }
+    if (!next) return;
+    setOrderActionBusy(true);
+    try {
+      await deliveryAPI.updateOrderStatus(active.id, next);
+      await load();
+    } catch (e) {
+      Alert.alert('Update failed', e instanceof Error ? e.message : 'Try again.');
+    } finally {
+      setOrderActionBusy(false);
+    }
+  };
+
+  const orderActionLabel =
+    active?.status === 'PickedUp'
+      ? 'START DELIVERY'
+      : active?.status === 'OutForDelivery'
+        ? 'COMPLETE DELIVERY'
+        : 'MARK PICKED UP';
 
   const todayDeliveries =
     profile?.deliveryHistory?.filter((h) => {
@@ -186,6 +218,17 @@ export default function DeliveryDashboard() {
                 <Ionicons name="call" size={22} color={DeliveryColors.navy} />
               </Pressable>
             </View>
+            <Pressable
+              style={[styles.statusBtn, orderActionBusy && { opacity: 0.75 }]}
+              onPress={advanceOrder}
+              disabled={orderActionBusy}
+            >
+              {orderActionBusy ? (
+                <ActivityIndicator color={DeliveryColors.white} />
+              ) : (
+                <Text style={styles.statusBtnText}>{orderActionLabel}</Text>
+              )}
+            </Pressable>
           </View>
         ) : (
           <View style={styles.emptyTask}>
@@ -347,6 +390,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   navBtnText: { color: DeliveryColors.white, fontWeight: '800', fontSize: 13, letterSpacing: 0.5 },
+  statusBtn: {
+    marginTop: 10,
+    backgroundColor: DeliveryColors.navy,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  statusBtnText: {
+    color: DeliveryColors.white,
+    fontWeight: '800',
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
   callBtn: {
     width: 52,
     alignItems: 'center',
