@@ -16,12 +16,14 @@ import {
   BusinessTab,
   SettingsTab,
   TABS,
-  Colors,
-  screenStyles as styles,
 } from '@/components/pages/customer/profile';
 import type { TabKey } from '@/components/pages/customer/profile';
+import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
+import { useAppThemeColors } from '@/constants/theme';
 
 export default function CustomerProfile() {
+  const { screenStyles } = useCustomerProfileStyles();
+  const appColors = useAppThemeColors();
   const [activeTab, setActiveTab] = useState<TabKey>('Personal');
   const indicatorAnim = useRef(new Animated.Value(0)).current;
   const { user, logout } = useAuthStore();
@@ -56,46 +58,40 @@ export default function CustomerProfile() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.neutral} />
+    <SafeAreaView style={screenStyles.safe}>
+      <StatusBar barStyle="light-content" backgroundColor={appColors.customerNeutral} />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={screenStyles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <Text style={styles.headerBrand}>FOODIE</Text>
+        <Text style={screenStyles.headerTitle}>Profile</Text>
+        <Text style={screenStyles.headerBrand}>FOODIE</Text>
       </View>
 
-      {/* Tab bar */}
-      <View style={styles.tabBarWrapper}>
-        <View style={styles.tabBar}>
+      <View style={screenStyles.tabBarWrapper}>
+        <View style={screenStyles.tabBar}>
           {TABS.map((tab, i) => (
             <TouchableOpacity
               key={tab}
-              style={styles.tabItem}
+              style={screenStyles.tabItem}
               onPress={() => handleTabPress(tab, i)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>
+              <Text style={[screenStyles.tabLabel, activeTab === tab && screenStyles.tabLabelActive]}>
                 {tab}
               </Text>
             </TouchableOpacity>
           ))}
           <Animated.View
-            style={[
-              styles.tabIndicator,
-              { width: '33.33%', transform: [{ translateX }] },
-            ]}
+            style={[screenStyles.tabIndicator, { width: '33.33%', transform: [{ translateX }] }]}
           />
         </View>
       </View>
 
-      {/* Content */}
       {activeTab === 'Personal' && <PersonalTab user={user} />}
       {activeTab === 'Business' && <BusinessTab />}
       {activeTab === 'Settings' && <SettingsTab user={user} onLogout={handleLogout} />}

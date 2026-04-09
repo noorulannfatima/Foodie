@@ -1,9 +1,9 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
-import { Colors, Fonts } from '@/constants/theme';
+import { useAppThemeColors, Fonts } from '@/constants/theme';
 import { Loader } from '@/components/atoms';
 import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
 import {
@@ -19,7 +19,40 @@ import {
 export default function RestaurantDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const Colors = useAppThemeColors();
   const { dashboard, dashboardLoading, fetchDashboard, toggleActive } = useRestaurantStore();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: Colors.screenBackground,
+        },
+        loadingContainer: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: Colors.screenBackground,
+        },
+        scrollContent: {
+          padding: 20,
+          paddingBottom: 40,
+        },
+        statsGrid: {
+          flexDirection: 'row',
+          gap: 12,
+          marginBottom: 12,
+        },
+        sectionTitle: {
+          fontFamily: Fonts.brandBlack,
+          fontSize: 20,
+          color: Colors.text,
+          marginBottom: 12,
+        },
+      }),
+    [Colors],
+  );
 
   useEffect(() => {
     fetchDashboard();
@@ -62,7 +95,7 @@ export default function RestaurantDashboard() {
           <DashboardStatBox
             label="ACTIVE ORDERS"
             value={String(
-              (today?.pendingCount ?? 0) + (today?.preparingCount ?? 0) + (today?.readyCount ?? 0)
+              (today?.pendingCount ?? 0) + (today?.preparingCount ?? 0) + (today?.readyCount ?? 0),
             )}
             icon="receipt-outline"
             sublabel={`${today?.preparingCount ?? 0} preparing`}
@@ -115,31 +148,3 @@ export default function RestaurantDashboard() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 20,
-    color: Colors.dark,
-    marginBottom: 12,
-  },
-});

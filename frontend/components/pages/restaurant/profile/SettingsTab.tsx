@@ -1,7 +1,17 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  RefreshControl,
+  Switch,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '@/constants/theme';
-import { screenStyles } from './profile.styles';
+import { useAppThemeColors, Fonts } from '@/constants/theme';
+import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
+import { useAppThemeStore } from '@/stores/appThemeStore';
 
 export interface SettingsTabProps {
   refreshing: boolean;
@@ -10,6 +20,88 @@ export interface SettingsTabProps {
 }
 
 export default function SettingsTab({ refreshing, onRefresh, onLogout }: SettingsTabProps) {
+  const { screenStyles } = useRestaurantProfileStyles();
+  const Colors = useAppThemeColors();
+  const isDark = useAppThemeStore((s) => s.isDark);
+  const setIsDark = useAppThemeStore((s) => s.setIsDark);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        settingsTitle: {
+          fontFamily: Fonts.brandBlack,
+          fontSize: 18,
+          color: Colors.text,
+          marginBottom: 12,
+          marginTop: 8,
+        },
+        darkRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: Colors.card,
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 10,
+          borderWidth: 1,
+          borderColor: Colors.border,
+        },
+        darkLabel: { flex: 1, paddingRight: 12 },
+        darkTitle: { fontFamily: Fonts.brandBold, fontSize: 15, color: Colors.text },
+        darkSub: { fontFamily: Fonts.brand, fontSize: 12, color: Colors.muted, marginTop: 4 },
+        settingsItem: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: Colors.card,
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 10,
+          borderWidth: 1,
+          borderColor: Colors.border,
+          gap: 12,
+        },
+        settingsIcon: {
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        settingsInfo: {
+          flex: 1,
+        },
+        settingsItemTitle: {
+          fontFamily: Fonts.brandBold,
+          fontSize: 15,
+          color: Colors.text,
+        },
+        settingsItemSub: {
+          fontFamily: Fonts.brand,
+          fontSize: 12,
+          color: Colors.muted,
+          marginTop: 2,
+        },
+        signOutBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          borderWidth: 1.5,
+          borderColor: Colors.primary,
+          borderRadius: 12,
+          paddingVertical: 14,
+          marginTop: 16,
+        },
+        signOutText: {
+          fontFamily: Fonts.brandBold,
+          fontSize: 14,
+          color: Colors.primary,
+          letterSpacing: 0.5,
+        },
+      }),
+    [Colors],
+  );
+
   return (
     <ScrollView
       style={screenStyles.tabContent}
@@ -18,6 +110,19 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <Text style={styles.settingsTitle}>Restaurant Settings</Text>
+
+      <View style={styles.darkRow}>
+        <View style={styles.darkLabel}>
+          <Text style={styles.darkTitle}>Dark mode</Text>
+          <Text style={styles.darkSub}>Restaurant app uses the same appearance as the rest of Foodie</Text>
+        </View>
+        <Switch
+          value={isDark}
+          onValueChange={setIsDark}
+          trackColor={{ false: Colors.border, true: '#FCA5A5' }}
+          thumbColor={isDark ? Colors.primary : '#f4f3f4'}
+        />
+      </View>
 
       <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
         <View style={[styles.settingsIcon, { backgroundColor: '#FEE2E2' }]}>
@@ -59,62 +164,3 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  settingsTitle: {
-    fontFamily: Fonts.brandBlack,
-    fontSize: 18,
-    color: Colors.dark,
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    gap: 12,
-  },
-  settingsIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsInfo: {
-    flex: 1,
-  },
-  settingsItemTitle: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 15,
-    color: Colors.dark,
-  },
-  settingsItemSub: {
-    fontFamily: Fonts.brand,
-    fontSize: 12,
-    color: Colors.muted,
-    marginTop: 2,
-  },
-  signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 16,
-  },
-  signOutText: {
-    fontFamily: Fonts.brandBold,
-    fontSize: 14,
-    color: Colors.primary,
-    letterSpacing: 0.5,
-  },
-});

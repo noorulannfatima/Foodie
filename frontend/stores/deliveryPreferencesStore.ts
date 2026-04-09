@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import zustandStorage from '@/utils/zustandStorage';
+import { useAppThemeStore } from '@/stores/appThemeStore';
 
 export type DeliveryLanguage = 'en' | 'es' | 'fr' | 'ur';
 
@@ -30,16 +31,22 @@ export const useDeliveryPreferencesStore = create<State>()(
   persist(
     (set) => ({
       ...defaults,
-      mergeFromServer: (p) =>
+      mergeFromServer: (p) => {
+        const darkMode = typeof p.darkMode === 'boolean' ? p.darkMode : defaults.darkMode;
+        const notificationsEnabled =
+          typeof p.notificationsEnabled === 'boolean'
+            ? p.notificationsEnabled
+            : defaults.notificationsEnabled;
+        const language = normLang(p.language);
+        set({ darkMode, notificationsEnabled, language });
+        // Keep global app appearance in sync when delivery prefs load from API
+        useAppThemeStore.getState().setIsDark(darkMode);
+      },
+      reset: () =>
         set({
-          darkMode: typeof p.darkMode === 'boolean' ? p.darkMode : defaults.darkMode,
-          notificationsEnabled:
-            typeof p.notificationsEnabled === 'boolean'
-              ? p.notificationsEnabled
-              : defaults.notificationsEnabled,
-          language: normLang(p.language),
+          ...defaults,
+          darkMode: useAppThemeStore.getState().isDark,
         }),
-      reset: () => set({ ...defaults }),
     }),
     { name: 'delivery-preferences', storage: createJSONStorage(() => zustandStorage) },
   ),

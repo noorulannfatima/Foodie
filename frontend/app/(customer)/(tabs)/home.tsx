@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,12 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { customerAPI } from '@/services/api/customer.api';
+import { useAppThemeColors } from '@/constants/theme';
 import CategoryPill from '@/components/molecules/CategoryPill/CategoryPill';
 import RestaurantCard from '@/components/molecules/RestaurantCard/RestaurantCard';
 import RestaurantListCard from '@/components/molecules/RestaurantListCard/RestaurantListCard';
 import {
-  NAV_COLOR,
-  BODY_BG,
   CUISINE_EMOJI,
   CustomerHomeHeader,
   CustomerHomeHero,
@@ -29,6 +28,7 @@ import {
 } from '@/components/pages/customer/home';
 
 export default function CustomerHome() {
+  const themeColors = useAppThemeColors();
   const { user } = useAuthStore();
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -101,9 +101,41 @@ export default function CustomerHome() {
   const categoryData =
     categories.length > 0 ? categories : [{ id: 'all', label: 'All', emoji: '🍽️', key: 'all' }];
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        safeArea: {
+          flex: 1,
+          backgroundColor: themeColors.navBar,
+        },
+        scroll: {
+          flex: 1,
+          backgroundColor: themeColors.customerBodyBg,
+        },
+        scrollContent: {
+          paddingBottom: 16,
+        },
+        categoriesList: {
+          paddingHorizontal: 16,
+          paddingBottom: 4,
+          marginBottom: 12,
+        },
+        featuredList: {
+          paddingHorizontal: 16,
+        },
+        allRestaurantsSection: {
+          paddingTop: 4,
+        },
+        bottomSpacer: {
+          height: 24,
+        },
+      }),
+    [themeColors.navBar, themeColors.customerBodyBg],
+  );
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={NAV_COLOR} />
+      <StatusBar barStyle="light-content" backgroundColor={themeColors.navBar} />
       <CustomerHomeHeader />
 
       <ScrollView
@@ -191,31 +223,3 @@ export default function CustomerHome() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: NAV_COLOR,
-  },
-  scroll: {
-    flex: 1,
-    backgroundColor: BODY_BG,
-  },
-  scrollContent: {
-    paddingBottom: 16,
-  },
-  categoriesList: {
-    paddingHorizontal: 16,
-    paddingBottom: 4,
-    marginBottom: 12,
-  },
-  featuredList: {
-    paddingHorizontal: 16,
-  },
-  allRestaurantsSection: {
-    paddingTop: 4,
-  },
-  bottomSpacer: {
-    height: 24,
-  },
-});

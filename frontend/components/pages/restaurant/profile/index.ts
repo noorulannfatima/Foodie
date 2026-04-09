@@ -1,5 +1,5 @@
 export type { RestaurantProfileTabKey } from './profile.styles';
-export { RESTAURANT_PROFILE_TABS, screenStyles } from './profile.styles';
+export { RESTAURANT_PROFILE_TABS } from './profile.styles';
 export { default as RestaurantProfileTitle } from './RestaurantProfileTitle';
 export { default as RestaurantProfileTabBar } from './RestaurantProfileTabBar';
 export { default as GeneralTab } from './GeneralTab';

@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { getDeliveryTabTheme } from '@/constants/deliveryTheme';
-import { useDeliveryPreferencesStore } from '@/stores/deliveryPreferencesStore';
+import { useAppThemeStore } from '@/stores/appThemeStore';
 
 export default function DeliveryLayout() {
-  const darkMode = useDeliveryPreferencesStore((s) => s.darkMode);
+  const darkMode = useAppThemeStore((s) => s.isDark); // shared with customer/restaurant via persisted store
   const theme = getDeliveryTabTheme(darkMode);
   return (
     <View style={[styles.flex, { backgroundColor: theme.pageBg }]}>

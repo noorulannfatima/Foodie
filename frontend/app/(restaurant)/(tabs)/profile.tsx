@@ -2,12 +2,11 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, Modal, Alert, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/constants/theme';
+import { useAppThemeColors } from '@/constants/theme';
 import { useRestaurantStore } from '@/stores/restaurantStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Loader } from '@/components/atoms';
 import {
-  screenStyles,
   RestaurantProfileTitle,
   RestaurantProfileTabBar,
   GeneralTab,
@@ -16,9 +15,12 @@ import {
   OperatingHoursModal,
   type RestaurantProfileTabKey,
 } from '@/components/pages/restaurant/profile';
+import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 
 export default function RestaurantProfile() {
   const insets = useSafeAreaInsets();
+  const { screenStyles } = useRestaurantProfileStyles();
+  const colors = useAppThemeColors();
   const { logout } = useAuthStore();
   const { profile, profileLoading, fetchProfile, updateProfile } = useRestaurantStore();
   const [hoursModalVisible, setHoursModalVisible] = useState(false);
@@ -73,7 +75,7 @@ export default function RestaurantProfile() {
     <View style={[screenStyles.container, { paddingTop: insets.top }]}>
       <View style={screenStyles.header}>
         <View style={screenStyles.headerLeft}>
-          <Ionicons name="restaurant" size={20} color={Colors.primary} />
+          <Ionicons name="restaurant" size={20} color={colors.primary} />
           <Text style={screenStyles.brand}>FOODIE</Text>
         </View>
       </View>

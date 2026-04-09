@@ -266,7 +266,7 @@ export async function patchPreferences(req: AuthRequest, res: Response): Promise
       return;
     }
 
-    const dp = await DeliveryPerson.findByIdAndUpdate(req.user!.id, { $set: set }, { new: true })
+    const dp = await DeliveryPerson.findByIdAndUpdate(req.user!.id, { $set: set }, { returnDocument: 'after' })
       .select('-password')
       .lean();
     if (!dp) {
@@ -337,7 +337,7 @@ export async function patchOnline(req: AuthRequest, res: Response): Promise<void
           lastActiveAt: new Date(),
         },
       },
-      { new: true },
+      { returnDocument: 'after' },
     ).select('-password');
     if (!dp) {
       res.status(404).json({ message: 'Not found' });

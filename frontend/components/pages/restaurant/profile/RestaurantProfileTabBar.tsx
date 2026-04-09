@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
-import { RESTAURANT_PROFILE_TABS, type RestaurantProfileTabKey, screenStyles } from './profile.styles';
+import { RESTAURANT_PROFILE_TABS, type RestaurantProfileTabKey } from './profile.styles';
+import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 
 export interface RestaurantProfileTabBarProps {
   activeTab: RestaurantProfileTabKey;
@@ -12,6 +13,8 @@ export default function RestaurantProfileTabBar({
   indicatorAnim,
   onTabPress,
 }: RestaurantProfileTabBarProps) {
+  const { screenStyles } = useRestaurantProfileStyles();
+
   const translateX = indicatorAnim.interpolate({
     inputRange: [0, 1, 2],
     outputRange: ['0%', '100%', '200%'],
@@ -27,7 +30,9 @@ export default function RestaurantProfileTabBar({
             onPress={() => onTabPress(tab, i)}
             activeOpacity={0.8}
           >
-            <Text style={[screenStyles.tabLabel, activeTab === tab && screenStyles.tabLabelActive]}>{tab}</Text>
+            <Text style={[screenStyles.tabLabel, activeTab === tab && screenStyles.tabLabelActive]}>
+              {tab}
+            </Text>
           </TouchableOpacity>
         ))}
         <Animated.View

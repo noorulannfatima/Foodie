@@ -1,5 +1,4 @@
-export { Colors, TABS, sharedStyles, screenStyles } from './profile.styles';
-export type { TabKey } from './profile.styles';
+export { TABS, type TabKey } from './profile.styles';
 
 export { default as ListRow } from './ListRow';
 export { default as PersonalTab } from './PersonalTab';

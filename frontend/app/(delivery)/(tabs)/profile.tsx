@@ -29,6 +29,7 @@ import {
   useDeliveryPreferencesStore,
   type DeliveryLanguage,
 } from '@/stores/deliveryPreferencesStore';
+import { useAppThemeStore } from '@/stores/appThemeStore';
 
 const VEHICLE_TYPES = ['Bicycle', 'Bike', 'Scooter', 'Car'] as const;
 type TabId = 'account' | 'settings';
@@ -49,7 +50,7 @@ function localeForLang(lang: DeliveryLanguage): string {
 export default function DeliveryProfileScreen() {
   const router = useRouter();
   const logout = useAuthStore((s) => s.logout);
-  const darkMode = useDeliveryPreferencesStore((s) => s.darkMode);
+  const darkMode = useAppThemeStore((s) => s.isDark);
   const storeLang = useDeliveryPreferencesStore((s) => s.language);
   const mergePrefs = useDeliveryPreferencesStore((s) => s.mergeFromServer);
 

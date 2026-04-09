@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { sharedStyles, Colors } from './profile.styles';
+import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
 
 export interface ListRowProps {
   icon?: React.ReactNode;
@@ -11,6 +11,8 @@ export interface ListRowProps {
 }
 
 export default function ListRow({ icon, label, onPress, rightElement }: ListRowProps) {
+  const { Colors, sharedStyles } = useCustomerProfileStyles();
+
   return (
     <TouchableOpacity style={sharedStyles.listRow} onPress={onPress} activeOpacity={0.7}>
       <View style={sharedStyles.listRowLeft}>

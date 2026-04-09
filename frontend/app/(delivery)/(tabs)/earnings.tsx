@@ -1,11 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Image } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import DeliveryHeader from '@/components/delivery/DeliveryHeader';
-import { DeliveryColors, DeliveryLayout } from '@/constants/deliveryTheme';
+import { DeliveryLayout, getDeliveryTabTheme, type DeliveryTabTheme } from '@/constants/deliveryTheme';
 import { deliveryAPI, type DeliveryProfile, type DeliveryOrderPayload } from '@/services/api/delivery.api';
+import { useAppThemeStore } from '@/stores/appThemeStore';
 
 function fmtUsd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -18,6 +19,17 @@ export default function DeliveryEarnings() {
   const [tx, setTx] = useState<DeliveryOrderPayload[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const isDark = useAppThemeStore((s) => s.isDark);
+  const theme = useMemo(() => getDeliveryTabTheme(isDark), [isDark]); // earnings surfaces use delivery dark tokens, not static DeliveryColors
+  const styles = useMemo(() => createEarningsStyles(theme), [theme]);
+  const balanceGradient = useMemo(
+    () =>
+      (theme.isDark
+        ? (['#0A1628', '#152535'] as [string, string])
+        : (['#001F3F', '#0A2850'] as [string, string])),
+    [theme.isDark],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -56,21 +68,21 @@ export default function DeliveryEarnings() {
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={DeliveryColors.red} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.red} />
         }
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient colors={['#001F3F', '#0A2850']} style={styles.balanceCard}>
+        <LinearGradient colors={balanceGradient} style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>TOTAL BALANCE</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceMain}>{loading ? '—' : fmtUsd(total)}</Text>
           </View>
           <View style={styles.trendRow}>
-            <Ionicons name="trending-up" size={16} color={DeliveryColors.gold} />
+            <Ionicons name="trending-up" size={16} color={theme.gold} />
             <Text style={styles.trendText}>+12.5% vs last week</Text>
           </View>
           <Pressable style={styles.cashOut} onPress={() => {}}>
-            <Ionicons name="wallet-outline" size={18} color={DeliveryColors.white} />
+            <Ionicons name="wallet-outline" size={18} color={theme.white} />
             <Text style={styles.cashOutText}>Cash Out</Text>
           </Pressable>
         </LinearGradient>
@@ -104,7 +116,7 @@ export default function DeliveryEarnings() {
               {t.restaurant?.image ? (
                 <Image source={{ uri: t.restaurant.image }} style={styles.thumbImg} />
               ) : (
-                <Ionicons name="restaurant" size={28} color={DeliveryColors.navy} />
+                <Ionicons name="restaurant" size={28} color={theme.navy} />
               )}
             </View>
             <View style={{ flex: 1 }}>
@@ -124,107 +136,109 @@ export default function DeliveryEarnings() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DeliveryColors.pageBg },
-  content: { paddingHorizontal: DeliveryLayout.screenPaddingH, paddingBottom: 32 },
-  balanceCard: {
-    borderRadius: DeliveryLayout.cardRadius,
-    padding: 20,
-    marginTop: 8,
-    marginBottom: 22,
-  },
-  balanceLabel: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-  },
-  balanceRow: { marginTop: 8 },
-  balanceMain: { fontSize: 34, fontWeight: '800', color: DeliveryColors.white },
-  trendRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  trendText: { color: DeliveryColors.gold, fontSize: 13, fontWeight: '600' },
-  cashOut: {
-    marginTop: 18,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: DeliveryColors.red,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  cashOutText: { color: DeliveryColors.white, fontWeight: '800', fontSize: 14 },
-  weekHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  weekTitle: { fontSize: 18, fontWeight: '800', color: DeliveryColors.navy },
-  weekBadge: {
-    backgroundColor: DeliveryColors.redLight,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  weekBadgeText: { fontSize: 12, fontWeight: '700', color: DeliveryColors.red },
-  chartCard: {
-    backgroundColor: DeliveryColors.card,
-    borderRadius: DeliveryLayout.cardRadius,
-    padding: 16,
-    marginBottom: 22,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  chartPlaceholder: { minHeight: 120, justifyContent: 'flex-end' },
-  chartBars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  barCol: { alignItems: 'center', flex: 1 },
-  bar: {
-    width: 8,
-    height: 40,
-    backgroundColor: DeliveryColors.border,
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  barActive: { height: 72, backgroundColor: DeliveryColors.red },
-  barLabel: { fontSize: 10, color: DeliveryColors.textMuted, fontWeight: '600' },
-  barLabelActive: { color: DeliveryColors.red, fontWeight: '800' },
-  txTitle: { fontSize: 18, fontWeight: '800', color: DeliveryColors.navy, marginBottom: 12 },
-  empty: { fontSize: 14, color: DeliveryColors.textMuted, marginBottom: 12 },
-  txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: DeliveryColors.card,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  thumb: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    backgroundColor: DeliveryColors.sky,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thumbImg: { width: '100%', height: '100%' },
-  txRest: { fontSize: 15, fontWeight: '800', color: DeliveryColors.navy },
-  txMeta: { fontSize: 12, color: DeliveryColors.textMuted, marginTop: 2 },
-  txAmt: { fontSize: 15, fontWeight: '800', color: DeliveryColors.red },
-  txStatus: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: DeliveryColors.brownMuted,
-    marginTop: 4,
-    letterSpacing: 0.5,
-  },
-});
+function createEarningsStyles(theme: DeliveryTabTheme) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: theme.pageBg },
+    content: { paddingHorizontal: DeliveryLayout.screenPaddingH, paddingBottom: 32 },
+    balanceCard: {
+      borderRadius: DeliveryLayout.cardRadius,
+      padding: 20,
+      marginTop: 8,
+      marginBottom: 22,
+    },
+    balanceLabel: {
+      color: 'rgba(255,255,255,0.75)',
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1.2,
+    },
+    balanceRow: { marginTop: 8 },
+    balanceMain: { fontSize: 34, fontWeight: '800', color: theme.white },
+    trendRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+    trendText: { color: theme.gold, fontSize: 13, fontWeight: '600' },
+    cashOut: {
+      marginTop: 18,
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: theme.red,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderRadius: 10,
+    },
+    cashOutText: { color: theme.white, fontWeight: '800', fontSize: 14 },
+    weekHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    weekTitle: { fontSize: 18, fontWeight: '800', color: theme.navy },
+    weekBadge: {
+      backgroundColor: theme.redLight,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 20,
+    },
+    weekBadgeText: { fontSize: 12, fontWeight: '700', color: theme.red },
+    chartCard: {
+      backgroundColor: theme.card,
+      borderRadius: DeliveryLayout.cardRadius,
+      padding: 16,
+      marginBottom: 22,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    chartPlaceholder: { minHeight: 120, justifyContent: 'flex-end' },
+    chartBars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+    barCol: { alignItems: 'center', flex: 1 },
+    bar: {
+      width: 8,
+      height: 40,
+      backgroundColor: theme.border,
+      borderRadius: 4,
+      marginBottom: 8,
+    },
+    barActive: { height: 72, backgroundColor: theme.red },
+    barLabel: { fontSize: 10, color: theme.textMuted, fontWeight: '600' },
+    barLabelActive: { color: theme.red, fontWeight: '800' },
+    txTitle: { fontSize: 18, fontWeight: '800', color: theme.navy, marginBottom: 12 },
+    empty: { fontSize: 14, color: theme.textMuted, marginBottom: 12 },
+    txRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      elevation: 1,
+    },
+    thumb: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+      backgroundColor: theme.sky,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    thumbImg: { width: '100%', height: '100%' },
+    txRest: { fontSize: 15, fontWeight: '800', color: theme.navy },
+    txMeta: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
+    txAmt: { fontSize: 15, fontWeight: '800', color: theme.red },
+    txStatus: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: theme.brownMuted,
+      marginTop: 4,
+      letterSpacing: 0.5,
+    },
+  });
+}

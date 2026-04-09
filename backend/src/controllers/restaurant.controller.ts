@@ -131,7 +131,7 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
     const restaurant = await Restaurant.findByIdAndUpdate(
       req.user!.id,
       { $set: updates },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!restaurant) {
@@ -165,7 +165,7 @@ export async function updateStatus(req: AuthRequest, res: Response): Promise<voi
     const restaurant = await Restaurant.findByIdAndUpdate(
       req.user!.id,
       { $set: updates },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!restaurant) {

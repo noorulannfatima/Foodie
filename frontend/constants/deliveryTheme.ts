@@ -25,9 +25,15 @@ export const DeliveryLayout = {
   sectionGap: 20,
 };
 
-/** Theme overrides for delivery tabs when dark mode preference is on (from API). */
+/** Theme overrides for delivery tabs when global dark mode is on (shared app store + delivery API sync). */
 export function getDeliveryTabTheme(isDark: boolean) {
-  if (!isDark) return { ...DeliveryColors, isDark: false as const };
+  if (!isDark)
+    return {
+      ...DeliveryColors,
+      isDark: false as const,
+      /** Top delivery header stays branded navy in light mode. */
+      headerBackground: '#001F3F',
+    };
   return {
     ...DeliveryColors,
     isDark: true as const,
@@ -38,8 +44,15 @@ export function getDeliveryTabTheme(isDark: boolean) {
     border: '#2A3F55',
     sky: '#1A2838',
     skyDeep: '#243449',
+    /** In dark UI, former “navy” tokens are flipped for text on cards; header uses `headerBackground`. */
     navy: '#E2E8F0',
     navyMuted: '#CBD5E1',
     white: '#F8FAFC',
+    redLight: 'rgba(196,0,24,0.22)',
+    peach: '#2A231C',
+    /** Slightly lifted from pageBg so the app bar reads as a stripe. */
+    headerBackground: '#061420',
   };
 }
+
+export type DeliveryTabTheme = ReturnType<typeof getDeliveryTabTheme>;
