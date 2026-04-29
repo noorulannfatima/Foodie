@@ -44,8 +44,10 @@ interface CartState {
   addToCart: (data: {
     restaurantId: string;
     menuItem: string;
-    name: string;
-    price: number;
+    // name & price are accepted for caller convenience but the backend
+    // re-resolves them from the database — never trusted from the client.
+    name?: string;
+    price?: number;
     quantity?: number;
     customizations?: any[];
     specialInstructions?: string;
@@ -79,7 +81,11 @@ export const useCartStore = create<CartState>((set, get) => ({
   addToCart: async (data) => {
     set({ loading: true, error: null });
     try {
-      const result = await customerAPI.addToCart(data);
+      // Drop name/price before forwarding — backend re-resolves them.
+      const { name, price, ...payload } = data;
+      void name;
+      void price;
+      const result = await customerAPI.addToCart(payload);
       set({ cart: result.cart, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });

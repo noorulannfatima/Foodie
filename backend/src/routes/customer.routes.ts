@@ -12,6 +12,10 @@ import {
   createOrder,
   getOrders,
   getOrderDetail,
+  cancelOrder,
+  rateOrder,
+  reorder,
+  trackOrder,
 } from '../controllers/customer.controller';
 
 const router = Router();
@@ -39,5 +43,11 @@ router.delete('/cart', clearCart);
 router.post('/orders', createOrder);
 router.get('/orders', getOrders);
 router.get('/orders/:id', getOrderDetail);
+
+// Order actions
+router.post('/orders/:id/cancel', cancelOrder);
+router.post('/orders/:id/rate', rateOrder);
+router.post('/orders/:id/reorder', reorder);
+router.get('/orders/:id/track', trackOrder);
 
 export default router;

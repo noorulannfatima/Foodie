@@ -365,19 +365,27 @@ orderSchema.index({ restaurant: 1, status: 1 });
 orderSchema.index({ deliveryPerson: 1, status: 1 });
 orderSchema.index({ createdAt: -1 });
 
-// ========== Pre-Save Middleware ==========
+// ========== Pre-Validate / Pre-Save Middleware ==========
 
-// Generate order number before saving
-orderSchema.pre("save", async function () {
+/**
+ * Generate the order number BEFORE Mongoose runs validators. If we used a
+ * pre-"save" hook the required-validator would fire first and reject the doc
+ * because `orderNumber` is still undefined. `pre("validate")` runs earlier
+ * in the lifecycle so the field is populated by the time validation runs.
+ *
+ * `Date.now()` + a short random suffix keeps the number unique without
+ * paying the cost of a `countDocuments()` round-trip on every save.
+ */
+orderSchema.pre("validate", function (this: IOrder) {
   if (!this.orderNumber) {
-    const count = await mongoose.model("Order").countDocuments();
-    this.orderNumber = `ORD${Date.now()}${(count + 1).toString().padStart(4, "0")}`;
+    const random = Math.floor(1000 + Math.random() * 9000); // 4-digit
+    this.orderNumber = `ORD${Date.now()}${random}`;
   }
 });
 
 // Add initial timeline entry
 orderSchema.pre("save", function () {
-  if (this.isNew) {
+  if (this.isNew && (!this.timeline || this.timeline.length === 0)) {
     this.timeline.push({
       status: this.status,
       timestamp: new Date(),
