@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 import { useAppThemeStore } from '@/stores/appThemeStore';
+import { useRestaurantStore } from '@/stores/restaurantStore';
+import StoreInformationModal from '@/components/organisms/StoreInformationModal';
 
 export interface SettingsTabProps {
   refreshing: boolean;
@@ -24,6 +26,9 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
   const Colors = useAppThemeColors();
   const isDark = useAppThemeStore((s) => s.isDark);
   const setIsDark = useAppThemeStore((s) => s.setIsDark);
+  const profile = useRestaurantStore((s) => s.profile);
+
+  const [storeInfoModalVisible, setStoreInfoModalVisible] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -103,64 +108,78 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
   );
 
   return (
-    <ScrollView
-      style={screenStyles.tabContent}
-      contentContainerStyle={screenStyles.tabContentInner}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <Text style={styles.settingsTitle}>Restaurant Settings</Text>
+    <>
+      <ScrollView
+        style={screenStyles.tabContent}
+        contentContainerStyle={screenStyles.tabContentInner}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <Text style={styles.settingsTitle}>Restaurant Settings</Text>
 
-      <View style={styles.darkRow}>
-        <View style={styles.darkLabel}>
-          <Text style={styles.darkTitle}>Dark mode</Text>
-          <Text style={styles.darkSub}>Restaurant app uses the same appearance as the rest of Foodie</Text>
+        <View style={styles.darkRow}>
+          <View style={styles.darkLabel}>
+            <Text style={styles.darkTitle}>Dark mode</Text>
+            <Text style={styles.darkSub}>Restaurant app uses the same appearance as the rest of Foodie</Text>
+          </View>
+          <Switch
+            value={isDark}
+            onValueChange={setIsDark}
+            trackColor={{ false: Colors.border, true: '#FCA5A5' }}
+            thumbColor={isDark ? Colors.primary : '#f4f3f4'}
+          />
         </View>
-        <Switch
-          value={isDark}
-          onValueChange={setIsDark}
-          trackColor={{ false: Colors.border, true: '#FCA5A5' }}
-          thumbColor={isDark ? Colors.primary : '#f4f3f4'}
-        />
-      </View>
 
-      <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
-        <View style={[styles.settingsIcon, { backgroundColor: '#FEE2E2' }]}>
-          <Ionicons name="storefront-outline" size={18} color={Colors.primary} />
-        </View>
-        <View style={styles.settingsInfo}>
-          <Text style={styles.settingsItemTitle}>Store Information</Text>
-          <Text style={styles.settingsItemSub}>Update description, tags, and photos</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingsItem}
+          activeOpacity={0.85}
+          onPress={() => setStoreInfoModalVisible(true)}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: '#FEE2E2' }]}>
+            <Ionicons name="storefront-outline" size={18} color={Colors.primary} />
+          </View>
+          <View style={styles.settingsInfo}>
+            <Text style={styles.settingsItemTitle}>Store Information</Text>
+            <Text style={styles.settingsItemSub}>Update description and restaurant cover</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
-        <View style={[styles.settingsIcon, { backgroundColor: '#DBEAFE' }]}>
-          <Ionicons name="notifications-outline" size={18} color="#3B82F6" />
-        </View>
-        <View style={styles.settingsInfo}>
-          <Text style={styles.settingsItemTitle}>Notification Preferences</Text>
-          <Text style={styles.settingsItemSub}>Order alerts, marketing, and reviews</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
+          <View style={[styles.settingsIcon, { backgroundColor: '#DBEAFE' }]}>
+            <Ionicons name="notifications-outline" size={18} color="#3B82F6" />
+          </View>
+          <View style={styles.settingsInfo}>
+            <Text style={styles.settingsItemTitle}>Notification Preferences</Text>
+            <Text style={styles.settingsItemSub}>Order alerts, marketing, and reviews</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
-        <View style={[styles.settingsIcon, { backgroundColor: '#FEF3C7' }]}>
-          <Ionicons name="wallet-outline" size={18} color="#F59E0B" />
-        </View>
-        <View style={styles.settingsInfo}>
-          <Text style={styles.settingsItemTitle}>Payouts & Billing</Text>
-          <Text style={styles.settingsItemSub}>Manage bank accounts and invoices</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
+          <View style={[styles.settingsIcon, { backgroundColor: '#FEF3C7' }]}>
+            <Ionicons name="wallet-outline" size={18} color="#F59E0B" />
+          </View>
+          <View style={styles.settingsInfo}>
+            <Text style={styles.settingsItemTitle}>Payouts & Billing</Text>
+            <Text style={styles.settingsItemSub}>Manage bank accounts and invoices</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.signOutBtn} onPress={onLogout} activeOpacity={0.85}>
-        <Ionicons name="log-out-outline" size={18} color={Colors.primary} />
-        <Text style={styles.signOutText}>SIGN OUT</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.signOutBtn} onPress={onLogout} activeOpacity={0.85}>
+          <Ionicons name="log-out-outline" size={18} color={Colors.primary} />
+          <Text style={styles.signOutText}>SIGN OUT</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Store Information Modal */}
+      <StoreInformationModal
+        visible={storeInfoModalVisible}
+        onClose={() => setStoreInfoModalVisible(false)}
+        currentDescription={profile?.description}
+        currentImages={profile?.image}
+      />
+    </>
   );
 }
