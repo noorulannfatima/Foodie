@@ -241,7 +241,8 @@ const userSchema = new mongoose.Schema<IUser>(
 
 userSchema.index({ phone: 1 });
 userSchema.index({ isActive: 1 });
-userSchema.index({ createdAt: -1 });
+userSchema.path('savedAddresses').default([]);
+    
 
 // ========== Pre-Save Middleware (Hooks) ==========
 
@@ -407,7 +408,7 @@ userSchema.statics.findByEmailWithPassword = function (email: string) {
  * Full address count
  */
 userSchema.virtual("addressCount").get(function () {
-  return this.savedAddresses.length;
+  return this.savedAddresses?.length ?? 0;
 });
 
 /**
