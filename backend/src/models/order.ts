@@ -49,10 +49,13 @@ export interface IOrder extends Document {
   
   // Payment
   payment: {
-    method: "Cash" | "Card" | "Wallet" | "Online";
+    method: "Cash" | "Card" | "Wallet" | "Online" | "Safepay";
     status: "Pending" | "Completed" | "Failed" | "Refunded";
     transactionId?: string;
     paidAt?: Date;
+    // Safepay-specific fields. Only populated for online card payments.
+    safepayTracker?: string;       // Tracker token returned by Safepay init
+    safepayState?: string;         // Last known state from Safepay (TRACKER_ENDED, etc.)
   };
   
   // Order Status & Timeline
@@ -231,7 +234,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
       method: {
         type: String,
         required: true,
-        enum: ["Cash", "Card", "Wallet", "Online"],
+        enum: ["Cash", "Card", "Wallet", "Online", "Safepay"],
       },
       status: {
         type: String,
@@ -241,6 +244,9 @@ const orderSchema = new mongoose.Schema<IOrder>(
       },
       transactionId: String,
       paidAt: Date,
+      // Safepay tracker token & latest provider-side state
+      safepayTracker: { type: String, index: true },
+      safepayState: String,
     },
     
     // ========== Order Status & Timeline ==========

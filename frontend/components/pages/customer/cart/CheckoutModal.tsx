@@ -13,17 +13,31 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
+// Two payment options the backend supports end-to-end:
+//   - Safepay  (online card / wallet via hosted checkout)
+//   - Cash     (Cash on Delivery, paid to the rider)
 const PAYMENTS = [
-  { key: 'Card', icon: 'card-outline' as const, label: 'Credit Card' },
-  { key: 'Wallet', icon: 'wallet-outline' as const, label: 'Digital Wallet' },
-  { key: 'Cash', icon: 'cash-outline' as const, label: 'Cash' },
+  {
+    key: 'Safepay',
+    icon: 'card-outline' as const,
+    label: 'Pay with Safepay',
+    sub: 'Card / Wallet — secure online checkout',
+  },
+  {
+    key: 'Cash',
+    icon: 'cash-outline' as const,
+    label: 'Cash on Delivery',
+    sub: 'Pay the rider in cash on arrival',
+  },
 ];
+
+export type CheckoutPaymentMethod = 'Safepay' | 'Cash';
 
 export interface CheckoutModalProps {
   onClose: () => void;
   onPlaceOrder: (data: {
     deliveryAddress: { street: string; city: string; zipCode: string; instructions: string };
-    paymentMethod: string;
+    paymentMethod: CheckoutPaymentMethod;
   }) => Promise<void>;
 }
 
@@ -34,7 +48,7 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
   const [city, setCity] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('Safepay');
   const [placing, setPlacing] = useState(false);
 
   const handlePlace = async () => {
@@ -105,25 +119,32 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
             <Ionicons name="card" size={18} color={c.primary} />
             <Text style={styles.sectionTitle}>Payment Method</Text>
           </View>
-          {PAYMENTS.map((p) => (
-            <TouchableOpacity
-              key={p.key}
-              style={[styles.paymentOption, paymentMethod === p.key && styles.paymentOptionActive]}
-              onPress={() => setPaymentMethod(p.key)}
-            >
-              <Ionicons
-                name={p.icon}
-                size={20}
-                color={paymentMethod === p.key ? c.text : c.muted}
-              />
-              <Text style={[styles.paymentLabel, paymentMethod === p.key && styles.paymentLabelActive]}>
-                {p.label}
-              </Text>
-              {paymentMethod === p.key ? (
-                <Ionicons name="checkmark-circle" size={20} color={c.primary} style={styles.checkIcon} />
-              ) : null}
-            </TouchableOpacity>
-          ))}
+          {PAYMENTS.map((p) => {
+            const active = paymentMethod === p.key;
+            return (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.paymentOption, active && styles.paymentOptionActive]}
+                onPress={() => setPaymentMethod(p.key as CheckoutPaymentMethod)}
+              >
+                <Ionicons name={p.icon} size={20} color={active ? c.text : c.muted} />
+                <View style={styles.paymentTextWrap}>
+                  <Text style={[styles.paymentLabel, active && styles.paymentLabelActive]}>
+                    {p.label}
+                  </Text>
+                  <Text style={styles.paymentSub}>{p.sub}</Text>
+                </View>
+                {active ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={c.primary}
+                    style={styles.checkIcon}
+                  />
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.section}>
@@ -247,6 +268,9 @@ function createStyles(c: AppColors) {
       borderColor: c.text,
       borderWidth: 2,
     },
+    paymentTextWrap: {
+      flex: 1,
+    },
     paymentLabel: {
       fontFamily: Fonts.brand,
       fontSize: 14,
@@ -255,6 +279,12 @@ function createStyles(c: AppColors) {
     paymentLabelActive: {
       fontFamily: Fonts.brandBold,
       color: c.text,
+    },
+    paymentSub: {
+      fontFamily: Fonts.brand,
+      fontSize: 11,
+      color: c.muted,
+      marginTop: 2,
     },
     checkIcon: {
       marginLeft: 'auto',

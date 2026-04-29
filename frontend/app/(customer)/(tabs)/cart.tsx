@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCartStore, CartItem } from '@/stores/cartStore';
 import { customerAPI } from '@/services/api/customer.api';
+import { paymentAPI } from '@/services/api/payment.api';
+import { payWithSafepay } from '@/services/safepay';
 import { Loader } from '@/components/atoms';
 import {
   NAV_COLOR,
@@ -112,12 +114,54 @@ export default function CustomerCart() {
           onClose={() => setCheckoutVisible(false)}
           onPlaceOrder={async (data) => {
             try {
+              // 1. Create the order on the backend in "Pending" payment state.
               const result = await customerAPI.createOrder(data);
+              const order = result.order;
+
+              // 2. Branch on payment method. Both branches refresh the cart and
+              //    bounce the user back to the home screen on success.
+              if (data.paymentMethod === 'Safepay') {
+                // Online payment via Safepay's hosted checkout. Closes the
+                // checkout sheet first so the in-app browser can take over.
+                setCheckoutVisible(false);
+                const outcome = await payWithSafepay(order._id);
+                await useCartStore.getState().fetchCart();
+
+                if (outcome.kind === 'success') {
+                  Alert.alert(
+                    'Payment Successful',
+                    `Order #${order.orderNumber} confirmed and paid via Safepay.`,
+                    [{ text: 'OK', onPress: () => router.push('/(customer)/(tabs)/home') }]
+                  );
+                } else if (outcome.kind === 'pending') {
+                  Alert.alert(
+                    'Payment Pending',
+                    `Order #${order.orderNumber} was placed. We'll confirm payment shortly.`,
+                    [{ text: 'OK', onPress: () => router.push('/(customer)/(tabs)/home') }]
+                  );
+                } else if (outcome.kind === 'cancelled') {
+                  Alert.alert(
+                    'Payment Cancelled',
+                    `Order #${order.orderNumber} is awaiting payment. You can retry from your orders.`
+                  );
+                } else {
+                  Alert.alert(
+                    'Payment Failed',
+                    outcome.reason
+                      ? `Safepay reported: ${outcome.reason}.`
+                      : 'Your payment did not go through.'
+                  );
+                }
+                return;
+              }
+
+              // Cash on Delivery — confirm with the backend, no provider involved.
+              await paymentAPI.confirmCashOnDelivery(order._id);
               setCheckoutVisible(false);
               await useCartStore.getState().fetchCart();
               Alert.alert(
                 'Order Placed!',
-                `Your order #${result.order.orderNumber} has been placed successfully.`,
+                `Your order #${order.orderNumber} has been placed. Pay the rider on delivery.`,
                 [{ text: 'OK', onPress: () => router.push('/(customer)/(tabs)/home') }]
               );
             } catch (err: unknown) {
