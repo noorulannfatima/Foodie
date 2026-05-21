@@ -131,13 +131,31 @@ export default function CustomerCart() {
                   Alert.alert(
                     'Payment Successful',
                     `Order #${order.orderNumber} confirmed and paid via Safepay.`,
-                    [{ text: 'OK', onPress: () => router.push('/(customer)/(tabs)/home') }]
+                    [
+                      {
+                        text: 'OK',
+                        onPress: () =>
+                          router.replace({
+                            pathname: '/(customer)/order/[id]',
+                            params: { id: order._id },
+                          }),
+                      },
+                    ]
                   );
                 } else if (outcome.kind === 'pending') {
                   Alert.alert(
                     'Payment Pending',
                     `Order #${order.orderNumber} was placed. We'll confirm payment shortly.`,
-                    [{ text: 'OK', onPress: () => router.push('/(customer)/(tabs)/home') }]
+                    [
+                      {
+                        text: 'OK',
+                        onPress: () =>
+                          router.replace({
+                            pathname: '/(customer)/order/[id]',
+                            params: { id: order._id },
+                          }),
+                      },
+                    ]
                   );
                 } else if (outcome.kind === 'cancelled') {
                   Alert.alert(
@@ -162,7 +180,16 @@ export default function CustomerCart() {
               Alert.alert(
                 'Order Placed!',
                 `Your order #${order.orderNumber} has been placed. Pay the rider on delivery.`,
-                [{ text: 'OK', onPress: () => router.push('/(customer)/(tabs)/home') }]
+                [
+                  {
+                    text: 'OK',
+                    onPress: () =>
+                      router.replace({
+                        pathname: '/(customer)/order/[id]',
+                        params: { id: order._id },
+                      }),
+                  },
+                ]
               );
             } catch (err: unknown) {
               const message = err instanceof Error ? err.message : 'Failed to place order';

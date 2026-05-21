@@ -142,6 +142,19 @@ export default function PersonalTab({ user }: PersonalTabProps) {
         <View style={sharedStyles.divider} />
         <ListRow
           icon={
+            <Ionicons
+              name="receipt-outline"
+              size={22}
+              color={Colors.neutral}
+              style={sharedStyles.rowIcon}
+            />
+          }
+          label="Order History"
+          onPress={() => router.push('/(customer)/orders')}
+        />
+        <View style={sharedStyles.divider} />
+        <ListRow
+          icon={
             <MaterialIcons name="payment" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
           }
           label="Payment Methods"

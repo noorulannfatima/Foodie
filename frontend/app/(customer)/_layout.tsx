@@ -21,6 +21,10 @@ export default function CustomerLayout() {
         {/* Profile sub-screens */}
         <Stack.Screen name="personal-information" options={{ headerShown: false }} />
         <Stack.Screen name="payment-methods" options={{ headerShown: false }} />
+
+        {/* Orders */}
+        <Stack.Screen name="orders/index" options={{ headerShown: false }} />
+        <Stack.Screen name="order/[id]" options={{ headerShown: false }} />
       </Stack>
     </View>
   );
