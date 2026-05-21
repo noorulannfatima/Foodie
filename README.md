@@ -188,7 +188,6 @@ import { Button } from '@/components/atoms';
 
 ## Further reading
 
-- **[CLAUDE.md](./CLAUDE.md)** — Architecture, conventions, and what to avoid when contributing
 - **[project_tree.md](./project_tree.md)** — Complete repository file tree
 
 ## License
