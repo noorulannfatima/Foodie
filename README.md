@@ -25,7 +25,6 @@ A multi-role food delivery app built with **React Native (Expo)** and a **Node.j
 Foodie/
 ├── frontend/          # Expo app (Expo Router, Atomic Design components)
 ├── backend/           # Express API + Mongoose models
-├── CLAUDE.md          # Contributor / AI guide (architecture, conventions)
 └── project_tree.md    # Full file tree reference
 ```
 
