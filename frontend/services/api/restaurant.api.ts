@@ -70,6 +70,25 @@ export const restaurantAPI = {
     return handleResponse(res);
   },
 
+  // ========== Push Notifications ==========
+  registerPushToken: async (token: string) => {
+    const res = await fetch(`${BASE_URL}/restaurant/push-token`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ token }),
+    });
+    return handleResponse(res);
+  },
+
+  unregisterPushToken: async (token: string) => {
+    const res = await fetch(`${BASE_URL}/restaurant/push-token`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ token }),
+    });
+    return handleResponse(res);
+  },
+
   // ========== Orders ==========
   getOrders: async (params?: { status?: string; page?: number; limit?: number }) => {
     const query = new URLSearchParams();

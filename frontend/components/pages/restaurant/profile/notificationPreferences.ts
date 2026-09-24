@@ -100,13 +100,13 @@ export const NOTIFICATION_PREFERENCE_SECTIONS: ReadonlyArray<{
       {
         key: 'email',
         label: 'Email',
-        hint: 'Sent to your restaurant account email',
+        hint: 'Coming soon — sent to your restaurant account email',
         icon: 'mail-outline',
       },
       {
         key: 'sms',
         label: 'SMS',
-        hint: 'Text messages to your restaurant phone',
+        hint: 'Coming soon — text messages to your restaurant phone',
         icon: 'chatbubble-outline',
       },
     ],

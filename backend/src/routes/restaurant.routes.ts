@@ -8,6 +8,8 @@ import {
   updateStatus,
   getNotificationPreferences,
   updateNotificationPreferences,
+  registerPushToken,
+  unregisterPushToken,
   getOrders,
   getOrderDetail,
   updateOrderStatus,
@@ -36,6 +38,10 @@ router.put('/status', updateStatus);
 // Notification preferences
 router.get('/notification-preferences', getNotificationPreferences);
 router.patch('/notification-preferences', updateNotificationPreferences);
+
+// Push notification devices
+router.post('/push-token', registerPushToken);
+router.delete('/push-token', unregisterPushToken);
 
 // Orders
 router.get('/orders', getOrders);

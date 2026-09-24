@@ -2,10 +2,10 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Restaurant, {
   RESTAURANT_NOTIFICATION_KEYS,
-  DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES,
+  normalizeNotificationPreferences,
   type RestaurantNotificationKey,
-  type RestaurantNotificationPreferences,
 } from '../models/restaurant';
+import { isExpoPushToken } from '../services/push.service';
 import Menu from '../models/menu';
 import Order from '../models/order';
 
@@ -206,15 +206,6 @@ export async function updateStatus(req: AuthRequest, res: Response): Promise<voi
 
 // ========== Notification Preferences ==========
 
-/** Fills any keys missing on older documents with their defaults. */
-function normalizeNotificationPreferences(prefs: any): RestaurantNotificationPreferences {
-  const normalized = { ...DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES };
-  for (const key of RESTAURANT_NOTIFICATION_KEYS) {
-    if (typeof prefs?.[key] === 'boolean') normalized[key] = prefs[key];
-  }
-  return normalized;
-}
-
 /**
  * GET /restaurant/notification-preferences
  */
@@ -280,6 +271,69 @@ export async function updateNotificationPreferences(req: AuthRequest, res: Respo
   } catch (error) {
     console.error('Update notification preferences error:', error);
     res.status(500).json({ message: 'Server error updating notification preferences' });
+  }
+}
+
+// ========== Push Tokens ==========
+
+const MAX_PUSH_TOKENS_PER_RESTAURANT = 10;
+
+function readPushToken(req: AuthRequest, res: Response): string | null {
+  const { token } = (req.body ?? {}) as { token?: unknown };
+  if (typeof token !== 'string' || !isExpoPushToken(token)) {
+    res.status(400).json({ message: 'A valid Expo push token is required' });
+    return null;
+  }
+  return token;
+}
+
+/**
+ * POST /restaurant/push-token
+ * Body: { token } — registers this device for push notifications
+ */
+export async function registerPushToken(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const token = readPushToken(req, res);
+    if (!token) return;
+
+    // A device belongs to whoever signed in last on it
+    await Restaurant.updateMany(
+      { _id: { $ne: req.user!.id }, pushTokens: token },
+      { $pull: { pushTokens: token } }
+    );
+
+    // Move the token to the end, keeping only the most recent devices
+    await Restaurant.updateOne({ _id: req.user!.id }, { $pull: { pushTokens: token } });
+    const result = await Restaurant.updateOne(
+      { _id: req.user!.id },
+      { $push: { pushTokens: { $each: [token], $slice: -MAX_PUSH_TOKENS_PER_RESTAURANT } } }
+    );
+
+    if (result.matchedCount === 0) {
+      res.status(404).json({ message: 'Restaurant not found' });
+      return;
+    }
+    res.json({ registered: true });
+  } catch (error) {
+    console.error('Register push token error:', error);
+    res.status(500).json({ message: 'Server error registering push token' });
+  }
+}
+
+/**
+ * DELETE /restaurant/push-token
+ * Body: { token } — stops push notifications to this device (called on sign out)
+ */
+export async function unregisterPushToken(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const token = readPushToken(req, res);
+    if (!token) return;
+
+    await Restaurant.updateOne({ _id: req.user!.id }, { $pull: { pushTokens: token } });
+    res.json({ registered: false });
+  } catch (error) {
+    console.error('Unregister push token error:', error);
+    res.status(500).json({ message: 'Server error removing push token' });
   }
 }
 

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '@/services/api/auth.api';
 import { useDeliveryPreferencesStore } from '@/stores/deliveryPreferencesStore';
+import { unregisterRestaurantPushNotifications } from '@/services/pushNotifications';
 
 type UserRole = 'customer' | 'restaurant' | 'delivery';
 
@@ -85,6 +86,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    // Runs before the token is removed, since the request needs it
+    await unregisterRestaurantPushNotifications();
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('userRole');
     await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
@@ -106,6 +109,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const lastActivityRaw = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
       const lastActivity = lastActivityRaw ? parseInt(lastActivityRaw, 10) : 0;
       if (lastActivity && Date.now() - lastActivity >= INACTIVITY_LIMIT_MS) {
+        await unregisterRestaurantPushNotifications();
         await AsyncStorage.removeItem('token');
         await AsyncStorage.removeItem('userRole');
         await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);

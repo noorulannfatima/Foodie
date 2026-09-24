@@ -6,6 +6,7 @@ import Menu from '../models/menu';
 import Order from '../models/order';
 import Cart from '../models/cart';
 import User from '../models/user';
+import { notifyRestaurant } from '../services/push.service';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -482,6 +483,13 @@ export async function createOrder(req: AuthRequest, res: Response): Promise<void
     cart.status = 'Completed';
     await cart.save();
 
+    const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    void notifyRestaurant(restaurant._id, 'newOrders', {
+      title: 'New order received',
+      body: `Order #${order.orderNumber} · ${itemCount} item${itemCount === 1 ? '' : 's'} · Rs. ${Math.round(total).toLocaleString()}`,
+      data: { type: 'new_order', orderId: order._id.toString() },
+    });
+
     res.status(201).json({ order });
   } catch (error: any) {
     if (error.name === 'ValidationError') {
@@ -621,6 +629,13 @@ export async function cancelOrder(req: AuthRequest, res: Response): Promise<void
     }
 
     await order.save();
+
+    void notifyRestaurant(order.restaurant, 'orderCancellations', {
+      title: 'Order cancelled',
+      body: `Order #${order.orderNumber} was cancelled by the customer: ${order.cancellationReason}`,
+      data: { type: 'order_cancelled', orderId: order._id.toString() },
+    });
+
     res.json({ order });
   } catch (error: any) {
     console.error('Cancel order error:', error);
@@ -685,6 +700,15 @@ export async function rateOrder(req: AuthRequest, res: Response): Promise<void> 
         user: req.user!.id,
         rating: ratings[2], // food rating drives restaurant aggregate
         comment,
+      });
+
+      const trimmedComment = typeof comment === 'string' ? comment.trim() : '';
+      void notifyRestaurant(restaurantDoc._id, 'reviews', {
+        title: `New ${ratings[2]}-star review`,
+        body: trimmedComment
+          ? `"${trimmedComment.length > 100 ? `${trimmedComment.slice(0, 100)}…` : trimmedComment}"`
+          : `Order #${order.orderNumber} was rated ${ratings[2]} out of 5`,
+        data: { type: 'new_review', orderId: order._id.toString() },
       });
     }
 

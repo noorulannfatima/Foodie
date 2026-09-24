@@ -31,6 +31,15 @@ export const DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES: RestaurantNotification
   marketing: false,
 };
 
+/** Fills any keys missing on older documents with their defaults. */
+export function normalizeNotificationPreferences(prefs: any): RestaurantNotificationPreferences {
+  const normalized = { ...DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES };
+  for (const key of RESTAURANT_NOTIFICATION_KEYS) {
+    if (typeof prefs?.[key] === "boolean") normalized[key] = prefs[key];
+  }
+  return normalized;
+}
+
 export interface IRestaurant extends Document {
   // Basic Information
   name: string;
@@ -107,6 +116,7 @@ export interface IRestaurant extends Document {
   
   // Notification Preferences
   notificationPreferences: RestaurantNotificationPreferences;
+  pushTokens: string[]; // Expo push tokens, one per signed-in device
   
   // Timestamps
   createdAt: Date;
@@ -430,6 +440,12 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
         { type: Boolean, default: DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES[key] },
       ])
     ),
+    
+    pushTokens: {
+      type: [String],
+      default: [],
+      select: false,
+    },
   },
   {
     timestamps: true,
