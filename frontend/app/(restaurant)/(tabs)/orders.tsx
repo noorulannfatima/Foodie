@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
 import {
-  RestaurantOrdersHeader,
   RestaurantOrdersStatsBar,
   OrderStatusFilterRow,
   OrderPipelineTitle,
@@ -77,8 +76,7 @@ export default function RestaurantOrders() {
   const readyCount = orders.filter((o) => o.status === 'Ready').length;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <RestaurantOrdersHeader />
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
       <RestaurantOrdersStatsBar
         activeCount={activeCount}
         preparingCount={preparingCount}

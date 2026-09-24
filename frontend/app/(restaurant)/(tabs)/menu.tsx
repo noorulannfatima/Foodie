@@ -9,7 +9,6 @@ import {
   AddCategoryModal,
 } from '@/components/organisms';
 import {
-  RestaurantMenuHeader,
   MenuBuilderTitle,
   AddMenuItemCta,
   RestaurantCategoryFilterRow,
@@ -82,8 +81,7 @@ export default function RestaurantMenu() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <RestaurantMenuHeader />
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
 
       <ScrollView
         showsVerticalScrollIndicator={false}

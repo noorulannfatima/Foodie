@@ -1,9 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { StyleSheet, ScrollView, TextInput, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { customerAPI } from '@/services/api/customer.api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppThemeColors } from '@/constants/theme';
+import CustomerHeader from '@/components/pages/customer/CustomerHeader';
 import {
   STORAGE_KEY,
   SearchInputHeader,
@@ -22,6 +24,7 @@ function formatSearchCurrency(amount: number) {
 
 export default function CustomerSearch() {
   const router = useRouter();
+  const c = useAppThemeColors();
   const inputRef = useRef<TextInput>(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchRestaurantResult[]>([]);
@@ -76,7 +79,7 @@ export default function CustomerSearch() {
         setSearching(false);
       }
     },
-    [recentSearches]
+    [recentSearches],
   );
 
   const handleQueryChange = (text: string) => {
@@ -98,47 +101,50 @@ export default function CustomerSearch() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <SearchInputHeader
-        inputRef={inputRef}
-        query={query}
-        onChangeText={handleQueryChange}
-        onSubmit={() => performSearch(query)}
-        onClear={clearQuery}
-      />
+    <SafeAreaView style={[styles.safe, { backgroundColor: c.customerBodyBg }]} edges={['top']}>
+      <CustomerHeader />
+      <View style={[styles.page, { backgroundColor: c.customerBodyBg }]}>
+        <SearchInputHeader
+          inputRef={inputRef}
+          query={query}
+          onChangeText={handleQueryChange}
+          onSubmit={() => performSearch(query)}
+          onClear={clearQuery}
+        />
 
-      <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {searching ? <SearchLoadingRow /> : null}
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {searching ? <SearchLoadingRow /> : null}
 
-        {hasSearched && !searching ? (
-          results.length > 0 ? (
-            <SearchResultsSection
-              results={results}
-              formatCurrency={formatSearchCurrency}
-              onSelectRestaurant={(id) => router.push(`/(customer)/restaurant/${id}`)}
-            />
-          ) : (
-            <SearchNoResults />
-          )
-        ) : null}
+          {hasSearched && !searching ? (
+            results.length > 0 ? (
+              <SearchResultsSection
+                results={results}
+                formatCurrency={formatSearchCurrency}
+                onSelectRestaurant={(id) => router.push(`/(customer)/restaurant/${id}`)}
+              />
+            ) : (
+              <SearchNoResults />
+            )
+          ) : null}
 
-        {!hasSearched ? (
-          <>
-            <SearchPopularCuisines onSelectCuisine={handleQuickSearch} />
-            <SearchRecentSection
-              terms={recentSearches}
-              onSelectTerm={handleQuickSearch}
-              onRemoveTerm={removeRecentSearch}
-            />
-            <SearchPopularChips onSelectTerm={handleQuickSearch} />
-          </>
-        ) : null}
-      </ScrollView>
+          {!hasSearched ? (
+            <>
+              <SearchPopularCuisines onSelectCuisine={handleQuickSearch} />
+              <SearchRecentSection
+                terms={recentSearches}
+                onSelectTerm={handleQuickSearch}
+                onRemoveTerm={removeRecentSearch}
+              />
+              <SearchPopularChips onSelectTerm={handleQuickSearch} />
+            </>
+          ) : null}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -146,7 +152,9 @@ export default function CustomerSearch() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  page: {
+    flex: 1,
   },
   body: {
     flex: 1,

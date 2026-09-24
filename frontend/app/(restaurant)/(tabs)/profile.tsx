@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, Modal, Alert, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppThemeColors } from '@/constants/theme';
 import { useRestaurantStore } from '@/stores/restaurantStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Loader } from '@/components/atoms';
@@ -20,7 +19,6 @@ import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 export default function RestaurantProfile() {
   const insets = useSafeAreaInsets();
   const { screenStyles } = useRestaurantProfileStyles();
-  const colors = useAppThemeColors();
   const { logout } = useAuthStore();
   const { profile, profileLoading, fetchProfile, updateProfile } = useRestaurantStore();
   const [hoursModalVisible, setHoursModalVisible] = useState(false);
@@ -48,7 +46,14 @@ export default function RestaurantProfile() {
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => logout() },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)');
+        },
+      },
     ]);
   };
 
@@ -72,13 +77,7 @@ export default function RestaurantProfile() {
   }
 
   return (
-    <View style={[screenStyles.container, { paddingTop: insets.top }]}>
-      <View style={screenStyles.header}>
-        <View style={screenStyles.headerLeft}>
-          <Ionicons name="restaurant" size={20} color={colors.primary} />
-          <Text style={screenStyles.brand}>FOODIE</Text>
-        </View>
-      </View>
+    <View style={[screenStyles.container, { paddingTop: insets.top + 8 }]}>
 
       <View style={screenStyles.titleSection}>
         <RestaurantProfileTitle profile={profile} />

@@ -37,25 +37,6 @@ export function useRestaurantProfileStyles() {
         fontSize: 14,
         color: '#fff',
       },
-      header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        backgroundColor: c.chromeDark,
-      },
-      headerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-      },
-      brand: {
-        fontFamily: Fonts.brandBlack,
-        fontSize: 20,
-        color: '#fff',
-        letterSpacing: 1,
-      },
       titleSection: {
         paddingHorizontal: 20,
         paddingTop: 16,
@@ -63,13 +44,15 @@ export function useRestaurantProfileStyles() {
         backgroundColor: c.screenBackground,
       },
       tabBarWrapper: {
-        backgroundColor: c.chromeDark,
+        backgroundColor: c.screenBackground,
         paddingHorizontal: 16,
         paddingBottom: 10,
       },
       tabBar: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: c.card,
+        borderWidth: 1,
+        borderColor: c.border,
         borderRadius: 12,
         overflow: 'hidden',
         position: 'relative',
@@ -79,12 +62,11 @@ export function useRestaurantProfileStyles() {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1,
       },
       tabLabel: {
         fontFamily: Fonts.brandBold,
         fontSize: 13,
-        color: 'rgba(255,255,255,0.55)',
+        color: c.muted,
       },
       tabLabelActive: {
         color: '#fff',

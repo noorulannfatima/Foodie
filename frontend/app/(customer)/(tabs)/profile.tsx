@@ -1,14 +1,6 @@
 import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Animated,
-  Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, Animated, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -18,12 +10,11 @@ import {
   TABS,
 } from '@/components/pages/customer/profile';
 import type { TabKey } from '@/components/pages/customer/profile';
+import CustomerHeader from '@/components/pages/customer/CustomerHeader';
 import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
-import { useAppThemeColors } from '@/constants/theme';
 
 export default function CustomerProfile() {
   const { screenStyles } = useCustomerProfileStyles();
-  const appColors = useAppThemeColors();
   const [activeTab, setActiveTab] = useState<TabKey>('Personal');
   const indicatorAnim = useRef(new Animated.Value(0)).current;
   const { user, logout } = useAuthStore();
@@ -38,10 +29,10 @@ export default function CustomerProfile() {
     }).start();
   };
 
-  const translateX = indicatorAnim.interpolate({
-    inputRange: [0, 1, 2],
-    outputRange: ['0%', '100%', '200%'],
-  });
+  // Percentage translateX isn't reliable in React Native, so measure the bar and
+  // move the pill by whole segments in points. The -2 accounts for the 1pt border.
+  const [segmentWidth, setSegmentWidth] = useState(0);
+  const translateX = Animated.multiply(indicatorAnim, segmentWidth);
 
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -58,22 +49,23 @@ export default function CustomerProfile() {
   };
 
   return (
-    <SafeAreaView style={screenStyles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={appColors.customerNeutral} />
-
-      <View style={screenStyles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={screenStyles.headerTitle}>Profile</Text>
-        <Text style={screenStyles.headerBrand}>FOODIE</Text>
-      </View>
+    <SafeAreaView style={screenStyles.safe} edges={['top']}>
+      <CustomerHeader />
 
       <View style={screenStyles.tabBarWrapper}>
-        <View style={screenStyles.tabBar}>
+        <View
+          style={screenStyles.tabBar}
+          onLayout={(e) => setSegmentWidth((e.nativeEvent.layout.width - 2) / TABS.length)}
+        >
+          {segmentWidth > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                screenStyles.tabIndicator,
+                { width: segmentWidth - 8, transform: [{ translateX }] },
+              ]}
+            />
+          )}
           {TABS.map((tab, i) => (
             <TouchableOpacity
               key={tab}
@@ -86,9 +78,6 @@ export default function CustomerProfile() {
               </Text>
             </TouchableOpacity>
           ))}
-          <Animated.View
-            style={[screenStyles.tabIndicator, { width: '33.33%', transform: [{ translateX }] }]}
-          />
         </View>
       </View>
 

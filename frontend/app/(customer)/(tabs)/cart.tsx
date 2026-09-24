@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, StatusBar, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCartStore, CartItem } from '@/stores/cartStore';
@@ -7,8 +7,8 @@ import { customerAPI } from '@/services/api/customer.api';
 import { paymentAPI } from '@/services/api/payment.api';
 import { payWithSafepay } from '@/services/safepay';
 import { Loader } from '@/components/atoms';
+import { useAppThemeColors } from '@/constants/theme';
 import {
-  NAV_COLOR,
   CartHeader,
   CartScreenHeading,
   CartEmptyState,
@@ -24,6 +24,10 @@ export default function CustomerCart() {
   const { cart, loading, fetchCart, updateQuantity, removeItem, clearCart, deliveryFee, tax, total } =
     useCartStore();
   const [checkoutVisible, setCheckoutVisible] = useState(false);
+  const c = useAppThemeColors();
+  // Header has no bar of its own; the safe area matches the body below it.
+  const emptySafe = [styles.safe, { backgroundColor: c.customerBodyBg }];
+  const filledSafe = [styles.safe, { backgroundColor: '#fff' }];
 
   useEffect(() => {
     fetchCart();
@@ -43,7 +47,7 @@ export default function CustomerCart() {
 
   if (loading && !cart) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={filledSafe} edges={['top']}>
         <View style={styles.loadingContainer}>
           <Loader />
         </View>
@@ -53,8 +57,7 @@ export default function CustomerCart() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <StatusBar barStyle="light-content" backgroundColor={NAV_COLOR} />
+      <SafeAreaView style={emptySafe} edges={['top']}>
         <CartHeader />
         <CartEmptyState onBrowseRestaurants={() => router.push('/(customer)/(tabs)/home')} />
       </SafeAreaView>
@@ -67,8 +70,7 @@ export default function CustomerCart() {
   const totalAmt = total();
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={NAV_COLOR} />
+    <SafeAreaView style={filledSafe} edges={['top']}>
 
       <CartHeader
         showClearAction
@@ -205,7 +207,6 @@ export default function CustomerCart() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: NAV_COLOR,
   },
   loadingContainer: {
     flex: 1,

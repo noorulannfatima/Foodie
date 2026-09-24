@@ -5,6 +5,10 @@ import { useDeliveryPreferencesStore } from '@/stores/deliveryPreferencesStore';
 
 type UserRole = 'customer' | 'restaurant' | 'delivery';
 
+// Auto-logout after this much inactivity. Kept in sync with InactivityProvider.
+const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+const LAST_ACTIVITY_KEY = 'lastActivityAt';
+
 interface User {
   id: string;
   email: string;
@@ -58,6 +62,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authAPI.login(email, password, role);
       await AsyncStorage.setItem('token', response.token);
       await AsyncStorage.setItem('userRole', role);
+      await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
       set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
@@ -71,6 +76,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authAPI.signup(data, role);
       await AsyncStorage.setItem('token', response.token);
       await AsyncStorage.setItem('userRole', role);
+      await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
       set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
@@ -81,6 +87,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('userRole');
+    await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
     useDeliveryPreferencesStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false });
   },
@@ -89,16 +96,32 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const token = await AsyncStorage.getItem('token');
-      if (token) {
-        const response = await authAPI.verifyToken();
-        set({ user: response.user, token, isAuthenticated: true, isLoading: false });
-      } else {
+      if (!token) {
         set({ isLoading: false });
+        return;
       }
+
+      // If the app has been idle past the inactivity limit, don't restore the
+      // session — treat it as logged out.
+      const lastActivityRaw = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
+      const lastActivity = lastActivityRaw ? parseInt(lastActivityRaw, 10) : 0;
+      if (lastActivity && Date.now() - lastActivity >= INACTIVITY_LIMIT_MS) {
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('userRole');
+        await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
+        useDeliveryPreferencesStore.getState().reset();
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        return;
+      }
+
+      const response = await authAPI.verifyToken();
+      await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      set({ user: response.user, token, isAuthenticated: true, isLoading: false });
     } catch {
       // Token invalid or expired — clear storage and reset state
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('userRole');
+      await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
       useDeliveryPreferencesStore.getState().reset();
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }

@@ -4,7 +4,6 @@ import {
   StyleSheet,
   ScrollView,
   FlatList,
-  StatusBar,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -106,7 +105,7 @@ export default function CustomerHome() {
       StyleSheet.create({
         safeArea: {
           flex: 1,
-          backgroundColor: themeColors.navBar,
+          backgroundColor: themeColors.customerSurface,
         },
         scroll: {
           flex: 1,
@@ -130,12 +129,11 @@ export default function CustomerHome() {
           height: 24,
         },
       }),
-    [themeColors.navBar, themeColors.customerBodyBg],
+    [themeColors.customerSurface, themeColors.customerBodyBg],
   );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={themeColors.navBar} />
       <CustomerHomeHeader />
 
       <ScrollView

@@ -54,33 +54,24 @@ export function useCustomerProfileStyles() {
     });
 
     const screenStyles = StyleSheet.create({
-      safe: { flex: 1, backgroundColor: Colors.neutral },
-      header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 12,
-        paddingBottom: 14,
-        backgroundColor: Colors.neutral,
-      },
-      headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
-      headerBrand: { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: 2 },
+      safe: { flex: 1, backgroundColor: Colors.background },
       tabBarWrapper: {
-        backgroundColor: Colors.neutral,
+        backgroundColor: Colors.background,
         paddingHorizontal: 16,
-        paddingBottom: 0,
+        paddingBottom: 14,
       },
       tabBar: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: Colors.surface,
+        borderWidth: 1,
+        borderColor: Colors.border,
         borderRadius: 12,
         overflow: 'hidden',
         position: 'relative',
         height: 44,
       },
-      tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-      tabLabel: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.55)' },
+      tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+      tabLabel: { fontSize: 14, fontWeight: '500', color: Colors.textSecondary },
       tabLabelActive: { color: '#fff', fontWeight: '700' },
       tabIndicator: {
         position: 'absolute',

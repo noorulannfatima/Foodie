@@ -7,7 +7,6 @@ import { useAppThemeColors, Fonts } from '@/constants/theme';
 import { Loader } from '@/components/atoms';
 import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
 import {
-  RestaurantDashboardHeader,
   KitchenOverviewHero,
   DashboardRevenueCard,
   DashboardStatBox,
@@ -76,14 +75,13 @@ export default function RestaurantDashboard() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <RestaurantDashboardHeader isActive={isActive} onToggleActive={(val) => toggleActive(val)} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={dashboardLoading} onRefresh={onRefresh} />}
         contentContainerStyle={styles.scrollContent}
       >
-        <KitchenOverviewHero />
+        <KitchenOverviewHero isActive={isActive} onToggleActive={(val) => toggleActive(val)} />
 
         <DashboardRevenueCard
           totalRevenue={today?.totalRevenue ?? 0}

@@ -49,20 +49,19 @@ function createStyles(c: AppColors) {
   return StyleSheet.create({
     searchHeader: {
       paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: c.border,
+      paddingTop: 16,
+      paddingBottom: 4,
     },
     searchInputContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: c.isDark ? c.card : '#F5F5F5',
+      backgroundColor: c.customerSurface,
       borderRadius: 12,
       paddingHorizontal: 14,
-      paddingVertical: 10,
+      paddingVertical: 12,
       gap: 10,
-      borderWidth: c.isDark ? 1 : 0,
-      borderColor: c.border,
+      borderWidth: 1,
+      borderColor: c.customerBorder,
     },
     searchInput: {
       flex: 1,
