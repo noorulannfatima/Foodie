@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import { restaurantAPI } from '@/services/api/restaurant.api';
+import {
+  withNotificationDefaults,
+  type NotificationPreferences,
+} from '@/components/pages/restaurant/profile/notificationPreferences';
 
 // ========== Types ==========
 
@@ -42,6 +46,7 @@ export interface RestaurantProfile {
   isVerified: boolean;
   isPremium: boolean;
   isBusy: boolean;
+  notificationPreferences?: NotificationPreferences;
 }
 
 interface DashboardStats {
@@ -164,6 +169,10 @@ interface RestaurantState {
   profile: RestaurantProfile | null;
   profileLoading: boolean;
 
+  // Notification preferences
+  notificationPreferences: NotificationPreferences | null;
+  notificationPreferencesLoading: boolean;
+
   // Orders
   orders: OrderItem[];
   ordersPagination: Pagination | null;
@@ -186,6 +195,10 @@ interface RestaurantState {
   toggleActive: (isActive: boolean) => Promise<void>;
   toggleBusy: (isBusy: boolean) => Promise<void>;
 
+  // Actions — Notification preferences
+  fetchNotificationPreferences: () => Promise<void>;
+  updateNotificationPreferences: (patch: Partial<NotificationPreferences>) => Promise<void>;
+
   // Actions — Orders
   fetchOrders: (params?: { status?: string; page?: number }) => Promise<void>;
   fetchOrderDetail: (orderId: string) => Promise<void>;
@@ -200,11 +213,13 @@ interface RestaurantState {
   toggleItemAvailability: (itemId: string, isAvailable: boolean) => Promise<void>;
 }
 
-export const useRestaurantStore = create<RestaurantState>((set) => ({
+export const useRestaurantStore = create<RestaurantState>((set, get) => ({
   dashboard: null,
   dashboardLoading: false,
   profile: null,
   profileLoading: false,
+  notificationPreferences: null,
+  notificationPreferencesLoading: false,
   orders: [],
   ordersPagination: null,
   ordersLoading: false,
@@ -271,6 +286,50 @@ export const useRestaurantStore = create<RestaurantState>((set) => ({
       }));
     } catch (error: any) {
       set({ error: error.message });
+    }
+  },
+
+  // ========== Notification Preferences ==========
+  fetchNotificationPreferences: async () => {
+    set({ notificationPreferencesLoading: true, error: null });
+    try {
+      const data = await restaurantAPI.getNotificationPreferences();
+      set({
+        notificationPreferences: withNotificationDefaults(data.preferences),
+        notificationPreferencesLoading: false,
+      });
+    } catch (error: any) {
+      set({ notificationPreferencesLoading: false, error: error.message });
+      throw error;
+    }
+  },
+
+  updateNotificationPreferences: async (patch) => {
+    // Optimistic: flip the switches immediately, roll back only the patched keys on failure
+    const previous = withNotificationDefaults(
+      get().notificationPreferences ?? get().profile?.notificationPreferences,
+    );
+    const rollback = Object.fromEntries(
+      Object.keys(patch).map((key) => [key, previous[key as keyof NotificationPreferences]]),
+    ) as Partial<NotificationPreferences>;
+
+    set((state) => ({
+      notificationPreferences: { ...withNotificationDefaults(state.notificationPreferences), ...patch },
+    }));
+
+    try {
+      const data = await restaurantAPI.updateNotificationPreferences(patch as Record<string, boolean>);
+      const preferences = withNotificationDefaults(data.preferences);
+      set((state) => ({
+        notificationPreferences: preferences,
+        profile: state.profile ? { ...state.profile, notificationPreferences: preferences } : null,
+      }));
+    } catch (error: any) {
+      set((state) => ({
+        notificationPreferences: { ...withNotificationDefaults(state.notificationPreferences), ...rollback },
+        error: error.message,
+      }));
+      throw error;
     }
   },
 

@@ -32,6 +32,12 @@ function toggle<T>(arr: T[], item: T): T[] {
   return arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item];
 }
 
+/** Keeps a deliberate 0 (e.g. free delivery) instead of treating it as empty. */
+function numberOr(value: string, fallback: number): number {
+  const n = Number(value.trim());
+  return value.trim() !== '' && Number.isFinite(n) ? n : fallback;
+}
+
 export default function RestaurantSignup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -88,10 +94,10 @@ export default function RestaurantSignup() {
           cuisineTypes,
           deliveryOptions,
           paymentMethods,
-          minimumOrder: Number(minimumOrder) || 100,
-          deliveryFee: Number(deliveryFee) || 50,
-          deliveryRadius: Number(deliveryRadius) || 5,
-          estimatedDeliveryTime: Number(estTime) || 30,
+          minimumOrder: numberOr(minimumOrder, 100),
+          deliveryFee: numberOr(deliveryFee, 50),
+          deliveryRadius: numberOr(deliveryRadius, 5),
+          estimatedDeliveryTime: numberOr(estTime, 30),
         } as any,
         'restaurant',
       );

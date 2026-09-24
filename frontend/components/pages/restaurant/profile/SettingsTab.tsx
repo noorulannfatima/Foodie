@@ -7,6 +7,7 @@ import {
   StyleSheet,
   RefreshControl,
   Switch,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, Fonts, tintBg } from '@/constants/theme';
@@ -14,6 +15,7 @@ import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 import { useAppThemeStore } from '@/stores/appThemeStore';
 import { useRestaurantStore } from '@/stores/restaurantStore';
 import StoreInformationModal from '@/components/organisms/StoreInformationModal';
+import NotificationPreferencesModal from './NotificationPreferencesModal';
 
 export interface SettingsTabProps {
   refreshing: boolean;
@@ -29,6 +31,7 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
   const profile = useRestaurantStore((s) => s.profile);
 
   const [storeInfoModalVisible, setStoreInfoModalVisible] = useState(false);
+  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -152,7 +155,11 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
           <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.settingsItem}
+          activeOpacity={0.85}
+          onPress={() => setNotificationsModalVisible(true)}
+        >
           <View
             style={[styles.settingsIcon, { backgroundColor: tintBg('#3B82F6', '#DBEAFE', isDark) }]}
           >
@@ -191,6 +198,15 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         currentDescription={profile?.description}
         currentImages={profile?.image}
       />
+
+      <Modal
+        visible={notificationsModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setNotificationsModalVisible(false)}
+      >
+        <NotificationPreferencesModal onClose={() => setNotificationsModalVisible(false)} />
+      </Modal>
     </>
   );
 }

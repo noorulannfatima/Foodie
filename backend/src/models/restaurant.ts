@@ -1,6 +1,36 @@
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 
+export const RESTAURANT_NOTIFICATION_KEYS = [
+  // Channels
+  "push",
+  "email",
+  "sms",
+  // Alert categories
+  "newOrders",
+  "orderCancellations",
+  "reviews",
+  "payouts",
+  "weeklySummary",
+  "marketing",
+] as const;
+
+export type RestaurantNotificationKey = (typeof RESTAURANT_NOTIFICATION_KEYS)[number];
+
+export type RestaurantNotificationPreferences = Record<RestaurantNotificationKey, boolean>;
+
+export const DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES: RestaurantNotificationPreferences = {
+  push: true,
+  email: true,
+  sms: false,
+  newOrders: true,
+  orderCancellations: true,
+  reviews: true,
+  payouts: true,
+  weeklySummary: true,
+  marketing: false,
+};
+
 export interface IRestaurant extends Document {
   // Basic Information
   name: string;
@@ -74,6 +104,9 @@ export interface IRestaurant extends Document {
   isVerified: boolean;
   isPremium: boolean;
   isBusy: boolean; // Temporarily not accepting orders
+  
+  // Notification Preferences
+  notificationPreferences: RestaurantNotificationPreferences;
   
   // Timestamps
   createdAt: Date;
@@ -338,20 +371,22 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
     minimumOrder: {
       type: Number,
       default: 100,
-      min: 0,
+      min: [0, "Minimum order cannot be negative"],
+      max: [100000, "Minimum order cannot exceed Rs. 100,000"],
     },
     
     deliveryFee: {
       type: Number,
       default: 50,
-      min: 0,
+      min: [0, "Delivery fee cannot be negative"],
+      max: [10000, "Delivery fee cannot exceed Rs. 10,000"],
     },
     
     estimatedDeliveryTime: {
       type: Number,
       default: 30,
-      min: 10,
-      max: 120,
+      min: [10, "Estimated delivery time must be at least 10 minutes"],
+      max: [120, "Estimated delivery time cannot exceed 120 minutes"],
     },
     
     // ========== Business Metrics ==========
@@ -387,6 +422,14 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
       type: Boolean,
       default: false,
     },
+    
+    // ========== Notification Preferences ==========
+    notificationPreferences: Object.fromEntries(
+      RESTAURANT_NOTIFICATION_KEYS.map((key) => [
+        key,
+        { type: Boolean, default: DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES[key] },
+      ])
+    ),
   },
   {
     timestamps: true,

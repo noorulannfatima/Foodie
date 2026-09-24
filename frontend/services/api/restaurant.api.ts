@@ -53,6 +53,23 @@ export const restaurantAPI = {
     return handleResponse(res);
   },
 
+  // ========== Notification Preferences ==========
+  getNotificationPreferences: async () => {
+    const res = await fetch(`${BASE_URL}/restaurant/notification-preferences`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  updateNotificationPreferences: async (data: Record<string, boolean>) => {
+    const res = await fetch(`${BASE_URL}/restaurant/notification-preferences`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   // ========== Orders ==========
   getOrders: async (params?: { status?: string; page?: number; limit?: number }) => {
     const query = new URLSearchParams();

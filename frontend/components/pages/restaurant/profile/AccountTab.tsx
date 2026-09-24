@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
@@ -22,6 +22,7 @@ export interface AccountTabProps {
   refreshing: boolean;
   onRefresh: () => void;
   onUpdatePaymentMethods: (methods: string[]) => void;
+  onEditDeliverySettings: () => void;
 }
 
 export default function AccountTab({
@@ -29,6 +30,7 @@ export default function AccountTab({
   refreshing,
   onRefresh,
   onUpdatePaymentMethods,
+  onEditDeliverySettings,
 }: AccountTabProps) {
   const { screenStyles } = useRestaurantProfileStyles();
   const c = useAppThemeColors();
@@ -51,10 +53,26 @@ export default function AccountTab({
           marginBottom: 16,
         },
         cardTitle: {
+          flex: 1,
           fontFamily: Fonts.brandBold,
           fontSize: 12,
           color: c.muted,
           letterSpacing: 1,
+        },
+        editBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: c.border,
+        },
+        editBtnText: {
+          fontFamily: Fonts.brandBold,
+          fontSize: 12,
+          color: c.text,
         },
         settingRow: {
           flexDirection: 'row',
@@ -107,6 +125,16 @@ export default function AccountTab({
         <View style={styles.cardHeader}>
           <Ionicons name="bicycle-outline" size={18} color={c.primary} />
           <Text style={styles.cardTitle}>DELIVERY SETTINGS</Text>
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={onEditDeliverySettings}
+            accessibilityRole="button"
+            accessibilityLabel="Edit delivery settings"
+            hitSlop={8}
+          >
+            <Ionicons name="create-outline" size={14} color={c.text} />
+            <Text style={styles.editBtnText}>Edit</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.settingRow}>
           <Text style={styles.settingLabel}>Delivery Radius</Text>
@@ -118,7 +146,9 @@ export default function AccountTab({
         </View>
         <View style={styles.settingRow}>
           <Text style={styles.settingLabel}>Delivery Fee</Text>
-          <Text style={styles.settingValue}>{formatProfileCurrency(profile.deliveryFee)}</Text>
+          <Text style={styles.settingValue}>
+            {profile.deliveryFee === 0 ? 'Free' : formatProfileCurrency(profile.deliveryFee)}
+          </Text>
         </View>
         <View style={styles.settingRow}>
           <Text style={styles.settingLabel}>Estimated Time</Text>

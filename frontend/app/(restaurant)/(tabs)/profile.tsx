@@ -12,6 +12,8 @@ import {
   AccountTab,
   SettingsTab,
   OperatingHoursModal,
+  DeliverySettingsModal,
+  type DeliverySettings,
   type RestaurantProfileTabKey,
 } from '@/components/pages/restaurant/profile';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
@@ -22,6 +24,7 @@ export default function RestaurantProfile() {
   const { logout } = useAuthStore();
   const { profile, profileLoading, fetchProfile, updateProfile } = useRestaurantStore();
   const [hoursModalVisible, setHoursModalVisible] = useState(false);
+  const [deliveryModalVisible, setDeliveryModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<RestaurantProfileTabKey>('General');
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
@@ -41,6 +44,12 @@ export default function RestaurantProfile() {
       tension: 80,
       friction: 10,
     }).start();
+  };
+
+  const handleSaveDeliverySettings = async (settings: DeliverySettings) => {
+    // Errors propagate to the modal so it can show them inline and stay open
+    await updateProfile(settings);
+    setDeliveryModalVisible(false);
   };
 
   const handleLogout = () => {
@@ -103,6 +112,7 @@ export default function RestaurantProfile() {
           refreshing={profileLoading}
           onRefresh={onRefresh}
           onUpdatePaymentMethods={(methods) => updateProfile({ paymentMethods: methods })}
+          onEditDeliverySettings={() => setDeliveryModalVisible(true)}
         />
       )}
       {activeTab === 'Settings' && (
@@ -122,6 +132,24 @@ export default function RestaurantProfile() {
               Alert.alert('Error', message);
             }
           }}
+        />
+      </Modal>
+
+      <Modal
+        visible={deliveryModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setDeliveryModalVisible(false)}
+      >
+        <DeliverySettingsModal
+          settings={{
+            deliveryRadius: profile.deliveryRadius,
+            minimumOrder: profile.minimumOrder,
+            deliveryFee: profile.deliveryFee,
+            estimatedDeliveryTime: profile.estimatedDeliveryTime,
+          }}
+          onClose={() => setDeliveryModalVisible(false)}
+          onSave={handleSaveDeliverySettings}
         />
       </Modal>
     </View>

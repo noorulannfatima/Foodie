@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { requireRole } from '../middleware/requireRole';
 import {
   getDashboard,
   getProfile,
   updateProfile,
   updateStatus,
+  getNotificationPreferences,
+  updateNotificationPreferences,
   getOrders,
   getOrderDetail,
   updateOrderStatus,
@@ -18,8 +21,9 @@ import {
 
 const router = Router();
 
-// All routes require authentication
+// All routes require an authenticated restaurant account
 router.use(authMiddleware);
+router.use(requireRole('restaurant'));
 
 // Dashboard
 router.get('/dashboard', getDashboard);
@@ -28,6 +32,10 @@ router.get('/dashboard', getDashboard);
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.put('/status', updateStatus);
+
+// Notification preferences
+router.get('/notification-preferences', getNotificationPreferences);
+router.patch('/notification-preferences', updateNotificationPreferences);
 
 // Orders
 router.get('/orders', getOrders);

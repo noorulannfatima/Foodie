@@ -1,6 +1,11 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import Restaurant from '../models/restaurant';
+import Restaurant, {
+  RESTAURANT_NOTIFICATION_KEYS,
+  DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES,
+  type RestaurantNotificationKey,
+  type RestaurantNotificationPreferences,
+} from '../models/restaurant';
 import Menu from '../models/menu';
 import Order from '../models/order';
 
@@ -109,6 +114,10 @@ export async function getProfile(req: AuthRequest, res: Response): Promise<void>
   }
 }
 
+const NUMERIC_PROFILE_FIELDS = [
+  'deliveryRadius', 'minimumOrder', 'deliveryFee', 'estimatedDeliveryTime',
+] as const;
+
 /**
  * PUT /restaurant/profile
  */
@@ -128,6 +137,14 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
       }
     }
 
+    // Mongoose would silently coerce "", null or "12abc"; reject anything that isn't a real number
+    for (const field of NUMERIC_PROFILE_FIELDS) {
+      if (updates[field] !== undefined && (typeof updates[field] !== 'number' || !Number.isFinite(updates[field]))) {
+        res.status(400).json({ message: `${field} must be a number` });
+        return;
+      }
+    }
+
     const restaurant = await Restaurant.findByIdAndUpdate(
       req.user!.id,
       { $set: updates },
@@ -144,6 +161,10 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((e: any) => e.message);
       res.status(400).json({ message: messages.join(', ') });
+      return;
+    }
+    if (error.name === 'CastError') {
+      res.status(400).json({ message: `Invalid value for ${error.path}` });
       return;
     }
     console.error('Update profile error:', error);
@@ -180,6 +201,85 @@ export async function updateStatus(req: AuthRequest, res: Response): Promise<voi
   } catch (error) {
     console.error('Update status error:', error);
     res.status(500).json({ message: 'Server error updating status' });
+  }
+}
+
+// ========== Notification Preferences ==========
+
+/** Fills any keys missing on older documents with their defaults. */
+function normalizeNotificationPreferences(prefs: any): RestaurantNotificationPreferences {
+  const normalized = { ...DEFAULT_RESTAURANT_NOTIFICATION_PREFERENCES };
+  for (const key of RESTAURANT_NOTIFICATION_KEYS) {
+    if (typeof prefs?.[key] === 'boolean') normalized[key] = prefs[key];
+  }
+  return normalized;
+}
+
+/**
+ * GET /restaurant/notification-preferences
+ */
+export async function getNotificationPreferences(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const restaurant = await Restaurant.findById(req.user!.id).select('notificationPreferences').lean();
+    if (!restaurant) {
+      res.status(404).json({ message: 'Restaurant not found' });
+      return;
+    }
+    res.json({ preferences: normalizeNotificationPreferences(restaurant.notificationPreferences) });
+  } catch (error) {
+    console.error('Get notification preferences error:', error);
+    res.status(500).json({ message: 'Server error fetching notification preferences' });
+  }
+}
+
+/**
+ * PATCH /restaurant/notification-preferences
+ * Body: any subset of the preference keys, each a boolean
+ */
+export async function updateNotificationPreferences(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+
+    const unknownKeys = Object.keys(body).filter(
+      (key) => !RESTAURANT_NOTIFICATION_KEYS.includes(key as RestaurantNotificationKey)
+    );
+    if (unknownKeys.length) {
+      res.status(400).json({ message: `Unknown preference: ${unknownKeys.join(', ')}` });
+      return;
+    }
+
+    const set: Record<string, boolean> = {};
+    for (const key of RESTAURANT_NOTIFICATION_KEYS) {
+      if (body[key] === undefined) continue;
+      if (typeof body[key] !== 'boolean') {
+        res.status(400).json({ message: `${key} must be true or false` });
+        return;
+      }
+      set[`notificationPreferences.${key}`] = body[key] as boolean;
+    }
+
+    if (Object.keys(set).length === 0) {
+      res.status(400).json({ message: 'Provide at least one preference field' });
+      return;
+    }
+
+    const restaurant = await Restaurant.findByIdAndUpdate(
+      req.user!.id,
+      { $set: set },
+      { returnDocument: 'after' }
+    )
+      .select('notificationPreferences')
+      .lean();
+
+    if (!restaurant) {
+      res.status(404).json({ message: 'Restaurant not found' });
+      return;
+    }
+
+    res.json({ preferences: normalizeNotificationPreferences(restaurant.notificationPreferences) });
+  } catch (error) {
+    console.error('Update notification preferences error:', error);
+    res.status(500).json({ message: 'Server error updating notification preferences' });
   }
 }
 
