@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
-
-const localhost = Constants.expoConfig?.hostUri?.split(':')[0];
-const BASE_URL = `http://${localhost}:5000`;
+import { API_BASE_URL as BASE_URL } from './baseUrl';
+import type { RestaurantReviewsResponse } from './review.types';
 
 async function getAuthHeaders() {
   const token = await AsyncStorage.getItem('token');
@@ -22,6 +20,14 @@ export const restaurantAPI = {
   // ========== Dashboard ==========
   getDashboard: async () => {
     const res = await fetch(`${BASE_URL}/restaurant/dashboard`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  // ========== Reviews ==========
+  getReviews: async (page = 1, limit = 20): Promise<RestaurantReviewsResponse> => {
+    const res = await fetch(`${BASE_URL}/restaurant/reviews?page=${page}&limit=${limit}`, {
       headers: await getAuthHeaders(),
     });
     return handleResponse(res);

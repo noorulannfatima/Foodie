@@ -109,7 +109,7 @@ export function getRestaurantPushRoute(data: unknown) {
     case 'order_cancelled':
       return '/(restaurant)/(tabs)/orders' as const;
     case 'new_review':
-      return '/(restaurant)/(tabs)/dashboard' as const;
+      return '/(restaurant)/reviews' as const;
     default:
       return null;
   }

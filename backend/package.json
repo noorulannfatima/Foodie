@@ -5,6 +5,7 @@
     "start": "node dist/server.js",
     "migrate:images": "ts-node src/scripts/migrateImagesToCloudinary.ts",
     "recalculate:ratings": "ts-node src/scripts/recalculateRatings.ts",
+    "seed:beefhouse": "ts-node src/scripts/seedBeefHouseOrders.ts",
     "test": "jest"
   },
   "dependencies": {

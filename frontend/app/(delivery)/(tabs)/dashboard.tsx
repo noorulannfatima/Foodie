@@ -11,13 +11,15 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import DeliveryHeader from '@/components/delivery/DeliveryHeader';
 import { DeliveryLayout, getDeliveryTabTheme, type DeliveryTabTheme } from '@/constants/deliveryTheme';
 import { deliveryAPI, type DeliveryProfile, type DeliveryOrderPayload } from '@/services/api/delivery.api';
 import { useAppThemeStore } from '@/stores/appThemeStore';
+import { RecentReviewsSection, type RecentReview } from '@/components/pages/reviews';
+import { getDeliveryReviewPalette } from '@/constants/deliveryReviewPalette';
 
 function fmtUsd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -30,10 +32,13 @@ export default function DeliveryDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [onlineBusy, setOnlineBusy] = useState(false);
   const [orderActionBusy, setOrderActionBusy] = useState(false);
+  const [recentReviews, setRecentReviews] = useState<RecentReview[] | null>(null);
+  const router = useRouter();
 
   const isDark = useAppThemeStore((s) => s.isDark);
   const theme = useMemo(() => getDeliveryTabTheme(isDark), [isDark]); // same palette factory as Profile / other delivery tabs
   const styles = useMemo(() => createDashboardStyles(theme), [theme]);
+  const reviewPalette = useMemo(() => getDeliveryReviewPalette(theme), [theme]);
   const mapMockGradient = useMemo(
     () =>
       (theme.isDark
@@ -42,6 +47,7 @@ export default function DeliveryDashboard() {
     [theme.isDark],
   );
   const statTimeBg = theme.isDark ? 'rgba(166,124,82,0.28)' : '#F5E6D3';
+  const statRatingBg = theme.isDark ? 'rgba(245,158,11,0.22)' : '#FEF3C7';
 
   const load = useCallback(async () => {
     try {
@@ -57,6 +63,19 @@ export default function DeliveryDashboard() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+
+    // Separate so a reviews failure never blanks the rest of the dashboard
+    try {
+      const res = await deliveryAPI.getReviews(1, 3);
+      setRecentReviews(
+        res.reviews.map((r) => ({
+          ...r,
+          title: r.orderNumber ? `Order #${r.orderNumber}` : undefined,
+        })),
+      );
+    } catch {
+      /* section stays hidden */
     }
   }, []);
 
@@ -179,6 +198,24 @@ export default function DeliveryDashboard() {
             <Text style={styles.statLabel}>Online Time</Text>
             <Text style={styles.statVal}>{profile?.isOnline ? onlineLabel : '—'}</Text>
           </View>
+          <Pressable
+            style={styles.statCard}
+            onPress={() => router.push('/(delivery)/reviews')}
+            accessibilityRole="button"
+            accessibilityLabel={
+              profile?.stats.totalRatings
+                ? `Rating ${profile.stats.averageRating.toFixed(1)} from ${profile.stats.totalRatings} ratings. View ratings`
+                : 'No ratings yet. View ratings'
+            }
+          >
+            <View style={[styles.statIcon, { backgroundColor: statRatingBg }]}>
+              <Ionicons name="star" size={22} color="#F59E0B" />
+            </View>
+            <Text style={styles.statLabel}>Rating</Text>
+            <Text style={styles.statVal}>
+              {loading || !profile?.stats.totalRatings ? '—' : profile.stats.averageRating.toFixed(1)}
+            </Text>
+          </Pressable>
         </View>
 
         <View style={styles.sectionHead}>
@@ -250,6 +287,13 @@ export default function DeliveryDashboard() {
             <Text style={styles.emptySub}>Go online and accept an order from the Orders tab.</Text>
           </View>
         )}
+
+        <RecentReviewsSection
+          reviews={recentReviews}
+          onSeeAll={() => router.push('/(delivery)/reviews')}
+          palette={reviewPalette}
+          titleStyle={styles.sectionTitle}
+        />
 
         <View style={styles.bonusCard}>
           <Text style={styles.bonusFlame}>🔥</Text>

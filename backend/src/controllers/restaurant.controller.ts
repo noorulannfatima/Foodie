@@ -99,6 +99,8 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
 
 /**
  * GET /restaurant/profile
+ * `totalOrders` is counted live (all orders except cancelled ones); the stored
+ * field on the restaurant document is never incremented.
  */
 export async function getProfile(req: AuthRequest, res: Response): Promise<void> {
   try {
@@ -107,7 +109,11 @@ export async function getProfile(req: AuthRequest, res: Response): Promise<void>
       res.status(404).json({ message: 'Restaurant not found' });
       return;
     }
-    res.json({ restaurant });
+    const totalOrders = await Order.countDocuments({
+      restaurant: restaurant._id,
+      status: { $ne: 'Cancelled' },
+    });
+    res.json({ restaurant: { ...restaurant.toJSON(), totalOrders } });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Server error fetching profile' });

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { customerAPI } from '@/services/api/customer.api';
+import ReviewModal, { type ReviewableOrder } from '@/components/organisms/Modals/ReviewModal';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 // Visual stepper collapses the 8-state backend lifecycle into 4 phases the
@@ -64,6 +65,12 @@ export default function OrderStatusScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Full order (dishes + review state), loaded once the order is delivered
+  const [reviewOrder, setReviewOrder] = useState<(ReviewableOrder & { isReviewed: boolean }) | null>(
+    null,
+  );
+  const [reviewOpen, setReviewOpen] = useState(false);
+
   const pulse = useRef(new Animated.Value(1)).current;
   const lastStatus = useRef<string | null>(null);
 
@@ -101,6 +108,29 @@ export default function OrderStatusScreen() {
       clearInterval(handle);
     };
   }, [id]);
+
+  const isDelivered = data?.status === 'Delivered';
+
+  useEffect(() => {
+    if (!id || !isDelivered) return;
+    let cancelled = false;
+    customerAPI
+      .getOrderDetail(id)
+      .then((res: { order: ReviewableOrder & { isReviewed: boolean } }) => {
+        if (!cancelled) setReviewOrder(res.order);
+      })
+      .catch(() => {
+        // The rate button just stays hidden; the order status itself still shows
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isDelivered]);
+
+  const onReviewSubmitted = () => {
+    setReviewOpen(false);
+    setReviewOrder((prev) => (prev ? { ...prev, isReviewed: true } : prev));
+  };
 
   const current = data ? phaseFor(data.status) : 'placed';
   const currentIndex = current === 'cancelled' ? -1 : PHASES.findIndex((p) => p.key === current);
@@ -206,6 +236,20 @@ export default function OrderStatusScreen() {
               </View>
             )}
 
+            {current === 'delivered' && reviewOrder ? (
+              reviewOrder.isReviewed ? (
+                <View style={styles.reviewedRow}>
+                  <Ionicons name="checkmark-circle" size={18} color="#15803D" />
+                  <Text style={styles.reviewedText}>Thanks for your review</Text>
+                </View>
+              ) : (
+                <TouchableOpacity style={styles.rateBtn} onPress={() => setReviewOpen(true)}>
+                  <Ionicons name="star" size={18} color={c.primary} />
+                  <Text style={styles.rateBtnText}>Rate your order</Text>
+                </TouchableOpacity>
+              )
+            ) : null}
+
             <TouchableOpacity
               style={styles.primaryBtn}
               onPress={() => router.replace('/(customer)/(tabs)/home')}
@@ -222,6 +266,13 @@ export default function OrderStatusScreen() {
           </>
         ) : null}
       </ScrollView>
+
+      <ReviewModal
+        visible={reviewOpen}
+        order={reviewOrder}
+        onClose={() => setReviewOpen(false)}
+        onSubmitted={onReviewSubmitted}
+      />
     </SafeAreaView>
   );
 }
@@ -379,6 +430,36 @@ function createStyles(c: AppColors) {
       fontSize: 13,
       color: c.muted,
       textAlign: 'center',
+    },
+    rateBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: c.customerSurface,
+      borderWidth: 1.5,
+      borderColor: c.primary,
+      borderRadius: 14,
+      paddingVertical: 15,
+      marginBottom: 10,
+    },
+    rateBtnText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: c.primary,
+    },
+    reviewedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 12,
+      marginBottom: 10,
+    },
+    reviewedText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 14,
+      color: c.text,
     },
     primaryBtn: {
       backgroundColor: c.secondary,

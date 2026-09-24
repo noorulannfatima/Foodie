@@ -1,6 +1,5 @@
 export { getDashboardGreeting } from './getDashboardGreeting';
 export { default as KitchenOverviewHero } from './KitchenOverviewHero';
 export { default as DashboardRevenueCard } from './DashboardRevenueCard';
-export { default as DashboardStatBox } from './DashboardStatBox';
 export { default as DashboardRecentOrderCard } from './DashboardRecentOrderCard';
 export { default as DashboardRecentOrdersEmpty } from './DashboardRecentOrdersEmpty';

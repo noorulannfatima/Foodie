@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
-
-const localhost = Constants.expoConfig?.hostUri?.split(':')[0];
-const BASE_URL = `http://${localhost}:5000`;
+import { API_BASE_URL as BASE_URL } from './baseUrl';
+import type { SubmitReviewBody } from './review.types';
 
 async function getAuthHeaders() {
   const token = await AsyncStorage.getItem('token');
@@ -14,7 +12,10 @@ async function getAuthHeaders() {
 
 async function handleResponse(res: Response) {
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Request failed');
+  if (!res.ok) {
+    // `status` lets callers tell e.g. "already reviewed" (409) apart from other failures
+    throw Object.assign(new Error(data.message || 'Request failed'), { status: res.status });
+  }
   return data;
 }
 
@@ -146,15 +147,15 @@ export const customerAPI = {
     return handleResponse(res);
   },
 
-  /** Rate a delivered order. All three ratings (1-5) are required. */
-  rateOrder: async (
-    orderId: string,
-    ratings: { restaurant: number; delivery: number; food: number; comment?: string },
-  ) => {
-    const res = await fetch(`${BASE_URL}/api/customer/orders/${orderId}/rate`, {
+  /**
+   * Review a delivered order: every distinct dish once, plus the rider if the
+   * order had one. One review per order; it can't be edited afterwards.
+   */
+  submitReview: async (orderId: string, body: SubmitReviewBody) => {
+    const res = await fetch(`${BASE_URL}/api/customer/orders/${orderId}/review`, {
       method: 'POST',
       headers: await getAuthHeaders(),
-      body: JSON.stringify(ratings),
+      body: JSON.stringify(body),
     });
     return handleResponse(res);
   },

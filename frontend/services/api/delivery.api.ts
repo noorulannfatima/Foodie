@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import type { DeliveryLanguage } from '@/stores/deliveryPreferencesStore';
+import type { DeliveryReviewsResponse } from './review.types';
 
 export type DeliveryPreferences = {
   darkMode: boolean;
@@ -129,6 +130,13 @@ export const deliveryAPI = {
     const { data } = await apiClient.get<{ orders: DeliveryOrderPayload[] }>(
       '/api/delivery/orders/history',
     );
+    return data;
+  },
+
+  async getReviews(page = 1, limit = 20): Promise<DeliveryReviewsResponse> {
+    const { data } = await apiClient.get<DeliveryReviewsResponse>('/api/delivery/reviews', {
+      params: { page, limit },
+    });
     return data;
   },
 

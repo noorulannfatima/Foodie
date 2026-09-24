@@ -1,6 +1,6 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
@@ -9,16 +9,30 @@ import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/re
 import {
   KitchenOverviewHero,
   DashboardRevenueCard,
-  DashboardStatBox,
   DashboardRecentOrderCard,
   DashboardRecentOrdersEmpty,
 } from '@/components/pages/restaurant/dashboard';
+import { RecentReviewsSection, type RecentReview } from '@/components/pages/reviews';
+import type { ReviewPalette } from '@/components/molecules/ReviewCard/ReviewCard';
+import { restaurantAPI } from '@/services/api/restaurant.api';
 
 export default function RestaurantDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const Colors = useAppThemeColors();
   const { dashboard, dashboardLoading, fetchDashboard, toggleActive } = useRestaurantStore();
+  const [recentReviews, setRecentReviews] = useState<RecentReview[] | null>(null);
+
+  const reviewPalette = useMemo<ReviewPalette>(
+    () => ({
+      card: Colors.card,
+      text: Colors.text,
+      muted: Colors.muted,
+      border: Colors.border,
+      accent: Colors.primary,
+    }),
+    [Colors],
+  );
 
   const styles = useMemo(
     () =>
@@ -37,11 +51,6 @@ export default function RestaurantDashboard() {
           padding: 20,
           paddingBottom: 40,
         },
-        statsGrid: {
-          flexDirection: 'row',
-          gap: 12,
-          marginBottom: 12,
-        },
         sectionTitle: {
           fontFamily: Fonts.brandBlack,
           fontSize: 20,
@@ -52,13 +61,22 @@ export default function RestaurantDashboard() {
     [Colors],
   );
 
-  useEffect(() => {
-    fetchDashboard();
+  const fetchRecentReviews = useCallback(async () => {
+    try {
+      const res = await restaurantAPI.getReviews(1, 3);
+      setRecentReviews(res.reviews.map((r) => ({ ...r, title: r.dishName })));
+    } catch {
+      // The section stays hidden; the rest of the dashboard still works
+    }
   }, []);
 
   const onRefresh = useCallback(() => {
     fetchDashboard();
-  }, [fetchDashboard]);
+    fetchRecentReviews();
+  }, [fetchDashboard, fetchRecentReviews]);
+
+  // Refetch whenever the tab regains focus, so new orders and reviews show up
+  useFocusEffect(onRefresh);
 
   if (dashboardLoading && !dashboard) {
     return (
@@ -92,40 +110,6 @@ export default function RestaurantDashboard() {
           formatCurrency={formatRestaurantCurrency}
         />
 
-        <View style={styles.statsGrid}>
-          <DashboardStatBox
-            label="ACTIVE ORDERS"
-            value={String(
-              (today?.pendingCount ?? 0) + (today?.preparingCount ?? 0) + (today?.readyCount ?? 0),
-            )}
-            icon="receipt-outline"
-            sublabel={`${today?.preparingCount ?? 0} preparing`}
-          />
-          <DashboardStatBox
-            label="READY FOR PICKUP"
-            value={String(today?.readyCount ?? 0)}
-            icon="bag-check-outline"
-            sublabel="Awaiting pickup"
-          />
-        </View>
-
-        <View style={styles.statsGrid}>
-          <DashboardStatBox
-            label="RATING"
-            value={String(restaurant?.averageRating?.toFixed(1) ?? '0.0')}
-            icon="star"
-            sublabel={`${restaurant?.totalReviews ?? 0} reviews`}
-            iconColor="#F59E0B"
-          />
-          <DashboardStatBox
-            label="PENDING"
-            value={String(today?.pendingCount ?? 0)}
-            icon="time-outline"
-            sublabel="Need attention"
-            iconColor={Colors.primary}
-          />
-        </View>
-
         <Text style={styles.sectionTitle}>Recent Orders</Text>
         {dashboard?.recentOrders && dashboard.recentOrders.length > 0 ? (
           dashboard.recentOrders.map((order: OrderItem) => (
@@ -140,6 +124,13 @@ export default function RestaurantDashboard() {
         ) : (
           <DashboardRecentOrdersEmpty />
         )}
+
+        <RecentReviewsSection
+          reviews={recentReviews}
+          onSeeAll={() => router.push('/(restaurant)/reviews')}
+          palette={reviewPalette}
+          titleStyle={styles.sectionTitle}
+        />
       </ScrollView>
     </View>
   );

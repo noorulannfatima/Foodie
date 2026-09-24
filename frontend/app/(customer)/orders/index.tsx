@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { customerAPI } from '@/services/api/customer.api';
+import ReviewModal from '@/components/organisms/Modals/ReviewModal';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 interface OrderListItem {
@@ -22,8 +23,10 @@ interface OrderListItem {
   createdAt: string;
   status: string;
   pricing: { total: number };
-  items: Array<{ name: string; quantity: number; price: number }>;
+  items: Array<{ menuItem: string; name: string; quantity: number; price: number }>;
   restaurant?: { name?: string; logo?: string };
+  deliveryPerson?: { name?: string } | null;
+  isReviewed: boolean;
 }
 
 function statusTone(status: string, c: AppColors): { bg: string; fg: string } {
@@ -63,6 +66,7 @@ export default function OrderHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<OrderListItem | null>(null);
   const fade = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(async () => {
@@ -91,6 +95,12 @@ export default function OrderHistoryScreen() {
     setRefreshing(true);
     fade.setValue(0);
     load();
+  };
+
+  const onReviewSubmitted = () => {
+    const reviewedId = reviewing?._id;
+    setReviewing(null);
+    setOrders((prev) => prev.map((o) => (o._id === reviewedId ? { ...o, isReviewed: true } : o)));
   };
 
   const renderItem = ({ item }: { item: OrderListItem }) => {
@@ -126,6 +136,26 @@ export default function OrderHistoryScreen() {
           <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
           <Text style={styles.totalText}>{formatPKR(item.pricing.total)}</Text>
         </View>
+
+        {item.status === 'Delivered' ? (
+          <View style={styles.reviewRow}>
+            {item.isReviewed ? (
+              <View style={styles.reviewedChip}>
+                <Ionicons name="star" size={12} color="#15803D" />
+                <Text style={styles.reviewedChipText}>Reviewed</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.rateBtn}
+                onPress={() => setReviewing(item)}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Ionicons name="star-outline" size={14} color={c.primary} />
+                <Text style={styles.rateBtnText}>Rate</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : null}
       </TouchableOpacity>
     );
   };
@@ -176,6 +206,13 @@ export default function OrderHistoryScreen() {
           />
         </Animated.View>
       )}
+
+      <ReviewModal
+        visible={!!reviewing}
+        order={reviewing}
+        onClose={() => setReviewing(null)}
+        onSubmitted={onReviewSubmitted}
+      />
     </SafeAreaView>
   );
 }
@@ -257,6 +294,43 @@ function createStyles(c: AppColors) {
       fontFamily: Fonts.brandBold,
       fontSize: 15,
       color: c.text,
+    },
+    reviewRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      marginTop: 12,
+      paddingTop: 12,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.border,
+    },
+    rateBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: c.primary,
+    },
+    rateBtnText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      color: c.primary,
+    },
+    reviewedChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 999,
+      backgroundColor: '#DCFCE7',
+    },
+    reviewedChipText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 11,
+      color: '#15803D',
     },
     center: {
       flex: 1,

@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, Modal, Alert, Animated } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore } from '@/stores/restaurantStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,13 +28,12 @@ export default function RestaurantProfile() {
   const [activeTab, setActiveTab] = useState<RestaurantProfileTabKey>('General');
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
   const onRefresh = useCallback(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  // Refetch whenever the tab regains focus, so rating and order counts stay current
+  useFocusEffect(onRefresh);
 
   const handleTabPress = (tab: RestaurantProfileTabKey, index: number) => {
     setActiveTab(tab);

@@ -94,7 +94,8 @@ function createStyles(c: AppColors) {
     },
     menuCardImage: {
       width: '100%',
-      height: 180,
+      // Same ratio menu photos are cropped to on upload, so nothing is cut off
+      aspectRatio: 16 / 9,
       resizeMode: 'cover',
     },
     menuCardBody: {

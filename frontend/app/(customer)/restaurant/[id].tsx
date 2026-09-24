@@ -41,6 +41,8 @@ interface MenuItemData {
   preparationTime: number;
   calories?: number;
   isAvailable: boolean;
+  averageRating: number;
+  ratingCount: number;
 }
 
 interface MenuCategory {
@@ -254,6 +256,18 @@ export default function RestaurantDetailScreen() {
                         {formatCurrency(item.discountedPrice || item.price)}
                       </Text>
                     </View>
+
+                    {item.ratingCount > 0 && (
+                      <View
+                        style={styles.menuItemRating}
+                        accessible
+                        accessibilityLabel={`Rated ${item.averageRating.toFixed(1)} out of 5 from ${item.ratingCount} review${item.ratingCount === 1 ? '' : 's'}`}
+                      >
+                        <Ionicons name="star" size={12} color="#FFA94D" />
+                        <Text style={styles.menuItemRatingValue}>{item.averageRating.toFixed(1)}</Text>
+                        <Text style={styles.menuItemRatingCount}>({item.ratingCount})</Text>
+                      </View>
+                    )}
 
                     <Text style={styles.menuItemDesc} numberOfLines={2}>
                       {item.description}
@@ -489,7 +503,8 @@ function createRestaurantDetailStyles(c: AppColors) {
   },
   menuItemImage: {
     width: '100%',
-    height: 160,
+    // Same ratio menu photos are cropped to on upload, so nothing is cut off
+    aspectRatio: 16 / 9,
     resizeMode: 'cover',
   },
   menuItemBody: {
@@ -512,6 +527,22 @@ function createRestaurantDetailStyles(c: AppColors) {
     fontFamily: Fonts.brandBold,
     fontSize: 16,
     color: c.primary,
+  },
+  menuItemRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  menuItemRatingValue: {
+    fontFamily: Fonts.brandBold,
+    fontSize: 12,
+    color: c.text,
+  },
+  menuItemRatingCount: {
+    fontFamily: Fonts.brand,
+    fontSize: 12,
+    color: c.muted,
   },
   menuItemDesc: {
     fontFamily: Fonts.brand,

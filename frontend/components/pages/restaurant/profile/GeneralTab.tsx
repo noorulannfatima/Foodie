@@ -168,14 +168,14 @@ export default function GeneralTab({
         </View>
         <View style={styles.perfStats}>
           <View style={styles.perfStat}>
-            <Text style={styles.perfStatLabel}>MONTHLY RATING</Text>
+            <Text style={styles.perfStatLabel}>RATING</Text>
             <Text style={styles.perfStatValue}>
               {profile.averageRating.toFixed(1)}
               <Text style={styles.perfStatMax}>/5.0</Text>
             </Text>
           </View>
           <View style={styles.perfStat}>
-            <Text style={styles.perfStatLabel}>ACTIVE ORDERS</Text>
+            <Text style={styles.perfStatLabel}>TOTAL ORDERS</Text>
             <Text style={styles.perfStatValue}>{profile.totalOrders}</Text>
           </View>
         </View>

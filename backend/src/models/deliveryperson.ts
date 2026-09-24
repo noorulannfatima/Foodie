@@ -592,8 +592,10 @@ deliveryPersonSchema.statics.resetMonthlyEarnings = async function () {
 /**
  * Completion rate
  */
+// Virtuals guard against partial documents (e.g. populate("deliveryPerson", "name phone")),
+// where stats / deliveryHistory are not loaded.
 deliveryPersonSchema.virtual("completionRate").get(function () {
-  if (this.stats.totalDeliveries === 0) return 100;
+  if (!this.stats?.totalDeliveries) return 100;
   return Math.round(
     (this.stats.completedDeliveries / this.stats.totalDeliveries) * 100
   );
@@ -611,7 +613,7 @@ deliveryPersonSchema.virtual("isLicenseExpired").get(function () {
  * Total distance covered
  */
 deliveryPersonSchema.virtual("totalDistance").get(function () {
-  return this.deliveryHistory.reduce(
+  return (this.deliveryHistory ?? []).reduce(
     (total: number, delivery: any) => total + delivery.distance,
     0
   );
