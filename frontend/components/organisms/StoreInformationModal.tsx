@@ -11,7 +11,7 @@ import {
     TextInput,
     Alert,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { pickAndUploadImage } from '@/services/api/upload.api';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
 import { useRestaurantStore } from '@/stores/restaurantStore';
@@ -35,6 +35,7 @@ export default function StoreInformationModal({
     const [description, setDescription] = useState(currentDescription);
     const [selectedImages, setSelectedImages] = useState<string[]>(currentImages);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
 
     const styles = useMemo(
@@ -225,43 +226,16 @@ export default function StoreInformationModal({
     const pickImage = async () => {
         try {
             setLocalError(null);
+            setUploading(true);
 
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permission Needed', 'Please allow access to your photo library');
-                return;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 0.8,
-            });
-
-            if (!result.canceled && result.assets[0]) {
-                const asset = result.assets[0];
-                console.log('📸 Image selected:', asset.uri);
-
-                // Use the URI directly (Expo handles base64 conversion internally)
-                // The image URI is already in a format the backend can handle
-                const imageUri = asset.uri;
-
-                // Check if it's already a base64 data URI
-                if (imageUri.startsWith('data:')) {
-                    // Already base64
-                    setSelectedImages([...selectedImages, imageUri]);
-                } else {
-                    // It's a file URI - add it directly
-                    // The backend will receive it as a file path that Expo can handle
-                    setSelectedImages([...selectedImages, imageUri]);
-                }
-
-                console.log('🖼️ Image added. Total images:', selectedImages.length + 1);
-            }
+            // Uploads to Cloudinary and gives back the hosted URL we store on the restaurant
+            const url = await pickAndUploadImage('restaurant', [4, 3]);
+            if (url) setSelectedImages((prev) => [...prev, url]);
         } catch (err: any) {
-            console.error('❌ Image pick error:', err);
-            setLocalError(err.message || 'Failed to pick image');
+            console.error('❌ Image upload error:', err);
+            setLocalError(err.message || 'Failed to upload image');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -328,7 +302,7 @@ export default function StoreInformationModal({
                         <TouchableOpacity
                             style={styles.closeButton}
                             onPress={onClose}
-                            disabled={isSubmitting || profileLoading}
+                            disabled={isSubmitting || profileLoading || uploading}
                         >
                             <Ionicons name="close" size={24} color={Colors.text} />
                         </TouchableOpacity>
@@ -359,7 +333,7 @@ export default function StoreInformationModal({
                                         <TouchableOpacity
                                             style={styles.removeImageButton}
                                             onPress={() => removeImage(index)}
-                                            disabled={isSubmitting || profileLoading}
+                                            disabled={isSubmitting || profileLoading || uploading}
                                         >
                                             <Ionicons name="trash" size={16} color="#FFFFFF" />
                                         </TouchableOpacity>
@@ -371,15 +345,21 @@ export default function StoreInformationModal({
                                     <TouchableOpacity
                                         style={styles.addImageButton}
                                         onPress={pickImage}
-                                        disabled={isSubmitting || profileLoading}
+                                        disabled={isSubmitting || profileLoading || uploading}
                                     >
                                         <View style={styles.addImageContent}>
-                                            <Ionicons
-                                                name="cloud-upload-outline"
-                                                size={28}
-                                                color={Colors.primary}
-                                            />
-                                            <Text style={styles.addImageText}>Add Image</Text>
+                                            {uploading ? (
+                                                <ActivityIndicator color={Colors.primary} />
+                                            ) : (
+                                                <Ionicons
+                                                    name="cloud-upload-outline"
+                                                    size={28}
+                                                    color={Colors.primary}
+                                                />
+                                            )}
+                                            <Text style={styles.addImageText}>
+                                                {uploading ? 'Uploading…' : 'Add Image'}
+                                            </Text>
                                             <Text
                                                 style={[
                                                     styles.addImageText,
@@ -408,7 +388,7 @@ export default function StoreInformationModal({
                                 onChangeText={setDescription}
                                 maxLength={500}
                                 multiline
-                                editable={!isSubmitting && !profileLoading}
+                                editable={!isSubmitting && !profileLoading && !uploading}
                             />
                             <Text style={styles.descriptionCounter}>
                                 {description.length}/500
@@ -421,17 +401,17 @@ export default function StoreInformationModal({
                         <TouchableOpacity
                             style={styles.cancelButton}
                             onPress={onClose}
-                            disabled={isSubmitting || profileLoading}
+                            disabled={isSubmitting || profileLoading || uploading}
                         >
                             <Text style={styles.cancelButtonText}>Cancel</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
                                 styles.submitButton,
-                                (isSubmitting || profileLoading) && styles.disabledButton,
+                                (isSubmitting || profileLoading || uploading) && styles.disabledButton,
                             ]}
                             onPress={handleSubmit}
-                            disabled={isSubmitting || profileLoading}
+                            disabled={isSubmitting || profileLoading || uploading}
                         >
                             {isSubmitting || profileLoading ? (
                                 <ActivityIndicator color="#FFFFFF" size="small" />

@@ -12,7 +12,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { pickAndUploadImage } from '@/services/api/upload.api';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { MenuItem } from '@/stores/restaurantStore';
@@ -47,40 +47,20 @@ export default function AddEditMenuItemModal({
   const [pickingImage, setPickingImage] = useState(false);
 
   const pickImage = async () => {
+    if (images.length >= 3) {
+      Alert.alert('Limit Reached', 'You can only add up to 3 images per item');
+      return;
+    }
+
     try {
       setPickingImage(true);
 
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Needed', 'Please allow access to your photo library');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        console.log('📸 Menu image selected:', asset.uri);
-
-        // Check if max images reached
-        if (images.length >= 3) {
-          Alert.alert('Limit Reached', 'You can only add up to 3 images per item');
-          return;
-        }
-
-        // Use the URI directly - Expo will handle it
-        const imageUri = asset.uri;
-        setImages([...images, imageUri]);
-        console.log('🖼️ Image added. Total images:', images.length + 1);
-      }
+      // Uploads to Cloudinary and gives back the hosted URL we store on the item
+      const url = await pickAndUploadImage('menu', [16, 9]);
+      if (url) setImages((prev) => [...prev, url]);
     } catch (error: any) {
-      console.error('❌ Image pick error:', error);
-      Alert.alert('Error', error.message || 'Failed to pick image');
+      console.error('❌ Image upload error:', error);
+      Alert.alert('Upload Failed', error.message || 'Failed to upload image');
     } finally {
       setPickingImage(false);
     }

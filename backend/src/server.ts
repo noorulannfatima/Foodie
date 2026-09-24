@@ -8,6 +8,7 @@ import restaurantRoutes from './routes/restaurant.routes';
 import customerRoutes from './routes/customer.routes';
 import deliveryRoutes from './routes/delivery.routes';
 import paymentRoutes, { webhookRouter as paymentWebhookRouter } from './routes/payment.routes';
+import uploadRoutes from './routes/upload.routes';
 
 dotenv.config();
 
@@ -18,7 +19,8 @@ const PORT = process.env.PORT || 5000;
 // parser inside the router can see the unmodified bytes for HMAC verification.
 app.use('/payments', paymentWebhookRouter);
 
-app.use(express.json());
+// Raised limit so base64 image uploads (see /upload/image) fit in the JSON body.
+app.use(express.json({ limit: '8mb' }));
 app.use(cors());
 app.use(cookieParser());
 
@@ -27,6 +29,7 @@ app.use('/restaurant', restaurantRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/upload', uploadRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
