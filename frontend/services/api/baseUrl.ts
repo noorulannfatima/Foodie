@@ -2,10 +2,16 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 /**
- * Dev API origin shared by Axios and fetch-based clients.
- * Prefers Metro host (works on physical devices on LAN); falls back to emulator defaults.
+ * API origin shared by Axios and fetch-based clients.
+ * Production builds read EXPO_PUBLIC_API_URL (set per build profile in eas.json).
+ * In development, prefers the Metro host (works on physical devices on LAN) and
+ * falls back to emulator defaults.
  */
 export function getApiBaseUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL;
+  if (fromEnv) {
+    return fromEnv.replace(/\/+$/, '');
+  }
   const hostFromExpo = Constants.expoConfig?.hostUri?.split(':')[0];
   if (hostFromExpo) {
     return `http://${hostFromExpo}:5000`;
