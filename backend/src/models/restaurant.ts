@@ -40,6 +40,43 @@ export function normalizeNotificationPreferences(prefs: any): RestaurantNotifica
   return normalized;
 }
 
+export type PayoutMethod = "Bank" | "JazzCash" | "Easypaisa";
+export type PayoutAccountStatus = "Pending" | "Verified" | "Rejected";
+
+/** Where Foodie sends this restaurant's payouts. Verified by an admin before any payout is marked paid. */
+export interface IPayoutAccount {
+  method: PayoutMethod;
+  accountTitle: string;
+  bankName?: string;
+  iban?: string; // Bank only
+  mobileNumber?: string; // JazzCash / Easypaisa only
+  status: PayoutAccountStatus;
+  rejectionReason?: string;
+  updatedAt: Date;
+}
+
+export const IBAN_REGEX = /^PK[0-9A-Z]{22}$/;
+export const WALLET_MOBILE_REGEX = /^03\d{9}$/;
+
+/** Shared with Payout.accountSnapshot. */
+export const payoutAccountSchema = new mongoose.Schema<IPayoutAccount>(
+  {
+    method: { type: String, required: true, enum: ["Bank", "JazzCash", "Easypaisa"] },
+    accountTitle: { type: String, required: true, trim: true, maxlength: 100 },
+    bankName: { type: String, trim: true, maxlength: 100 },
+    iban: { type: String, trim: true, uppercase: true, match: [IBAN_REGEX, "Invalid IBAN"] },
+    mobileNumber: {
+      type: String,
+      trim: true,
+      match: [WALLET_MOBILE_REGEX, "Mobile number must look like 03XXXXXXXXX"],
+    },
+    status: { type: String, enum: ["Pending", "Verified", "Rejected"], default: "Pending" },
+    rejectionReason: { type: String, trim: true, maxlength: 300 },
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 export interface IRestaurant extends Document {
   // Basic Information
   name: string;
@@ -97,6 +134,10 @@ export interface IRestaurant extends Document {
   // Business Metrics
   totalOrders: number;
   totalRevenue: number;
+  
+  // Payouts
+  commissionRate: number; // Foodie's cut of each order subtotal, 0–0.5
+  payoutAccount?: IPayoutAccount;
   
   // Restaurant Status
   isActive: boolean;
@@ -380,6 +421,19 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
     isBusy: {
       type: Boolean,
       default: false,
+    },
+    
+    // ========== Payouts ==========
+    commissionRate: {
+      type: Number,
+      default: 0.15,
+      min: [0, "Commission rate cannot be negative"],
+      max: [0.5, "Commission rate cannot exceed 50%"],
+    },
+    
+    payoutAccount: {
+      type: payoutAccountSchema,
+      default: undefined,
     },
     
     // ========== Notification Preferences ==========

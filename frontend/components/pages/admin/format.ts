@@ -1,0 +1,19 @@
+/** `PKR 1,234`, or `−PKR 150` for negatives (restaurant owes Foodie). */
+export function formatPKR(amount: number): string {
+  const formatted = `PKR ${Math.abs(amount).toLocaleString('en-PK', { maximumFractionDigits: 2 })}`;
+  return amount < 0 ? `−${formatted}` : formatted;
+}
+
+export function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+export function formatPeriod(start: string, end: string): string {
+  return `${formatShortDate(start)} – ${formatShortDate(end)}`;
+}
+
+/** Shows the last 4 characters only, e.g. `•••• 7890`. */
+export function maskAccountNumber(value?: string): string {
+  if (!value) return '—';
+  return `•••• ${value.slice(-4)}`;
+}

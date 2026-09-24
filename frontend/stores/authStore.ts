@@ -4,7 +4,7 @@ import { authAPI } from '@/services/api/auth.api';
 import { useDeliveryPreferencesStore } from '@/stores/deliveryPreferencesStore';
 import { unregisterRestaurantPushNotifications } from '@/services/pushNotifications';
 
-type UserRole = 'customer' | 'restaurant' | 'delivery';
+type UserRole = 'customer' | 'restaurant' | 'delivery' | 'admin';
 
 // Auto-logout after this much inactivity. Kept in sync with InactivityProvider.
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes

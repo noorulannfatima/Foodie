@@ -11,6 +11,7 @@ import customerRoutes from './routes/customer.routes';
 import deliveryRoutes from './routes/delivery.routes';
 import paymentRoutes, { webhookRouter as paymentWebhookRouter } from './routes/payment.routes';
 import uploadRoutes from './routes/upload.routes';
+import adminRoutes from './routes/admin.routes';
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/customer', customerRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');

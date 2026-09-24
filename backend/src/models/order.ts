@@ -23,6 +23,7 @@ export interface IOrder extends Document {
   customer: mongoose.Types.ObjectId;
   restaurant: mongoose.Types.ObjectId;
   deliveryPerson?: mongoose.Types.ObjectId;
+  payout?: mongoose.Types.ObjectId; // Set once the order is settled into a Payout
   
   // Order Items
   items: IOrderItem[];
@@ -122,6 +123,12 @@ const orderSchema = new mongoose.Schema<IOrder>(
     deliveryPerson: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "DeliveryPerson",
+    },
+    
+    payout: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payout",
+      index: true,
     },
     
     // ========== Order Items ==========

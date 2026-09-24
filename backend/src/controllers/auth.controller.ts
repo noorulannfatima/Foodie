@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/user';
 import Restaurant from '../models/restaurant';
 import DeliveryPerson from '../models/deliveryperson';
+import Admin from '../models/admin';
 import PasswordReset from '../models/passwordReset';
 import { generateToken, AuthRequest } from '../middleware/auth';
 
@@ -17,7 +18,7 @@ const RESET_MAX_ATTEMPTS = 5;
 /**
  * Helper function to select the correct Mongoose model based on the user role.
  * 
- * @param role - 'customer', 'restaurant', or 'delivery'
+ * @param role - 'customer', 'restaurant', 'delivery', or 'admin'
  */
 function getModel(role: string): mongoose.Model<any> | null {
   switch (role) {
@@ -27,9 +28,22 @@ function getModel(role: string): mongoose.Model<any> | null {
       return Restaurant;
     case 'delivery':
       return DeliveryPerson;
+    case 'admin':
+      return Admin;
     default:
       return null;
   }
+}
+
+/**
+ * Admins can log in but are only created by `npm run create:admin`, and their
+ * password can't be reset through the (dev-logged) reset-code flow.
+ * Returns true after sending a 403 so the caller can bail out.
+ */
+function rejectAdminSelfService(req: Request, res: Response): boolean {
+  if (req.params.role !== 'admin') return false;
+  res.status(403).json({ message: 'Not available for admin accounts' });
+  return true;
 }
 
 /**
@@ -38,6 +52,7 @@ function getModel(role: string): mongoose.Model<any> | null {
  * Creates a new user account for the given role.
  */
 export async function signup(req: Request, res: Response): Promise<void> {
+  if (rejectAdminSelfService(req, res)) return;
   try {
     const role = req.params.role as string;
     const Model = getModel(role);
@@ -197,6 +212,7 @@ export async function verifyToken(req: AuthRequest, res: Response): Promise<void
  * tested without an email provider. Remove `devCode` once SMTP/SMS is wired up.
  */
 export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  if (rejectAdminSelfService(req, res)) return;
   try {
     const role = req.params.role as string;
     const Model = getModel(role);
@@ -254,6 +270,7 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
  * re-hashes the password, so we just assign the plain value and save.
  */
 export async function resetPassword(req: Request, res: Response): Promise<void> {
+  if (rejectAdminSelfService(req, res)) return;
   try {
     const role = req.params.role as string;
     const Model = getModel(role);

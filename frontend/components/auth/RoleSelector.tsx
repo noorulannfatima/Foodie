@@ -8,7 +8,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 
-type Role = 'restaurant' | 'delivery';
+type Role = 'restaurant' | 'delivery' | 'admin';
 
 interface RoleSelectorProps {
   visible: boolean;
@@ -28,6 +28,12 @@ const ROLES: { id: Role; label: string; emoji: string; description: string }[] =
     label: 'Delivery Driver',
     emoji: '🚴',
     description: 'Pick up & deliver orders near you',
+  },
+  {
+    id: 'admin',
+    label: 'Foodie Admin',
+    emoji: '🛡️',
+    description: 'Payouts, commissions & verification',
   },
 ];
 

@@ -10,6 +10,7 @@ export default function AuthLayout() {
       <Stack.Screen name="delivery/signup" options={{ headerShown: false }} />
       <Stack.Screen name="restaurant/login" options={{ headerShown: false }} />
       <Stack.Screen name="restaurant/signup" options={{ headerShown: false }} />
+      <Stack.Screen name="admin/login" options={{ headerShown: false }} />
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
     </Stack>
   );    

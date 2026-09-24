@@ -20,7 +20,7 @@ export const ANDROID_CHANNELS = {
 } as const;
 
 /** Preference keys that gate a restaurant push. */
-export type RestaurantPushCategory = 'newOrders' | 'orderCancellations' | 'reviews';
+export type RestaurantPushCategory = 'newOrders' | 'orderCancellations' | 'reviews' | 'payouts';
 
 export interface PushMessage {
   title: string;
