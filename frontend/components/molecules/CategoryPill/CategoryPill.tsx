@@ -89,8 +89,8 @@ function createStyles(c: AppColors) {
       borderColor: c.customerBorder,
     },
     activeIconBox: {
-      backgroundColor: c.primary,
-      borderColor: c.primary,
+      backgroundColor: c.brand,
+      borderColor: c.brand,
     },
     emoji: {
       fontSize: 26,

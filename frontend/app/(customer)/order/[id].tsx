@@ -182,7 +182,7 @@ export default function OrderStatusScreen() {
                             style={[
                               styles.stepLine,
                               idx < currentIndex
-                                ? { backgroundColor: c.primary }
+                                ? { backgroundColor: c.brand }
                                 : { backgroundColor: c.border },
                             ]}
                           />
@@ -280,7 +280,7 @@ function createStyles(c: AppColors) {
       marginBottom: 10,
     },
     statusBadge: {
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       paddingHorizontal: 14,
       paddingVertical: 6,
       borderRadius: 20,
@@ -323,8 +323,8 @@ function createStyles(c: AppColors) {
       borderColor: c.border,
     },
     stepDotReached: {
-      backgroundColor: c.primary,
-      borderColor: c.primary,
+      backgroundColor: c.brand,
+      borderColor: c.brand,
     },
     stepDotActive: {
       shadowColor: c.primary,

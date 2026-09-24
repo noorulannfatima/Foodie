@@ -204,7 +204,7 @@ export default function StoreInformationModal({
                 submitButton: {
                     flex: 1,
                     paddingVertical: 12,
-                    backgroundColor: Colors.primary,
+                    backgroundColor: Colors.brand,
                     borderRadius: 12,
                     justifyContent: 'center',
                     alignItems: 'center',

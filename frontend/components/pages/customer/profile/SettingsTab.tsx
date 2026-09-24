@@ -51,7 +51,7 @@ export default function SettingsTab({ user, onLogout }: SettingsTabProps) {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: Colors.primary,
+          backgroundColor: Colors.brand,
           borderRadius: 14,
           paddingVertical: 16,
           gap: 10,
@@ -84,8 +84,8 @@ export default function SettingsTab({ user, onLogout }: SettingsTabProps) {
           <Switch
             value={isDark}
             onValueChange={setIsDark}
-            trackColor={{ false: Colors.border, true: '#FCA5A5' }}
-            thumbColor={isDark ? Colors.primary : '#f4f3f4'}
+            trackColor={{ false: Colors.border, true: Colors.brand }}
+            thumbColor="#FFFFFF"
           />
         </View>
         <View style={sharedStyles.divider} />

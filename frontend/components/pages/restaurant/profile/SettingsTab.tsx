@@ -9,7 +9,7 @@ import {
   Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppThemeColors, Fonts } from '@/constants/theme';
+import { useAppThemeColors, Fonts, tintBg } from '@/constants/theme';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 import { useAppThemeStore } from '@/stores/appThemeStore';
 import { useRestaurantStore } from '@/stores/restaurantStore';
@@ -120,13 +120,15 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         <View style={styles.darkRow}>
           <View style={styles.darkLabel}>
             <Text style={styles.darkTitle}>Dark mode</Text>
-            <Text style={styles.darkSub}>Restaurant app uses the same appearance as the rest of Foodie</Text>
+            <Text style={styles.darkSub}>
+              Restaurant app uses the same appearance as the rest of Foodie
+            </Text>
           </View>
           <Switch
             value={isDark}
             onValueChange={setIsDark}
-            trackColor={{ false: Colors.border, true: '#FCA5A5' }}
-            thumbColor={isDark ? Colors.primary : '#f4f3f4'}
+            trackColor={{ false: Colors.border, true: Colors.brand }}
+            thumbColor="#FFFFFF"
           />
         </View>
 
@@ -135,7 +137,12 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
           activeOpacity={0.85}
           onPress={() => setStoreInfoModalVisible(true)}
         >
-          <View style={[styles.settingsIcon, { backgroundColor: '#FEE2E2' }]}>
+          <View
+            style={[
+              styles.settingsIcon,
+              { backgroundColor: tintBg(Colors.primary, '#FEE2E2', isDark) },
+            ]}
+          >
             <Ionicons name="storefront-outline" size={18} color={Colors.primary} />
           </View>
           <View style={styles.settingsInfo}>
@@ -146,7 +153,9 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
-          <View style={[styles.settingsIcon, { backgroundColor: '#DBEAFE' }]}>
+          <View
+            style={[styles.settingsIcon, { backgroundColor: tintBg('#3B82F6', '#DBEAFE', isDark) }]}
+          >
             <Ionicons name="notifications-outline" size={18} color="#3B82F6" />
           </View>
           <View style={styles.settingsInfo}>
@@ -157,7 +166,9 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
-          <View style={[styles.settingsIcon, { backgroundColor: '#FEF3C7' }]}>
+          <View
+            style={[styles.settingsIcon, { backgroundColor: tintBg('#F59E0B', '#FEF3C7', isDark) }]}
+          >
             <Ionicons name="wallet-outline" size={18} color="#F59E0B" />
           </View>
           <View style={styles.settingsInfo}>

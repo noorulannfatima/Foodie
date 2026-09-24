@@ -90,7 +90,7 @@ function createStyles(c: AppColors) {
       color: c.muted,
     },
     saveBtn: {
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       paddingHorizontal: 24,
       paddingVertical: 10,
       borderRadius: 8,

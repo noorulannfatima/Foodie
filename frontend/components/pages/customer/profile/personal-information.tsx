@@ -375,7 +375,7 @@ function createMainStyles(c: AppColors) {
         vDivider: { height: 1, backgroundColor: c.customerBorder, marginHorizontal: 16 },
 
         saveBtn: {
-            backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16,
+            backgroundColor: c.brand, borderRadius: 14, paddingVertical: 16,
             alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
             gap: 8, marginTop: 8, shadowColor: c.primary,
             shadowOpacity: 0.4, shadowRadius: 10,

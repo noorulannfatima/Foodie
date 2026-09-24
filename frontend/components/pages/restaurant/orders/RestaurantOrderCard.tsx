@@ -179,7 +179,7 @@ function createStyles(c: AppColors) {
       flex: 1,
       paddingVertical: 10,
       borderRadius: 8,
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       alignItems: 'center',
     },
     acceptBtnFull: {

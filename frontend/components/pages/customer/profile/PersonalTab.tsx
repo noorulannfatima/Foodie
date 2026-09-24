@@ -46,7 +46,7 @@ export default function PersonalTab({ user }: PersonalTabProps) {
           width: 24,
           height: 24,
           borderRadius: 12,
-          backgroundColor: Colors.primary,
+          backgroundColor: Colors.brand,
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 2,

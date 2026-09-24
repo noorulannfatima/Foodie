@@ -43,7 +43,7 @@ function createStyles(c: AppColors) {
       color: c.muted,
     },
     browseBtn: {
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       paddingHorizontal: 24,
       paddingVertical: 12,
       borderRadius: 10,

@@ -18,7 +18,7 @@ export default function OrdersStatItem({ label, value, icon }: OrdersStatItemPro
       <Text style={styles.statsLabel}>{label}</Text>
       <View style={styles.statsValueRow}>
         <Text style={styles.statsValue}>{value}</Text>
-        <Ionicons name={icon} size={20} color={c.secondary} />
+        <Ionicons name={icon} size={20} color={c.primary} />
       </View>
     </View>
   );

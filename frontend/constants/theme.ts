@@ -5,6 +5,16 @@ import { useAppThemeStore } from '@/stores/appThemeStore';
 export const BRAND_RED = '#7d0606';
 /** Pale wash of BRAND_RED for selected/soft backgrounds. */
 export const BRAND_RED_TINT = '#F6E7E7';
+/**
+ * BRAND_RED lifted for text and icons on dark surfaces. The fill red stays BRAND_RED in
+ * both themes; this only exists because #7d0606 text on a dark page is ~1.9:1 (unreadable).
+ */
+export const BRAND_RED_ON_DARK = '#E26464';
+
+/** Soft tile/badge background from a hue: pastel in light mode, translucent wash in dark. */
+export function tintBg(hex: string, lightBg: string, isDark: boolean) {
+  return isDark ? `${hex}2E` : lightBg;
+}
 
 export const Fonts = {
   brand: 'Nunito',
@@ -28,6 +38,9 @@ export const Colors = {
 export interface AppColors {
   background: string;
   text: string;
+  /** Brand red for fills (buttons, active pills, switches). Same in both themes. */
+  brand: string;
+  /** Brand red for text, icons and outlines; lifted in dark mode for contrast. */
   primary: string;
   secondary: string;
   dark: string;
@@ -60,6 +73,7 @@ export function getAppColors(isDark: boolean): AppColors {
     return {
       background: '#fff',
       text: '#090801',
+      brand: BRAND_RED,
       primary: BRAND_RED,
       secondary: BRAND_RED,
       dark: '#000000',
@@ -86,8 +100,9 @@ export function getAppColors(isDark: boolean): AppColors {
   return {
     background: '#0F1419',
     text: '#F4F4F5',
-    primary: '#fa1919',
-    secondary: '#ff6b6b',
+    brand: BRAND_RED,
+    primary: BRAND_RED_ON_DARK,
+    secondary: BRAND_RED,
     dark: '#F4F4F5',
     light: '#27272A',
     primaryLight: '#3D2525',

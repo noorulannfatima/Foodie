@@ -26,7 +26,7 @@ export default function DashboardStatBox({
       <Text style={styles.statLabel}>{label}</Text>
       <View style={styles.statValueRow}>
         <Text style={styles.statValue}>{value}</Text>
-        <Ionicons name={icon} size={24} color={iconColor || c.secondary} />
+        <Ionicons name={icon} size={24} color={iconColor || c.primary} />
       </View>
       <Text style={styles.statSublabel}>{sublabel}</Text>
     </View>

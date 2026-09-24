@@ -19,7 +19,8 @@ export default function RestaurantFilterPill({ label, active, onPress }: Restaur
 }
 
 function createStyles(c: AppColors) {
-  const activeBg = c.chromeDark;
+  // Inverted ink: near-black in light mode, near-white in dark mode.
+  const activeBg = c.text;
   return StyleSheet.create({
     pill: {
       paddingHorizontal: 16,
@@ -39,7 +40,7 @@ function createStyles(c: AppColors) {
       color: c.muted,
     },
     textActive: {
-      color: '#fff',
+      color: c.background,
     },
   });
 }

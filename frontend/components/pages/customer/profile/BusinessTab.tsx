@@ -39,7 +39,7 @@ export default function BusinessTab() {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: Colors.primary,
+          backgroundColor: Colors.brand,
           borderRadius: 12,
           paddingVertical: 14,
           gap: 8,

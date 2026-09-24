@@ -541,7 +541,7 @@ function createRestaurantDetailStyles(c: AppColors) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.primary,
+    backgroundColor: c.brand,
     borderRadius: 10,
     paddingVertical: 10,
     gap: 6,

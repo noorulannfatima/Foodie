@@ -4,6 +4,7 @@ import { useAppThemeColors, type AppColors } from '@/constants/theme';
 
 function buildProfileColors(c: AppColors) {
   return {
+    brand: c.brand,
     primary: c.primary,
     secondary: c.customerSecondary,
     tertiary: c.customerTertiary,
@@ -79,7 +80,7 @@ export function useCustomerProfileStyles() {
         bottom: 4,
         left: 4,
         borderRadius: 9,
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.brand,
       },
     });
 

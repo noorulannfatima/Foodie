@@ -30,7 +30,7 @@ export function useRestaurantProfileStyles() {
         paddingHorizontal: 24,
         paddingVertical: 10,
         borderRadius: 8,
-        backgroundColor: c.primary,
+        backgroundColor: c.brand,
       },
       retryBtnText: {
         fontFamily: Fonts.brandBold,
@@ -77,7 +77,7 @@ export function useRestaurantProfileStyles() {
         bottom: 4,
         left: 4,
         borderRadius: 9,
-        backgroundColor: c.primary,
+        backgroundColor: c.brand,
       },
       tabContent: {
         flex: 1,

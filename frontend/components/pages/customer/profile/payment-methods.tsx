@@ -327,7 +327,7 @@ function createModalStyles(c: AppColors) {
         },
         secureText: { fontSize: 12, color: STATUS.success, fontWeight: '500', flex: 1 },
         addBtn: {
-            backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16,
+            backgroundColor: c.brand, borderRadius: 14, paddingVertical: 16,
             alignItems: 'center', shadowColor: c.primary,
             shadowOpacity: 0.4, shadowRadius: 8,
             shadowOffset: { width: 0, height: 4 }, elevation: 5,

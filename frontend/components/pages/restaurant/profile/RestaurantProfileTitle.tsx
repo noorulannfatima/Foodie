@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppThemeColors, Fonts } from '@/constants/theme';
+import { useAppThemeColors, Fonts, tintBg } from '@/constants/theme';
 import type { RestaurantProfile } from '@/stores/restaurantStore';
 
 export interface RestaurantProfileTitleProps {
@@ -42,7 +42,7 @@ export default function RestaurantProfileTitle({ profile }: RestaurantProfileTit
           flexDirection: 'row',
           alignItems: 'center',
           gap: 4,
-          backgroundColor: '#DCFCE7',
+          backgroundColor: tintBg('#10B981', '#DCFCE7', c.isDark),
           paddingHorizontal: 10,
           paddingVertical: 4,
           borderRadius: 12,

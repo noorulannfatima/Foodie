@@ -3,6 +3,7 @@ import { View, ScrollView, RefreshControl, Modal, Alert, StyleSheet } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, MenuItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
+import { useAppThemeColors } from '@/constants/theme';
 import {
   RestaurantMenuItemCard,
   AddEditMenuItemModal,
@@ -19,6 +20,7 @@ import {
 
 export default function RestaurantMenu() {
   const insets = useSafeAreaInsets();
+  const c = useAppThemeColors();
   const [activeCategory, setActiveCategory] = useState('All Items');
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [editItem, setEditItem] = useState<MenuItem | null>(null);
@@ -81,8 +83,12 @@ export default function RestaurantMenu() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
-
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + 8, backgroundColor: c.screenBackground },
+      ]}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={menuLoading} onRefresh={onRefresh} />}
@@ -168,7 +174,6 @@ export default function RestaurantMenu() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   scrollContent: {
     padding: 20,

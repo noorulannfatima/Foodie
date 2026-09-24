@@ -1,13 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Modal,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
@@ -73,13 +65,18 @@ export default function RestaurantOrders() {
   };
 
   const activeCount = orders.filter((o) =>
-    ['Pending', 'Confirmed', 'Preparing', 'Ready'].includes(o.status)
+    ['Pending', 'Confirmed', 'Preparing', 'Ready'].includes(o.status),
   ).length;
   const preparingCount = orders.filter((o) => o.status === 'Preparing').length;
   const readyCount = orders.filter((o) => o.status === 'Ready').length;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + 8, backgroundColor: c.screenBackground },
+      ]}
+    >
       <Text style={[styles.pageTitle, { color: c.text }]} accessibilityRole="header">
         View All Orders
       </Text>
@@ -129,7 +126,6 @@ export default function RestaurantOrders() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   // Matches the dashboard's page heading.
   pageTitle: {

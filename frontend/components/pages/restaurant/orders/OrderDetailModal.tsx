@@ -193,7 +193,7 @@ function createStyles(c: AppColors) {
     itemCountText: {
       fontFamily: Fonts.brandBold,
       fontSize: 10,
-      color: c.secondary,
+      color: c.primary,
       letterSpacing: 0.5,
     },
     modalItem: {
@@ -275,7 +275,7 @@ function createStyles(c: AppColors) {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -322,7 +322,7 @@ function createStyles(c: AppColors) {
       marginTop: 8,
     },
     modalActionBtn: {
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: 'center',

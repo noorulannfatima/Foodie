@@ -361,7 +361,8 @@ export default function AddEditMenuItemModal({
 }
 
 function createStyles(c: AppColors) {
-  const catActiveBg = c.chromeDark;
+  // Inverted ink: near-black in light mode, near-white in dark mode.
+  const catActiveBg = c.text;
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -577,7 +578,7 @@ function createStyles(c: AppColors) {
       color: c.muted,
     },
     catOptionTextActive: {
-      color: '#fff',
+      color: c.background,
     },
     optionRow: {
       flexDirection: 'row',
@@ -594,8 +595,8 @@ function createStyles(c: AppColors) {
       borderColor: c.border,
     },
     optionChipActive: {
-      backgroundColor: c.primary,
-      borderColor: c.primary,
+      backgroundColor: c.brand,
+      borderColor: c.brand,
     },
     optionChipText: {
       fontFamily: Fonts.brandBold,
@@ -631,7 +632,7 @@ function createStyles(c: AppColors) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: c.primary,
+      backgroundColor: c.brand,
       borderRadius: 12,
       paddingVertical: 16,
       gap: 8,

@@ -32,7 +32,8 @@ export default function OrderStatusFilterRow({ activeFilter, onSelectFilter }: O
 }
 
 function createStyles(c: AppColors) {
-  const activeBg = c.chromeDark;
+  // Inverted ink: near-black in light mode, near-white in dark mode.
+  const activeBg = c.text;
   return StyleSheet.create({
     filterContainer: {
       maxHeight: 48,
@@ -61,7 +62,7 @@ function createStyles(c: AppColors) {
       color: c.muted,
     },
     filterTextActive: {
-      color: '#fff',
+      color: c.background,
     },
   });
 }
