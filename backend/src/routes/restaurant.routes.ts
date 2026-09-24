@@ -20,6 +20,7 @@ import {
   deleteMenuItem,
   toggleItemAvailability,
 } from '../controllers/restaurant.controller';
+import { getRestaurantReviews } from '../controllers/review.controller';
 
 const router = Router();
 
@@ -47,6 +48,9 @@ router.delete('/push-token', unregisterPushToken);
 router.get('/orders', getOrders);
 router.get('/orders/:id', getOrderDetail);
 router.put('/orders/:id/status', updateOrderStatus);
+
+// Reviews
+router.get('/reviews', getRestaurantReviews);
 
 // Menu
 router.get('/menu', getMenu);

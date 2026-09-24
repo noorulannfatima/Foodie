@@ -61,16 +61,6 @@ export interface IDeliveryPerson extends Document {
     lastPayout?: Date;
   };
   
-  // Ratings & Reviews
-  ratings: Array<{
-    _id?: mongoose.Types.ObjectId;
-    order: mongoose.Types.ObjectId;
-    user: mongoose.Types.ObjectId;
-    rating: number;
-    comment?: string;
-    createdAt: Date;
-  }>;
-  
   // Delivery History
   deliveryHistory: Array<{
     _id?: mongoose.Types.ObjectId;
@@ -119,8 +109,6 @@ export interface IDeliveryPerson extends Document {
   updateLocation(longitude: number, latitude: number): Promise<IDeliveryPerson>;
   addDelivery(deliveryData: any): Promise<IDeliveryPerson>;
   updateEarnings(amount: number): Promise<IDeliveryPerson>;
-  calculateAverageRating(): Promise<void>;
-  addRating(ratingData: any): Promise<IDeliveryPerson>;
 }
 
 // Delivery Person Schema Definition
@@ -329,37 +317,6 @@ const deliveryPersonSchema = new mongoose.Schema<IDeliveryPerson>(
         type: Date,
       },
     },
-    
-    // ========== Ratings & Reviews ==========
-    ratings: [
-      {
-        order: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Order",
-          required: true,
-        },
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        rating: {
-          type: Number,
-          required: true,
-          min: 1,
-          max: 5,
-        },
-        comment: {
-          type: String,
-          trim: true,
-          maxlength: [300, "Comment cannot exceed 300 characters"],
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
     
     // ========== Delivery History ==========
     deliveryHistory: [
@@ -570,40 +527,6 @@ deliveryPersonSchema.methods.updateEarnings = async function (
   this.earnings.thisMonth += amount;
   this.earnings.pending += amount;
   
-  return await (this as any).save();
-};
-
-/**
- * Calculate average rating
- */
-deliveryPersonSchema.methods.calculateAverageRating = async function (): Promise<void> {
-  if (this.ratings.length === 0) {
-    this.stats.averageRating = 0;
-    this.stats.totalRatings = 0;
-    return;
-  }
-  
-  const totalRating = this.ratings.reduce(
-    (sum: number, rating: any) => sum + rating.rating,
-    0
-  );
-  
-  this.stats.averageRating = Math.round((totalRating / this.ratings.length) * 10) / 10;
-  this.stats.totalRatings = this.ratings.length;
-};
-
-/**
- * Add rating
- */
-deliveryPersonSchema.methods.addRating = async function (
-  ratingData: any
-): Promise<IDeliveryPerson> {
-  this.ratings.push({
-    ...ratingData,
-    createdAt: new Date(),
-  });
-  
-  await this.calculateAverageRating();
   return await (this as any).save();
 };
 

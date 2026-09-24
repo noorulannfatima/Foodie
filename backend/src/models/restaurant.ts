@@ -69,19 +69,9 @@ export interface IRestaurant extends Document {
   image: string[];
   logo?: string;
   
-  // Ratings & Reviews
+  // Ratings (derived from dish reviews in the Review collection; see rating.service)
   averageRating: number;
   totalReviews: number;
-  reviews: Array<{
-    _id?: mongoose.Types.ObjectId;
-    user: mongoose.Types.ObjectId;
-    rating: number;
-    comment: string;
-    response?: string;
-    images?: string[];
-    createdAt: Date;
-    updatedAt: Date;
-  }>;
   
   // Operating Information
   operatingHours: {
@@ -124,9 +114,6 @@ export interface IRestaurant extends Document {
   
   // Methods
   comparePassword(password: string): Promise<boolean>;
-  addReview(reviewData: any): Promise<IRestaurant>;
-  respondToReview(reviewId: string, response: string): Promise<IRestaurant>;
-  calculateAverageRating(): Promise<void>;
   isCurrentlyOpen(): boolean;
   canDeliver(distance: number): boolean;
 }
@@ -267,44 +254,6 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
       default: 0,
       min: 0,
     },
-    
-    reviews: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        rating: {
-          type: Number,
-          required: [true, "Rating is required"],
-          min: 1,
-          max: 5,
-        },
-        comment: {
-          type: String,
-          trim: true,
-          maxlength: [500, "Comment cannot exceed 500 characters"],
-        },
-        response: {
-          type: String,
-          trim: true,
-          maxlength: [300, "Response cannot exceed 300 characters"],
-        },
-        images: {
-          type: [String],
-          default: [],
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
-        updatedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
     
     // ========== Operating Information ==========
     operatingHours: {
@@ -473,13 +422,6 @@ restaurantSchema.pre("save", async function (this: IRestaurant) {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Update review count when reviews change
-restaurantSchema.pre("save", function (this: IRestaurant) {
-  if (this.isModified("reviews")) {
-    this.totalReviews = this.reviews.length;
-  }
-});
-
 // ========== Instance Methods ==========
 
 /**
@@ -493,74 +435,6 @@ restaurantSchema.methods.comparePassword = async function (
   } catch (error) {
     throw new Error("Password comparison failed");
   }
-};
-
-/**
- * Add a new review
- */
-restaurantSchema.methods.addReview = async function (
-  reviewData: any
-): Promise<IRestaurant> {
-  // Check if user already reviewed
-  const existingReview = this.reviews.find(
-    (review: any) => review.user.toString() === reviewData.user.toString()
-  );
-  
-  if (existingReview) {
-    // Update existing review
-    existingReview.rating = reviewData.rating;
-    existingReview.comment = reviewData.comment;
-    existingReview.images = reviewData.images || [];
-    existingReview.updatedAt = new Date();
-  } else {
-    // Add new review
-    this.reviews.push({
-      ...reviewData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-  
-  await this.calculateAverageRating();
-  return await (this as any).save();
-};
-
-/**
- * Respond to a review
- */
-restaurantSchema.methods.respondToReview = async function (
-  reviewId: string,
-  response: string
-): Promise<IRestaurant> {
-  const review = this.reviews.find(
-    (r: any) => r._id.toString() === reviewId
-  );
-  
-  if (!review) {
-    throw new Error("Review not found");
-  }
-  
-  review.response = response;
-  review.updatedAt = new Date();
-  
-  return await (this as any).save();
-};
-
-/**
- * Calculate average rating
- */
-restaurantSchema.methods.calculateAverageRating = async function (): Promise<void> {
-  if (this.reviews.length === 0) {
-    this.averageRating = 0;
-    return;
-  }
-  
-  const totalRating = this.reviews.reduce(
-    (sum: number, review: any) => sum + review.rating,
-    0
-  );
-  
-  this.averageRating = Math.round((totalRating / this.reviews.length) * 10) / 10;
 };
 
 /**

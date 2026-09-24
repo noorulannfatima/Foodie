@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { requireRole } from '../middleware/requireRole';
 import {
   getHome,
   getRestaurantDetail,
@@ -13,10 +14,10 @@ import {
   getOrders,
   getOrderDetail,
   cancelOrder,
-  rateOrder,
   reorder,
   trackOrder,
 } from '../controllers/customer.controller';
+import { submitOrderReview } from '../controllers/review.controller';
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get('/orders/:id', getOrderDetail);
 
 // Order actions
 router.post('/orders/:id/cancel', cancelOrder);
-router.post('/orders/:id/rate', rateOrder);
+router.post('/orders/:id/review', requireRole('customer'), submitOrderReview);
 router.post('/orders/:id/reorder', reorder);
 router.get('/orders/:id/track', trackOrder);
 

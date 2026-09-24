@@ -7,6 +7,7 @@ export { default as DeliveryPerson } from "./deliveryperson";
 export { default as Menu } from "./menu";
 export { default as Order } from "./order";
 export { default as Cart } from "./cart";
+export { default as Review } from "./review";
 
 // Export types
 export type { IUser } from "./user";
@@ -15,3 +16,4 @@ export type { IDeliveryPerson } from "./deliveryperson";
 export type { IMenu, IMenuItem } from "./menu";
 export type { IOrder, IOrderItem } from "./order";
 export type { ICart, ICartItem } from "./cart";
+export type { IReview, IReviewItem } from "./review";

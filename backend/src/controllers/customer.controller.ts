@@ -5,8 +5,9 @@ import Restaurant from '../models/restaurant';
 import Menu from '../models/menu';
 import Order from '../models/order';
 import Cart from '../models/cart';
-import User from '../models/user';
+import Review from '../models/review';
 import { notifyRestaurant } from '../services/push.service';
+import { roundedAverage } from '../services/rating.service';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -36,6 +37,22 @@ function customizationsTotal(customizations?: any[]): number {
       (c.selectedOptions || []).reduce((s: number, o: any) => s + (Number(o.price) || 0), 0),
     0,
   );
+}
+
+/**
+ * Shapes a menu item for customers: exposes the average star rating and hides
+ * the running totals it is derived from.
+ */
+function toCustomerMenuItem(item: any) {
+  const { ratingSum = 0, ratingCount = 0, ...rest } = item.toObject();
+  return { ...rest, averageRating: roundedAverage(ratingSum, ratingCount), ratingCount };
+}
+
+/** Ids (as strings) of the given orders that already have a review. */
+async function findReviewedOrderIds(orderIds: mongoose.Types.ObjectId[]): Promise<Set<string>> {
+  if (orderIds.length === 0) return new Set();
+  const reviews = await Review.find({ order: { $in: orderIds } }).select('order').lean();
+  return new Set(reviews.map((r) => r.order.toString()));
 }
 
 /** Standard 5% tax rule, kept in one place. */
@@ -100,10 +117,11 @@ export async function getRestaurantDetail(req: AuthRequest, res: Response): Prom
     const menu = await Menu.findOne({ restaurant: restaurant._id });
 
     // Group items by category
+    const items = menu ? menu.items.map(toCustomerMenuItem) : [];
     const menuByCategory: Record<string, any[]> = {};
     if (menu) {
       for (const cat of menu.categories) {
-        menuByCategory[cat.name] = menu.items.filter((item) => item.category === cat.name);
+        menuByCategory[cat.name] = items.filter((item) => item.category === cat.name);
       }
     }
 
@@ -112,7 +130,7 @@ export async function getRestaurantDetail(req: AuthRequest, res: Response): Prom
       menu: menu ? {
         _id: menu._id,
         categories: menu.categories,
-        items: menu.items,
+        items,
         menuByCategory,
       } : null,
     });
@@ -522,14 +540,17 @@ export async function getOrders(req: AuthRequest, res: Response): Promise<void> 
     const [orders, total] = await Promise.all([
       Order.find(query)
         .populate('restaurant', 'name logo image')
+        .populate('deliveryPerson', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum),
       Order.countDocuments(query),
     ]);
 
+    const reviewed = await findReviewedOrderIds(orders.map((o) => o._id as mongoose.Types.ObjectId));
+
     res.json({
-      orders,
+      orders: orders.map((o) => ({ ...o.toJSON(), isReviewed: reviewed.has(o._id.toString()) })),
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -568,7 +589,9 @@ export async function getOrderDetail(req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    res.json({ order });
+    const isReviewed = await Review.exists({ order: order._id });
+
+    res.json({ order: { ...order.toJSON(), isReviewed: Boolean(isReviewed) } });
   } catch (error) {
     console.error('Get order detail error:', error);
     res.status(500).json({ message: 'Server error fetching order' });
@@ -576,7 +599,7 @@ export async function getOrderDetail(req: AuthRequest, res: Response): Promise<v
 }
 
 // ---------------------------------------------------------------------------
-// Order actions: cancel, rate, reorder, track
+// Order actions: cancel, reorder, track (reviews live in review.controller)
 // ---------------------------------------------------------------------------
 
 /**
@@ -640,82 +663,6 @@ export async function cancelOrder(req: AuthRequest, res: Response): Promise<void
   } catch (error: any) {
     console.error('Cancel order error:', error);
     res.status(500).json({ message: error.message || 'Server error cancelling order' });
-  }
-}
-
-/**
- * POST /api/customer/orders/:id/rate
- * Body: { restaurant: 1-5, delivery: 1-5, food: 1-5, comment?: string }
- *
- * Lets the customer rate a delivered order. Saves the rating on the order
- * and pushes it onto the restaurant's `reviews` array (with rating + comment),
- * which keeps both the per-order audit trail and the aggregated restaurant
- * rating up to date.
- */
-export async function rateOrder(req: AuthRequest, res: Response): Promise<void> {
-  try {
-    const orderId = req.params.id as string;
-    const { restaurant, delivery, food, comment } = req.body || {};
-
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      res.status(400).json({ message: 'Invalid order id' });
-      return;
-    }
-
-    const ratings = [restaurant, delivery, food].map((v) => Number(v));
-    if (ratings.some((v) => Number.isNaN(v) || v < 1 || v > 5)) {
-      res
-        .status(400)
-        .json({ message: 'restaurant, delivery, and food ratings (1-5) are required' });
-      return;
-    }
-
-    const order = await Order.findOne({ _id: orderId, customer: req.user!.id });
-    if (!order) {
-      res.status(404).json({ message: 'Order not found' });
-      return;
-    }
-
-    if (order.status !== 'Delivered') {
-      res.status(409).json({ message: 'Only delivered orders can be rated' });
-      return;
-    }
-    if (order.customerRating?.ratedAt) {
-      res.status(409).json({ message: 'Order has already been rated' });
-      return;
-    }
-
-    await order.addRating({
-      restaurant: ratings[0],
-      delivery: ratings[1],
-      food: ratings[2],
-      comment,
-    });
-
-    // Mirror the food rating into the restaurant's review list so it bubbles
-    // up to the average rating used in search/listings.
-    const restaurantDoc = await Restaurant.findById(order.restaurant);
-    if (restaurantDoc) {
-      await restaurantDoc.addReview({
-        user: req.user!.id,
-        rating: ratings[2], // food rating drives restaurant aggregate
-        comment,
-      });
-
-      const trimmedComment = typeof comment === 'string' ? comment.trim() : '';
-      void notifyRestaurant(restaurantDoc._id, 'reviews', {
-        title: `New ${ratings[2]}-star review`,
-        body: trimmedComment
-          ? `"${trimmedComment.length > 100 ? `${trimmedComment.slice(0, 100)}…` : trimmedComment}"`
-          : `Order #${order.orderNumber} was rated ${ratings[2]} out of 5`,
-        data: { type: 'new_review', orderId: order._id.toString() },
-      });
-    }
-
-    res.json({ order });
-  } catch (error: any) {
-    console.error('Rate order error:', error);
-    res.status(500).json({ message: error.message || 'Server error rating order' });
   }
 }
 

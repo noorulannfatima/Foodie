@@ -83,15 +83,6 @@ export interface IOrder extends Document {
   specialInstructions?: string;
   cancellationReason?: string;
   
-  // Ratings
-  customerRating?: {
-    restaurant: number;
-    delivery: number;
-    food: number;
-    comment?: string;
-    ratedAt: Date;
-  };
-  
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -101,7 +92,6 @@ export interface IOrder extends Document {
   assignDeliveryPerson(deliveryPersonId: string): Promise<IOrder>;
   calculateTotal(): number;
   canBeCancelled(): boolean;
-  addRating(ratingData: any): Promise<IOrder>;
 }
 
 // Order Schema
@@ -330,27 +320,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
       type: String,
       trim: true,
     },
-    
-    // ========== Ratings ==========
-    customerRating: {
-      restaurant: {
-        type: Number,
-        min: 1,
-        max: 5,
-      },
-      delivery: {
-        type: Number,
-        min: 1,
-        max: 5,
-      },
-      food: {
-        type: Number,
-        min: 1,
-        max: 5,
-      },
-      comment: String,
-      ratedAt: Date,
-    },
+
   },
   {
     timestamps: true,
@@ -451,18 +421,6 @@ orderSchema.methods.calculateTotal = function (): number {
 orderSchema.methods.canBeCancelled = function (): boolean {
   const cancellableStatuses = ["Pending", "Confirmed", "Preparing"];
   return cancellableStatuses.includes(this.status);
-};
-
-/**
- * Add customer rating
- */
-orderSchema.methods.addRating = async function (ratingData: any): Promise<IOrder> {
-  this.customerRating = {
-    ...ratingData,
-    ratedAt: new Date(),
-  };
-  
-  return await (this as any).save();
 };
 
 // ========== Static Methods ==========

@@ -13,6 +13,7 @@ import {
   acceptOrder,
   patchOrderStatus,
 } from '../controllers/delivery.controller';
+import { getDeliveryReviews } from '../controllers/review.controller';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.get('/orders/requests', getOrderRequests);
 router.get('/orders/history', getOrderHistory);
 router.post('/orders/:id/accept', acceptOrder);
 router.patch('/orders/:id/status', patchOrderStatus);
+router.get('/reviews', getDeliveryReviews);
 
 export default router;

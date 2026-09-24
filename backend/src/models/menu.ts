@@ -16,6 +16,9 @@ export interface IMenuItem {
   preparationTime: number; // in minutes
   calories?: number;
   isAvailable: boolean;
+  /** Running totals of customer star ratings; maintained by rating.service, never by the restaurant. */
+  ratingSum: number;
+  ratingCount: number;
   customizations: Array<{
     name: string;
     options: Array<{
@@ -147,6 +150,16 @@ const menuSchema = new mongoose.Schema<IMenu>(
           type: Boolean,
           default: true,
         },
+        ratingSum: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+        ratingCount: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
         customizations: [
           {
             name: {
@@ -201,6 +214,15 @@ const menuSchema = new mongoose.Schema<IMenu>(
 menuSchema.index({ "items.category": 1 });
 menuSchema.index({ "items.isAvailable": 1 });
 
+/** Fields derived from customer reviews; restaurants must not be able to set them. */
+const PROTECTED_ITEM_FIELDS = ["ratingSum", "ratingCount"] as const;
+
+function withoutProtectedFields(data: any) {
+  const copy = { ...data };
+  for (const field of PROTECTED_ITEM_FIELDS) delete copy[field];
+  return copy;
+}
+
 // Instance Methods
 
 /**
@@ -235,7 +257,7 @@ menuSchema.methods.addItem = async function (itemData: any): Promise<IMenu> {
   }
   
   this.items.push({
-    ...itemData,
+    ...withoutProtectedFields(itemData),
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -256,7 +278,7 @@ menuSchema.methods.updateItem = async function (
     throw new Error("Item not found");
   }
   
-  Object.assign(item, updates);
+  Object.assign(item, withoutProtectedFields(updates));
   (item as any).updatedAt = new Date();
   
   return await (this as any).save();
