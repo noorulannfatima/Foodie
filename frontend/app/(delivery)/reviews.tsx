@@ -8,35 +8,33 @@ import ReviewCard from '@/components/molecules/ReviewCard/ReviewCard';
 import { ReviewsSummary } from '@/components/pages/reviews';
 import { deliveryAPI } from '@/services/api/delivery.api';
 import type { DeliveryReview, DeliveryReviewsResponse } from '@/services/api/review.types';
-import { DeliveryLayout, getDeliveryTabTheme } from '@/constants/deliveryTheme';
-import { getDeliveryReviewPalette } from '@/constants/deliveryReviewPalette';
-import { useAppThemeStore } from '@/stores/appThemeStore';
+import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useDeliveryReviewPalette } from '@/components/pages/delivery';
 
 export default function DeliveryReviewsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const isDark = useAppThemeStore((s) => s.isDark);
-  const theme = useMemo(() => getDeliveryTabTheme(isDark), [isDark]);
-  const palette = useMemo(() => getDeliveryReviewPalette(theme), [theme]);
+  const c = useAppThemeColors();
+  const palette = useDeliveryReviewPalette();
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1, backgroundColor: theme.pageBg, paddingTop: insets.top },
+        container: { flex: 1, backgroundColor: c.screenBackground, paddingTop: insets.top },
         header: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingHorizontal: DeliveryLayout.screenPaddingH,
+          paddingHorizontal: 20,
           paddingVertical: 12,
         },
-        title: { fontSize: 20, fontWeight: '800', color: theme.navy },
+        title: { fontFamily: Fonts.brandBlack, fontSize: 20, color: c.text },
         listContent: {
-          paddingHorizontal: DeliveryLayout.screenPaddingH,
+          paddingHorizontal: 20,
           paddingBottom: insets.bottom + 24,
         },
       }),
-    [theme, insets],
+    [c, insets],
   );
 
   const [summary, setSummary] = useState<DeliveryReviewsResponse['summary'] | null>(null);
@@ -70,7 +68,7 @@ export default function DeliveryReviewsScreen() {
           accessibilityRole="button"
           accessibilityLabel="Back"
         >
-          <Ionicons name="arrow-back" size={24} color={theme.navy} />
+          <Ionicons name="arrow-back" size={24} color={c.text} />
         </Pressable>
         <Text style={styles.title}>My Ratings</Text>
         <View style={{ width: 24 }} />

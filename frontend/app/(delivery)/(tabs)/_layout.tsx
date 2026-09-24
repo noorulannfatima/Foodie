@@ -1,96 +1,64 @@
-import { useMemo } from 'react';
+import { StatusBar } from 'react-native';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { DeliveryColors, getDeliveryTabTheme } from '@/constants/deliveryTheme';
-import { useAppThemeStore } from '@/stores/appThemeStore';
-
-function TabIcon({
-  name,
-  focused,
-  theme,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  focused: boolean;
-  theme: ReturnType<typeof getDeliveryTabTheme>;
-}) {
-  const styles = useMemo(() => createTabIconStyles(theme), [theme]);
-  return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Ionicons name={name} size={22} color={focused ? DeliveryColors.red : theme.textMuted} />
-    </View>
-  );
-}
+import { Fonts, useAppThemeColors } from '@/constants/theme';
 
 export default function DeliveryTabsLayout() {
   const insets = useSafeAreaInsets();
+  const c = useAppThemeColors();
   const bottomPad = Math.max(insets.bottom, 8);
-  const isDark = useAppThemeStore((s) => s.isDark);
-  const theme = useMemo(() => getDeliveryTabTheme(isDark), [isDark]); // tab chrome matches delivery page tokens
-
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: false,
-      tabBarActiveTintColor: DeliveryColors.red,
-      tabBarInactiveTintColor: theme.textMuted,
-      tabBarLabelStyle: { fontSize: 11, fontWeight: '600' as const },
-      tabBarStyle: {
-        borderTopColor: theme.border,
-        backgroundColor: theme.card,
-        paddingTop: 6,
-        paddingBottom: bottomPad,
-        minHeight: 52 + bottomPad,
-      },
-    }),
-    [theme, bottomPad],
-  );
 
   return (
-    <Tabs screenOptions={screenOptions}>
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name="speedometer-outline" focused={focused} theme={theme} />
-          ),
-        }}
+    <>
+      <StatusBar
+        barStyle={c.isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={c.screenBackground}
       />
-      <Tabs.Screen
-        name="earnings"
-        options={{
-          title: 'Earnings',
-          tabBarIcon: ({ focused }) => <TabIcon name="cash-outline" focused={focused} theme={theme} />,
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: c.primary,
+          tabBarInactiveTintColor: c.muted,
+          tabBarLabelStyle: { fontFamily: Fonts.brandBold, fontSize: 10 },
+          tabBarStyle: {
+            borderTopColor: c.border,
+            backgroundColor: c.card,
+            paddingTop: 4,
+            paddingBottom: bottomPad,
+            minHeight: 52 + bottomPad,
+          },
         }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Orders',
-          tabBarIcon: ({ focused }) => <TabIcon name="car-outline" focused={focused} theme={theme} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon name="person-outline" focused={focused} theme={theme} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="dashboard"
+          options={{
+            title: 'Dashboard',
+            tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="orders"
+          options={{
+            title: 'Orders',
+            tabBarIcon: ({ color, size }) => <Ionicons name="receipt-outline" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="earnings"
+          options={{
+            title: 'Earnings',
+            tabBarIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          }}
+        />
+      </Tabs>
+    </>
   );
-}
-
-function createTabIconStyles(theme: ReturnType<typeof getDeliveryTabTheme>) {
-  return StyleSheet.create({
-    iconWrap: {
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 20,
-    },
-    iconWrapActive: {
-      backgroundColor: theme.redLight,
-    },
-  });
 }

@@ -10,16 +10,17 @@ import {
   Alert,
   Modal,
   TextInput,
-  Switch,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import DeliveryHeader from '@/components/delivery/DeliveryHeader';
-import { DeliveryColors, DeliveryLayout, getDeliveryTabTheme } from '@/constants/deliveryTheme';
-import { BRAND_RED } from '@/constants/theme';
+import Constants from 'expo-constants';
+import { BRAND_RED_TINT, Fonts, tintBg, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { Loader, Switch } from '@/components/atoms';
+import { DeliveryPageHeading, DeliverySegmentedTabs } from '@/components/pages/delivery';
 import {
   DELIVERY_LANGUAGE_LABELS,
   deliveryProfileT,
@@ -55,8 +56,9 @@ export default function DeliveryProfileScreen() {
   const storeLang = useDeliveryPreferencesStore((s) => s.language);
   const mergePrefs = useDeliveryPreferencesStore((s) => s.mergeFromServer);
 
-  const theme = useMemo(() => getDeliveryTabTheme(darkMode), [darkMode]);
-  const styles = useMemo(() => createProfileStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
+  const c = useAppThemeColors();
+  const styles = useMemo(() => createProfileStyles(c), [c]);
   const t = useCallback(
     (key: Parameters<typeof deliveryProfileT>[1]) => deliveryProfileT(storeLang, key),
     [storeLang],
@@ -252,18 +254,27 @@ export default function DeliveryProfileScreen() {
   };
 
   const notif = useDeliveryPreferencesStore((s) => s.notificationsEnabled);
-  const rating = p?.stats?.averageRating?.toFixed(2) ?? '—';
+  const rating = p?.stats?.totalRatings ? p.stats.averageRating.toFixed(1) : null;
   const reliability = `${p?.completionRate ?? 0}%`;
   const locale = localeForLang(storeLang);
 
   const inputProps = {
-    placeholderTextColor: theme.textMuted,
+    placeholderTextColor: c.muted,
     style: styles.input,
   };
 
+  if (loading && !p) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <Loader />
+      </View>
+    );
+  }
+
+  const appVersion = Constants.expoConfig?.version;
+
   return (
-    <View style={styles.root}>
-      <DeliveryHeader avatarUri={p?.profileImage ?? undefined} />
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -273,112 +284,108 @@ export default function DeliveryProfileScreen() {
               setRefreshing(true);
               load();
             }}
-            tintColor={DeliveryColors.red}
+            tintColor={c.primary}
           />
         }
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.screenTitle}>{t('profileTitle')}</Text>
+        <DeliveryPageHeading title={t('profileTitle')} />
 
-        <View style={styles.tabRow}>
-          <Pressable
-            style={[styles.tab, tab === 'account' && styles.tabActive]}
-            onPress={() => setTab('account')}
-          >
-            <Text style={[styles.tabText, tab === 'account' && styles.tabTextActive]}>
-              {t('account')}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.tab, tab === 'settings' && styles.tabActive]}
-            onPress={() => setTab('settings')}
-          >
-            <Text style={[styles.tabText, tab === 'settings' && styles.tabTextActive]}>
-              {t('settings')}
-            </Text>
-          </Pressable>
+        <View style={styles.tabsWrap}>
+          <DeliverySegmentedTabs<TabId>
+            tabs={[
+              { key: 'account', label: t('account') },
+              { key: 'settings', label: t('settings') },
+            ]}
+            active={tab}
+            onChange={setTab}
+          />
         </View>
 
         {tab === 'account' ? (
           <>
             <View style={styles.heroCard}>
-              <View style={styles.accentBar} />
-              <View style={styles.heroInner}>
-                <View style={styles.avatarBlock}>
-                  {p?.profileImage ? (
-                    <Image source={{ uri: p.profileImage }} style={styles.bigAvatar} />
-                  ) : (
-                    <View style={[styles.bigAvatar, styles.avatarPh]}>
-                      <Ionicons name="person" size={48} color={theme.navy} />
-                    </View>
-                  )}
-                  <Pressable style={styles.editFab} onPress={openEdit}>
-                    <Ionicons name="pencil" size={16} color={DeliveryColors.white} />
-                  </Pressable>
-                </View>
-                <Text style={styles.name}>{loading ? '…' : p?.name}</Text>
-                <View style={styles.badgeRow}>
-                  <View style={styles.tierPill}>
-                    <Text style={styles.tierText}>{p?.tierLabel ?? 'MESSENGER TIER'}</Text>
+              <View style={styles.avatarBlock}>
+                {p?.profileImage ? (
+                  <Image source={{ uri: p.profileImage }} style={styles.bigAvatar} />
+                ) : (
+                  <View style={[styles.bigAvatar, styles.avatarPh]}>
+                    <Ionicons name="person" size={40} color={c.muted} />
                   </View>
+                )}
+                <Pressable
+                  style={styles.editFab}
+                  onPress={openEdit}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('updateAccount')}
+                  hitSlop={8}
+                >
+                  <Ionicons name="pencil" size={14} color="#fff" />
+                </Pressable>
+              </View>
+              <Text style={styles.name}>{p?.name ?? '—'}</Text>
+              <View style={styles.badgeRow}>
+                <View style={styles.tierPill}>
+                  <Text style={styles.tierText}>{p?.tierLabel ?? 'COURIER'}</Text>
+                </View>
+                {p?.isVerified ? (
+                  <View style={styles.verifiedPill}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Text style={styles.verifiedText}>Verified</Text>
+                  </View>
+                ) : null}
+              </View>
+              <View style={styles.stats3}>
+                <View style={styles.statCol}>
+                  <Text style={styles.statN}>{p?.stats?.totalDeliveries ?? 0}</Text>
+                  <Text style={styles.statL}>{t('totalOrders')}</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statCol}>
                   <View style={styles.rateRow}>
-                    <Ionicons name="star" size={16} color="#F59E0B" />
-                    <Text style={styles.rateNum}>{rating}</Text>
+                    <Ionicons name="star" size={14} color="#F59E0B" />
+                    <Text style={styles.statN}>{rating ?? 'New'}</Text>
                   </View>
+                  <Text style={styles.statL}>Rating</Text>
                 </View>
-                <View style={styles.stats3}>
-                  <View style={styles.statCol}>
-                    <Text style={styles.statN}>{p?.stats?.totalDeliveries ?? '—'}</Text>
-                    <Text style={styles.statL}>{t('totalOrders')}</Text>
-                  </View>
-                  <View style={styles.statCol}>
-                    <Text style={styles.statN}>{formatSince(p?.createdAt, locale)}</Text>
-                    <Text style={styles.statL}>{t('memberSince')}</Text>
-                  </View>
-                  <View style={styles.statCol}>
-                    <Text style={styles.statN}>{reliability}</Text>
-                    <Text style={styles.statL}>{t('reliability')}</Text>
-                  </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statCol}>
+                  <Text style={styles.statN}>{reliability}</Text>
+                  <Text style={styles.statL}>{t('reliability')}</Text>
                 </View>
               </View>
+              <Text style={styles.since}>
+                {t('memberSince')} {formatSince(p?.createdAt, locale)}
+              </Text>
             </View>
 
-            <Pressable style={styles.primaryBtn} onPress={openEdit}>
-              <Ionicons name="create-outline" size={20} color={DeliveryColors.white} />
-              <Text style={styles.primaryBtnText}>{t('updateAccount')}</Text>
-            </Pressable>
-
-            <Section title={t('personalInfo')} icon="person-outline" sx={styles}>
-              <Row label={t('email')} value={p?.email ?? '—'} sx={styles} />
-              <Row label={t('phone')} value={p?.phone ?? '—'} sx={styles} />
+            <Section title={t('personalInfo')} icon="person-outline" sx={styles} c={c}>
               <Row label={t('name')} value={p?.name ?? '—'} sx={styles} />
+              <Row label={t('email')} value={p?.email ?? '—'} sx={styles} />
+              <Row label={t('phone')} value={p?.phone ?? '—'} sx={styles} last />
             </Section>
 
-            <Section title={t('vehicleInfo')} icon="bicycle-outline" sx={styles}>
-              <View style={styles.vehBox}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.vehTag}>{t('vehicleType').toUpperCase()}</Text>
-                  <Text style={styles.vehName}>
-                    {p?.vehicle?.model
-                      ? `${p.vehicle.model} (${p.vehicle.type})`
-                      : p?.vehicle?.type ?? '—'}
-                  </Text>
-                  <Text style={styles.vehLic}>
-                    {t('plate')}: {p?.vehicle?.plateNumber ?? '—'}
-                  </Text>
-                </View>
-                <View style={styles.vehThumb}>
-                  <Ionicons name="bicycle" size={36} color={theme.navy} />
-                </View>
-              </View>
+            <Section title={t('vehicleInfo')} icon="bicycle-outline" sx={styles} c={c}>
+              <Row
+                label={t('vehicleType')}
+                value={
+                  p?.vehicle?.model ? `${p.vehicle.model} (${p.vehicle.type})` : p?.vehicle?.type ?? '—'
+                }
+                sx={styles}
+              />
+              <Row label={t('plate')} value={p?.vehicle?.plateNumber ?? '—'} sx={styles} last={!p?.vehicle?.color} />
+              {p?.vehicle?.color ? (
+                <Row label={t('vehicleColor')} value={p.vehicle.color} sx={styles} last />
+              ) : null}
             </Section>
 
-            <Section title={t('documents')} icon="folder-outline" sx={styles}>
+            <Section title={t('documents')} icon="folder-outline" sx={styles} c={c}>
               <Pressable
-                style={styles.docBox}
+                style={({ pressed }) => [styles.docRow, pressed && { opacity: 0.7 }]}
                 onPress={() => Alert.alert(t('driversLicense'), t('verifiedOnFile'))}
+                accessibilityRole="button"
               >
-                <Ionicons name="card-outline" size={22} color={theme.navy} />
+                <Ionicons name="card-outline" size={20} color={c.primary} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.docTitle}>{t('driversLicense')}</Text>
                   <Text style={styles.docSub}>
@@ -387,90 +394,98 @@ export default function DeliveryProfileScreen() {
                       : t('verifiedOnFile')}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                <Ionicons name="chevron-forward" size={18} color={c.muted} />
               </Pressable>
               {p?.emergencyContact?.name ? (
-                <View style={[styles.docBox, { marginBottom: 0 }]}>
-                  <Ionicons name="people-outline" size={22} color={theme.navy} />
+                <View style={[styles.docRow, styles.docRowLast]}>
+                  <Ionicons name="people-outline" size={20} color={c.primary} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.docTitle}>{t('emergencyContact')}</Text>
                     <Text style={styles.docSub}>
-                      {p.emergencyContact.name} • {p.emergencyContact.phone ?? ''}
+                      {[p.emergencyContact.name, p.emergencyContact.phone].filter(Boolean).join(' • ')}
                     </Text>
                   </View>
                 </View>
               ) : null}
             </Section>
 
-            <Pressable style={styles.dangerOutline} onPress={() => setDeleteOpen(true)}>
-              <Ionicons name="trash-outline" size={20} color={BRAND_RED} />
+            <Pressable
+              style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
+              onPress={openEdit}
+              accessibilityRole="button"
+            >
+              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Text style={styles.primaryBtnText}>{t('updateAccount')}</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [styles.dangerOutline, pressed && { opacity: 0.7 }]}
+              onPress={() => setDeleteOpen(true)}
+              accessibilityRole="button"
+            >
+              <Ionicons name="trash-outline" size={18} color={c.primary} />
               <Text style={styles.dangerOutlineText}>{t('deleteAccount')}</Text>
             </Pressable>
           </>
         ) : (
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionGroupTitle}>{t('appearance')}</Text>
+              <Text style={styles.groupTitle}>{t('appearance').toUpperCase()}</Text>
               <View style={styles.switchRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.setLabel}>{t('darkMode')}</Text>
                   <Text style={styles.setHint}>{t('darkModeHint')}</Text>
                 </View>
-                <Switch
-                  value={darkMode}
-                  onValueChange={(v) => patchPref({ darkMode: v })}
-                  trackColor={{ false: theme.border, true: '#FCA5A5' }}
-                  thumbColor={darkMode ? DeliveryColors.red : '#f4f3f4'}
-                />
+                <Switch value={darkMode} onValueChange={(v) => patchPref({ darkMode: v })} />
               </View>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionGroupTitle}>{t('general')}</Text>
+              <Text style={styles.groupTitle}>{t('general').toUpperCase()}</Text>
               <View style={styles.switchRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.setLabel}>{t('notifications')}</Text>
                   <Text style={styles.setHint}>{t('notificationsHint')}</Text>
                 </View>
-                <Switch
-                  value={notif}
-                  onValueChange={(v) => patchPref({ notificationsEnabled: v })}
-                  trackColor={{ false: theme.border, true: '#FCA5A5' }}
-                  thumbColor={notif ? DeliveryColors.red : '#f4f3f4'}
-                />
+                <Switch value={notif} onValueChange={(v) => patchPref({ notificationsEnabled: v })} />
               </View>
-              <Text style={[styles.setLabel, { marginTop: 16, marginBottom: 10 }]}>
-                {t('language')}
-              </Text>
+              <View style={styles.divider} />
+              <Text style={[styles.setLabel, { marginBottom: 10 }]}>{t('language')}</Text>
               <View style={styles.langRow}>
-                {(Object.keys(DELIVERY_LANGUAGE_LABELS) as DeliveryLanguage[]).map((code) => (
-                  <Pressable
-                    key={code}
-                    style={[styles.langChip, storeLang === code && styles.langChipActive]}
-                    onPress={() => patchPref({ language: code })}
-                  >
-                    <Text
-                      style={[
-                        styles.langChipText,
-                        storeLang === code && styles.langChipTextActive,
-                      ]}
+                {(Object.keys(DELIVERY_LANGUAGE_LABELS) as DeliveryLanguage[]).map((code) => {
+                  const on = storeLang === code;
+                  return (
+                    <Pressable
+                      key={code}
+                      style={[styles.langChip, on && styles.langChipActive]}
+                      onPress={() => patchPref({ language: code })}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: on }}
                     >
-                      {DELIVERY_LANGUAGE_LABELS[code]}
-                    </Text>
-                  </Pressable>
-                ))}
+                      <Text style={[styles.langChipText, on && styles.langChipTextActive]}>
+                        {DELIVERY_LANGUAGE_LABELS[code]}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
           </>
         )}
 
-        <Pressable style={styles.logoutBtn} onPress={onLogout}>
-          <Ionicons name="log-out-outline" size={22} color={DeliveryColors.red} />
+        <Pressable
+          style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.7 }]}
+          onPress={onLogout}
+          accessibilityRole="button"
+        >
+          <Ionicons name="log-out-outline" size={20} color={c.primary} />
           <Text style={styles.logoutText}>{t('logOut')}</Text>
         </Pressable>
-        <Text style={styles.ver}>
-          {t('appVersion')} 4.2.1-MESSENGER
-        </Text>
+        {appVersion ? (
+          <Text style={styles.ver}>
+            {t('appVersion')} {appVersion}
+          </Text>
+        ) : null}
       </ScrollView>
 
       <Modal visible={editOpen} animationType="slide" transparent>
@@ -569,7 +584,7 @@ export default function DeliveryProfileScreen() {
                 disabled={saveBusy}
               >
                 {saveBusy ? (
-                  <ActivityIndicator color={DeliveryColors.white} />
+                  <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.modalPrimaryTxt}>{t('save')}</Text>
                 )}
@@ -586,7 +601,7 @@ export default function DeliveryProfileScreen() {
             <Text style={styles.deleteMsg}>{t('deleteConfirmMessage')}</Text>
             <Text style={styles.fieldLbl}>{t('password')}</Text>
             <TextInput
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={c.muted}
               style={styles.input}
               value={deletePassword}
               onChangeText={setDeletePassword}
@@ -602,7 +617,7 @@ export default function DeliveryProfileScreen() {
                 disabled={deleteBusy}
               >
                 {deleteBusy ? (
-                  <ActivityIndicator color={DeliveryColors.white} />
+                  <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.modalPrimaryTxt}>{t('closeAccount')}</Text>
                 )}
@@ -615,24 +630,25 @@ export default function DeliveryProfileScreen() {
   );
 }
 
+
 function Section({
   title,
   icon,
   children,
   sx,
+  c,
 }: {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   children: ReactNode;
   sx: ReturnType<typeof createProfileStyles>;
+  c: AppColors;
 }) {
   return (
     <View style={sx.section}>
       <View style={sx.sectionHead}>
-        <View style={sx.sectionTitleRow}>
-          <Ionicons name={icon} size={20} color={DeliveryColors.red} />
-          <Text style={sx.sectionTitle}>{title}</Text>
-        </View>
+        <Ionicons name={icon} size={18} color={c.primary} />
+        <Text style={sx.groupTitle}>{title.toUpperCase()}</Text>
       </View>
       {children}
     </View>
@@ -643,220 +659,197 @@ function Row({
   label,
   value,
   sx,
+  last,
 }: {
   label: string;
   value: string;
   sx: ReturnType<typeof createProfileStyles>;
+  last?: boolean;
 }) {
   return (
-    <View style={sx.row}>
+    <View style={[sx.row, last && sx.rowLast]}>
       <Text style={sx.rowLabel}>{label}</Text>
-      <Text style={sx.rowVal}>{value}</Text>
+      <Text style={sx.rowVal} numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 }
 
-function createProfileStyles(theme: ReturnType<typeof getDeliveryTabTheme>) {
+function createProfileStyles(c: AppColors) {
   return StyleSheet.create({
-    root: { flex: 1, backgroundColor: theme.pageBg },
-    content: { paddingHorizontal: DeliveryLayout.screenPaddingH, paddingBottom: 40 },
-    screenTitle: {
-      fontSize: 26,
-      fontWeight: '800',
-      color: theme.navy,
-      marginTop: 4,
-      marginBottom: 12,
-    },
-    tabRow: {
-      flexDirection: 'row',
-      gap: 10,
+    root: { flex: 1, backgroundColor: c.screenBackground },
+    content: { padding: 20, paddingBottom: 40 },
+    tabsWrap: { marginTop: -8, marginBottom: 16 },
+    heroCard: {
+      backgroundColor: c.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      alignItems: 'center',
       marginBottom: 16,
     },
-    tab: {
-      flex: 1,
-      paddingVertical: 12,
-      borderRadius: 12,
-      backgroundColor: theme.sky,
+    avatarBlock: { marginBottom: 12 },
+    bigAvatar: { width: 88, height: 88, borderRadius: 44 },
+    avatarPh: {
+      backgroundColor: c.screenBackground,
+      borderWidth: 1,
+      borderColor: c.border,
       alignItems: 'center',
+      justifyContent: 'center',
     },
-    tabActive: { backgroundColor: theme.card, borderWidth: 2, borderColor: DeliveryColors.red },
-    tabText: { fontSize: 14, fontWeight: '700', color: theme.textMuted },
-    tabTextActive: { color: DeliveryColors.red },
-    heroCard: {
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      overflow: 'hidden',
-      marginBottom: 14,
-      flexDirection: 'row',
-      shadowColor: '#000',
-      shadowOpacity: theme.isDark ? 0.2 : 0.06,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    accentBar: { width: 4, backgroundColor: DeliveryColors.red },
-    heroInner: { flex: 1, padding: 16 },
-    avatarBlock: { alignSelf: 'center', marginBottom: 8 },
-    bigAvatar: { width: 96, height: 96, borderRadius: 48 },
-    avatarPh: { backgroundColor: theme.sky, alignItems: 'center', justifyContent: 'center' },
     editFab: {
       position: 'absolute',
-      right: 0,
-      bottom: 0,
-      backgroundColor: DeliveryColors.red,
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      right: -2,
+      bottom: -2,
+      backgroundColor: c.brand,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 3,
-      borderColor: theme.card,
+      borderColor: c.card,
     },
-    name: { fontSize: 22, fontWeight: '800', color: theme.text, textAlign: 'center' },
+    name: { fontFamily: Fonts.brandBlack, fontSize: 22, color: c.text, textAlign: 'center' },
     badgeRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 12,
+      gap: 8,
       marginTop: 8,
     },
     tierPill: {
-      backgroundColor: '#EA580C',
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 20,
+      backgroundColor: tintBg(c.brand, BRAND_RED_TINT, c.isDark),
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
     },
-    tierText: { color: DeliveryColors.white, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
-    rateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    rateNum: { fontSize: 16, fontWeight: '800', color: '#F59E0B' },
+    tierText: { fontFamily: Fonts.brandBold, fontSize: 11, color: c.primary, letterSpacing: 0.5 },
+    verifiedPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: tintBg('#10B981', '#DCFCE7', c.isDark),
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    verifiedText: { fontFamily: Fonts.brandBold, fontSize: 11, color: '#10B981' },
     stats3: {
       flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'stretch',
       marginTop: 18,
+      paddingTop: 16,
       borderTopWidth: 1,
-      borderTopColor: theme.border,
-      paddingTop: 14,
+      borderTopColor: c.border,
     },
     statCol: { flex: 1, alignItems: 'center' },
-    statN: { fontSize: 15, fontWeight: '800', color: theme.navy },
-    statL: { fontSize: 11, color: theme.textMuted, marginTop: 4, textAlign: 'center' },
+    statDivider: { width: 1, height: 28, backgroundColor: c.border },
+    rateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    statN: { fontFamily: Fonts.brandBlack, fontSize: 18, color: c.text, fontVariant: ['tabular-nums'] },
+    statL: { fontFamily: Fonts.brand, fontSize: 12, color: c.muted, marginTop: 2, textAlign: 'center' },
+    since: { fontFamily: Fonts.brand, fontSize: 12, color: c.muted, marginTop: 14 },
+    section: {
+      backgroundColor: c.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      marginBottom: 16,
+    },
+    sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+    groupTitle: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: c.muted,
+      letterSpacing: 1,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 16,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    rowLast: { borderBottomWidth: 0, paddingBottom: 0 },
+    rowLabel: { fontFamily: Fonts.brand, fontSize: 14, color: c.muted },
+    rowVal: { flexShrink: 1, fontFamily: Fonts.brandBold, fontSize: 14, color: c.text, textAlign: 'right' },
+    docRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    docRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
+    docTitle: { fontFamily: Fonts.brandBold, fontSize: 14, color: c.text },
+    docSub: { fontFamily: Fonts.brand, fontSize: 12, color: c.muted, marginTop: 2 },
     primaryBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      backgroundColor: DeliveryColors.red,
-      paddingVertical: 14,
+      backgroundColor: c.brand,
+      minHeight: 48,
       borderRadius: 12,
-      marginBottom: 14,
+      marginBottom: 10,
     },
-    primaryBtnText: { color: DeliveryColors.white, fontSize: 15, fontWeight: '800' },
-    section: {
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      padding: 14,
-      marginBottom: 14,
-      shadowColor: '#000',
-      shadowOpacity: theme.isDark ? 0.15 : 0.04,
-      shadowRadius: 6,
-      elevation: 1,
-    },
-    sectionGroupTitle: {
-      fontSize: 13,
-      fontWeight: '800',
-      color: theme.navy,
-      marginBottom: 12,
-      letterSpacing: 0.3,
-    },
-    sectionHead: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    sectionTitle: { fontSize: 16, fontWeight: '800', color: theme.text },
-    row: { marginBottom: 10 },
-    rowLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, letterSpacing: 0.3 },
-    rowVal: { fontSize: 14, color: theme.navy, marginTop: 3, fontWeight: '600' },
-    vehBox: {
-      flexDirection: 'row',
-      backgroundColor: theme.sky,
-      borderRadius: 12,
-      padding: 14,
-      alignItems: 'center',
-    },
-    vehTag: { fontSize: 10, fontWeight: '800', color: theme.textMuted, letterSpacing: 0.5 },
-    vehName: { fontSize: 17, fontWeight: '800', color: theme.navy, marginTop: 4 },
-    vehLic: { fontSize: 13, color: theme.textMuted, marginTop: 4 },
-    vehThumb: {
-      width: 64,
-      height: 64,
-      borderRadius: 10,
-      backgroundColor: theme.card,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    docBox: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      backgroundColor: theme.sky,
-      borderRadius: 10,
-      padding: 12,
-      marginBottom: 8,
-    },
-    docTitle: { fontSize: 14, fontWeight: '700', color: theme.navy },
-    docSub: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
+    primaryBtnText: { fontFamily: Fonts.brandBold, color: '#fff', fontSize: 15 },
     dangerOutline: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      paddingVertical: 14,
+      minHeight: 48,
       borderRadius: 12,
-      borderWidth: 2,
-      borderColor: BRAND_RED,
-      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.card,
     },
-    dangerOutlineText: { fontSize: 15, fontWeight: '800', color: BRAND_RED },
+    dangerOutlineText: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.primary },
     switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 12,
-      paddingVertical: 6,
     },
-    setLabel: { fontSize: 15, fontWeight: '700', color: theme.navy },
-    setHint: { fontSize: 12, color: theme.textMuted, marginTop: 4 },
+    divider: { height: 1, backgroundColor: c.border, marginVertical: 16 },
+    setLabel: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.text },
+    setHint: { fontFamily: Fonts.brand, fontSize: 13, color: c.muted, marginTop: 2 },
     langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     langChip: {
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      borderRadius: 10,
-      backgroundColor: theme.sky,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: c.card,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: c.border,
     },
-    langChipActive: { borderColor: DeliveryColors.red, backgroundColor: theme.isDark ? '#2A1F1F' : DeliveryColors.redLight },
-    langChipText: { fontSize: 13, fontWeight: '600', color: theme.text },
-    langChipTextActive: { color: DeliveryColors.red, fontWeight: '800' },
+    langChipActive: { backgroundColor: c.text, borderColor: c.text },
+    langChipText: { fontFamily: Fonts.brandBold, fontSize: 13, color: c.muted },
+    langChipTextActive: { color: c.background },
     logoutBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      backgroundColor: theme.sky,
-      paddingVertical: 14,
+      minHeight: 48,
       borderRadius: 12,
       marginTop: 8,
     },
-    logoutText: { fontSize: 16, fontWeight: '800', color: DeliveryColors.red },
+    logoutText: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.primary },
     ver: {
+      fontFamily: Fonts.brand,
       textAlign: 'center',
-      marginTop: 14,
-      fontSize: 11,
-      color: theme.textMuted,
-      letterSpacing: 0.5,
-      fontWeight: '600',
+      marginTop: 4,
+      fontSize: 12,
+      color: c.muted,
     },
     modalOverlay: {
       flex: 1,
@@ -864,80 +857,86 @@ function createProfileStyles(theme: ReturnType<typeof getDeliveryTabTheme>) {
       justifyContent: 'flex-end',
     },
     modalSheet: {
-      backgroundColor: theme.card,
+      backgroundColor: c.card,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      paddingHorizontal: 18,
-      paddingTop: 18,
+      paddingHorizontal: 20,
+      paddingTop: 20,
       maxHeight: '92%',
     },
-    modalTitle: { fontSize: 18, fontWeight: '800', color: theme.navy, marginBottom: 14 },
+    modalTitle: { fontFamily: Fonts.brandBlack, fontSize: 20, color: c.text, marginBottom: 8 },
     fieldLbl: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: theme.textMuted,
-      marginTop: 10,
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: c.muted,
+      marginTop: 12,
       marginBottom: 6,
-      textTransform: 'uppercase',
       letterSpacing: 0.5,
+      textTransform: 'uppercase',
     },
     input: {
-      backgroundColor: theme.sky,
+      fontFamily: Fonts.brand,
+      backgroundColor: c.screenBackground,
       borderRadius: 10,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: c.border,
       paddingHorizontal: 12,
       paddingVertical: 11,
-      fontSize: 14,
-      color: theme.text,
+      fontSize: 15,
+      color: c.text,
+      marginBottom: 6,
     },
     vehPickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     vehChip: {
-      paddingHorizontal: 12,
+      paddingHorizontal: 16,
       paddingVertical: 8,
-      borderRadius: 8,
-      backgroundColor: theme.sky,
+      borderRadius: 20,
+      backgroundColor: c.card,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: c.border,
     },
-    vehChipOn: { borderColor: DeliveryColors.red, backgroundColor: theme.isDark ? '#2A1F1F' : DeliveryColors.redLight },
-    vehChipTx: { fontSize: 12, fontWeight: '600', color: theme.text },
-    vehChipTxOn: { color: DeliveryColors.red },
-    modalActions: { flexDirection: 'row', gap: 12, marginTop: 16, marginBottom: 20 },
+    vehChipOn: { backgroundColor: c.text, borderColor: c.text },
+    vehChipTx: { fontFamily: Fonts.brandBold, fontSize: 13, color: c.muted },
+    vehChipTxOn: { color: c.background },
+    modalActions: { flexDirection: 'row', gap: 12, marginTop: 16, marginBottom: 24 },
     modalGhost: {
       flex: 1,
-      paddingVertical: 14,
+      minHeight: 48,
       alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: 12,
-      backgroundColor: theme.sky,
+      borderWidth: 1,
+      borderColor: c.border,
     },
-    modalGhostTxt: { fontSize: 15, fontWeight: '700', color: theme.navy },
+    modalGhostTxt: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.text },
     modalPrimary: {
       flex: 1,
-      paddingVertical: 14,
+      minHeight: 48,
       alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: 12,
-      backgroundColor: DeliveryColors.red,
+      backgroundColor: c.brand,
     },
-    modalPrimaryTxt: { fontSize: 15, fontWeight: '800', color: DeliveryColors.white },
+    modalPrimaryTxt: { fontFamily: Fonts.brandBold, fontSize: 15, color: '#fff' },
     modalDanger: {
       flex: 1,
-      paddingVertical: 14,
+      minHeight: 48,
       alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: 12,
-      backgroundColor: BRAND_RED,
+      backgroundColor: c.brand,
     },
     deleteSheet: {
       alignSelf: 'center',
       marginTop: 'auto',
       marginBottom: 'auto',
-      backgroundColor: theme.card,
+      backgroundColor: c.card,
       borderRadius: 16,
       padding: 20,
       width: '88%',
       maxWidth: 400,
     },
-    deleteTitle: { fontSize: 18, fontWeight: '800', color: theme.navy, marginBottom: 8 },
-    deleteMsg: { fontSize: 14, color: theme.textMuted, lineHeight: 20, marginBottom: 12 },
+    deleteTitle: { fontFamily: Fonts.brandBlack, fontSize: 20, color: c.text, marginBottom: 8 },
+    deleteMsg: { fontFamily: Fonts.brand, fontSize: 14, color: c.muted, lineHeight: 20, marginBottom: 4 },
   });
 }

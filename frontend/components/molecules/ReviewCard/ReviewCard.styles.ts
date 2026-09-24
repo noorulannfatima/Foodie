@@ -3,7 +3,7 @@ import { Fonts } from '@/constants/theme';
 
 /**
  * Colors a review surface needs. Restaurant screens pass app theme colors and
- * delivery screens pass the delivery theme, so the same components fit both.
+ * delivery screens pass the same app theme, so the same components fit both.
  */
 export interface ReviewPalette {
   card: string;

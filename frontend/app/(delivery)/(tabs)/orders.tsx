@@ -1,63 +1,59 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Pressable,
-  Image,
-  Alert,
-} from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import DeliveryHeader from '@/components/delivery/DeliveryHeader';
-import { DeliveryLayout, getDeliveryTabTheme, type DeliveryTabTheme } from '@/constants/deliveryTheme';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppThemeColors } from '@/constants/theme';
+import { Loader } from '@/components/atoms';
 import { deliveryAPI, type DeliveryOrderPayload } from '@/services/api/delivery.api';
-import { useAppThemeStore } from '@/stores/appThemeStore';
+import {
+  DeliveryEmptyState,
+  DeliveryHistoryRow,
+  DeliveryOnlineStatus,
+  DeliveryPageHeading,
+  DeliveryRequestCard,
+  DeliverySegmentedTabs,
+} from '@/components/pages/delivery';
 
-function fmtUsd(n: number) {
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-}
+type TabKey = 'new' | 'history';
 
 export default function DeliveryOrders() {
-  const [tab, setTab] = useState<'new' | 'history'>('new');
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const c = useAppThemeColors();
+  const [tab, setTab] = useState<TabKey>('new');
   const [requests, setRequests] = useState<DeliveryOrderPayload[]>([]);
   const [history, setHistory] = useState<DeliveryOrderPayload[]>([]);
+  const [online, setOnline] = useState<boolean | null>(null);
+  const [hasActive, setHasActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [accepting, setAccepting] = useState<string | null>(null);
 
-  const isDark = useAppThemeStore((s) => s.isDark);
-  const theme = useMemo(() => getDeliveryTabTheme(isDark), [isDark]); // order list cards track global dark preference
-  const styles = useMemo(() => createOrdersStyles(theme), [theme]);
-  const mapSkyGradient = useMemo(
+  const styles = useMemo(
     () =>
-      (theme.isDark
-        ? ['#3D4F64', '#2A3F55', '#243449']
-        : ['#C5D4E8', '#9EB5D1', '#D8E4F2']) as [string, string, string],
-    [theme.isDark],
-  );
-  const zoneGradient = useMemo(
-    () =>
-      (theme.isDark
-        ? (['#0A1628', '#152535'] as [string, string])
-        : (['#001F3F', '#0A2850'] as [string, string])),
-    [theme.isDark],
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: c.screenBackground },
+        top: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
+        list: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40, flexGrow: 1 },
+        loadingWrap: { paddingVertical: 60 },
+      }),
+    [c],
   );
 
   const load = useCallback(async () => {
     try {
-      const [req, hist] = await Promise.all([
+      const [req, hist, me, act] = await Promise.all([
         deliveryAPI.getOrderRequests(),
         deliveryAPI.getOrderHistory(),
+        deliveryAPI.getMe(),
+        deliveryAPI.getActiveOrder(),
       ]);
       setRequests(req.orders);
       setHistory(hist.orders);
+      setOnline(me.profile.isOnline);
+      setHasActive(Boolean(act.order));
     } catch {
-      setRequests([]);
-      setHistory([]);
+      /* keep last good data */
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,275 +75,96 @@ export default function DeliveryOrders() {
     setAccepting(id);
     try {
       await deliveryAPI.acceptOrder(id);
-      Alert.alert('Order accepted', 'Pick it up at the restaurant when ready.');
-      await load();
+      router.navigate('/(delivery)/(tabs)/dashboard');
     } catch (e: unknown) {
       Alert.alert('Could not accept', e instanceof Error ? e.message : 'Try again.');
+      await load();
     } finally {
       setAccepting(null);
     }
   };
 
-  return (
-    <View style={styles.root}>
-      <DeliveryHeader
-        subtitleRow={
-          <View style={styles.headerLower}>
-            <View>
-              <Text style={styles.liveLabel}>LIVE DISPATCH</Text>
-              <Text style={styles.consoleTitle}>Order Console</Text>
-            </View>
-            <View style={styles.readyPill}>
-              <View style={styles.dot} />
-              <Text style={styles.readyText}>ONLINE & READY</Text>
-            </View>
-          </View>
-        }
+  const renderRequests = () => {
+    if (hasActive) {
+      return (
+        <DeliveryEmptyState
+          icon="bicycle-outline"
+          title="Finish your current run"
+          message="You can accept a new request once the active delivery is complete."
+          actionLabel="Open active delivery"
+          onAction={() => router.navigate('/(delivery)/(tabs)/dashboard')}
+        />
+      );
+    }
+    if (online === false) {
+      return (
+        <DeliveryEmptyState
+          icon="moon-outline"
+          title="You're offline"
+          message="Go online from the Dashboard to start taking requests."
+          actionLabel="Go to Dashboard"
+          onAction={() => router.navigate('/(delivery)/(tabs)/dashboard')}
+        />
+      );
+    }
+    if (requests.length === 0) {
+      return (
+        <DeliveryEmptyState
+          icon="receipt-outline"
+          title="No requests right now"
+          message="New orders appear here as restaurants confirm them. Pull down to refresh."
+        />
+      );
+    }
+    return requests.map((o) => (
+      <DeliveryRequestCard
+        key={o.id}
+        order={o}
+        accepting={accepting === o.id}
+        disabled={accepting !== null}
+        onAccept={() => accept(o.id)}
       />
+    ));
+  };
 
-      <View style={styles.tabs}>
-        <Pressable
-          onPress={() => setTab('new')}
-          style={[styles.tabBtn, tab === 'new' && styles.tabBtnActive]}
-        >
-          <Text style={[styles.tabText, tab === 'new' && styles.tabTextActive]}>New Requests</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setTab('history')}
-          style={[styles.tabBtn, tab === 'history' && styles.tabBtnActive]}
-        >
-          <Text style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>
-            Delivery History
-          </Text>
-        </Pressable>
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.top}>
+        <DeliveryPageHeading
+          title="Orders"
+          right={online === null ? null : <DeliveryOnlineStatus online={online} />}
+        />
+        <DeliverySegmentedTabs<TabKey>
+          tabs={[
+            { key: 'new', label: requests.length ? `Requests (${requests.length})` : 'Requests' },
+            { key: 'history', label: 'History' },
+          ]}
+          active={tab}
+          onChange={setTab}
+        />
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.red} />
-        }
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} />}
+        contentContainerStyle={styles.list}
       >
-        <View style={styles.mapCard}>
-          <LinearGradient colors={mapSkyGradient} style={styles.mapInner}>
-            <View style={styles.locBox}>
-              <Text style={styles.locLabel}>YOUR LOCATION</Text>
-              <Text style={styles.locVal}>Downtown Sector 4</Text>
-            </View>
-          </LinearGradient>
-          <LinearGradient colors={zoneGradient} style={styles.zoneBanner}>
-            <Text style={styles.zoneText}>Active Zone Boost</Text>
-            <Text style={styles.zoneMult}>+1.5x</Text>
-          </LinearGradient>
-        </View>
-
-        {tab === 'new' ? (
-          <>
-            {requests.length === 0 && !loading ? (
-              <Text style={styles.empty}>No open requests nearby. Pull to refresh.</Text>
-            ) : null}
-            {requests.map((o, index) => (
-              <View key={o.id} style={styles.orderCard}>
-                <View style={styles.imgWrap}>
-                  {o.restaurant?.image ? (
-                    <Image source={{ uri: o.restaurant.image }} style={styles.foodImg} />
-                  ) : (
-                    <View style={[styles.foodImg, styles.imgPh]}>
-                      <Ionicons name="fast-food-outline" size={40} color={theme.navy} />
-                    </View>
-                  )}
-                  {o.tag === 'HOT_ORDER' ? (
-                    <View style={styles.hotRibbon}>
-                      <Text style={styles.hotText}>HOT ORDER</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={styles.restTitle}>{o.restaurant?.name}</Text>
-                <View style={styles.metaRow}>
-                  <Ionicons name="navigate-outline" size={14} color={theme.textMuted} />
-                  <Text style={styles.metaText}>{o.milesAway?.toFixed(1) ?? '—'} miles away</Text>
-                  <Text style={styles.metaSep}> </Text>
-                  <Ionicons name="time-outline" size={14} color={theme.textMuted} />
-                  <Text style={styles.metaText}>{o.prepMinutes ?? o.estimatedPreparationTime} min prep</Text>
-                </View>
-                <Text style={styles.payout}>
-                  EST. PAYOUT <Text style={styles.payoutAmt}>{fmtUsd(o.estPayout)}</Text>
-                </Text>
-                {index === 2 ? (
-                  <Pressable style={styles.btnSecondary} onPress={() => accept(o.id)}>
-                    <Text style={styles.btnSecondaryText}>Add to Route</Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    style={[styles.btnPrimary, accepting === o.id && { opacity: 0.7 }]}
-                    onPress={() => accept(o.id)}
-                    disabled={accepting === o.id}
-                  >
-                    <Text style={styles.btnPrimaryText}>
-                      {accepting === o.id ? '…' : 'Accept Order'}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            ))}
-          </>
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <Loader />
+          </View>
+        ) : tab === 'new' ? (
+          renderRequests()
+        ) : history.length === 0 ? (
+          <DeliveryEmptyState
+            icon="checkmark-done-outline"
+            title="No deliveries yet"
+            message="Completed deliveries and what you earned from each show up here."
+          />
         ) : (
-          <>
-            {history.length === 0 && !loading ? (
-              <Text style={styles.empty}>No completed deliveries yet.</Text>
-            ) : null}
-            {history.map((o) => (
-              <View key={o.id} style={styles.orderCard}>
-                <View style={styles.historyRow}>
-                  <View style={styles.imgWrapSmall}>
-                    {o.restaurant?.image ? (
-                      <Image source={{ uri: o.restaurant.image }} style={styles.foodImg} />
-                    ) : (
-                      <View style={[styles.foodImg, styles.imgPh]}>
-                        <Ionicons name="checkmark-circle" size={32} color={theme.online} />
-                      </View>
-                    )}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.restTitle}>{o.restaurant?.name}</Text>
-                    <Text style={styles.metaText}>#{o.orderNumber} • Delivered</Text>
-                  </View>
-                  <Text style={styles.histAmt}>+{fmtUsd(o.driverEarnings ?? o.estPayout)}</Text>
-                </View>
-              </View>
-            ))}
-          </>
+          history.map((o) => <DeliveryHistoryRow key={o.id} order={o} />)
         )}
       </ScrollView>
     </View>
   );
-}
-
-function createOrdersStyles(theme: DeliveryTabTheme) {
-  return StyleSheet.create({
-    root: { flex: 1, backgroundColor: theme.pageBg },
-    headerLower: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-end',
-    },
-    liveLabel: {
-      fontSize: 11,
-      fontWeight: '800',
-      color: theme.brownMuted,
-      letterSpacing: 1,
-    },
-    consoleTitle: { fontSize: 22, fontWeight: '800', color: theme.white, marginTop: 4 },
-    readyPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 20,
-    },
-    dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.online },
-    readyText: { fontSize: 10, fontWeight: '800', color: theme.white, letterSpacing: 0.5 },
-    tabs: {
-      flexDirection: 'row',
-      paddingHorizontal: DeliveryLayout.screenPaddingH,
-      gap: 10,
-      marginTop: 12,
-      marginBottom: 8,
-    },
-    tabBtn: {
-      flex: 1,
-      paddingVertical: 12,
-      borderRadius: 12,
-      backgroundColor: theme.sky,
-      alignItems: 'center',
-    },
-    tabBtnActive: { backgroundColor: theme.card },
-    tabText: { fontSize: 13, fontWeight: '700', color: theme.navy },
-    tabTextActive: { color: theme.red },
-    scroll: { paddingHorizontal: DeliveryLayout.screenPaddingH, paddingBottom: 32 },
-    mapCard: { borderRadius: DeliveryLayout.cardRadius, overflow: 'hidden', marginBottom: 18 },
-    mapInner: { height: 140, justifyContent: 'flex-start', padding: 12 },
-    locBox: {
-      alignSelf: 'flex-start',
-      backgroundColor: theme.isDark ? 'rgba(21,37,53,0.92)' : 'rgba(255,255,255,0.95)',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 10,
-    },
-    locLabel: { fontSize: 10, fontWeight: '800', color: theme.brownMuted, letterSpacing: 0.5 },
-    locVal: { fontSize: 14, fontWeight: '800', color: theme.text, marginTop: 2 },
-    zoneBanner: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-    },
-    zoneText: { color: theme.white, fontWeight: '700', fontSize: 13 },
-    zoneMult: { color: theme.gold, fontWeight: '900', fontSize: 16 },
-    empty: { textAlign: 'center', color: theme.textMuted, marginVertical: 20 },
-    orderCard: {
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      padding: 14,
-      marginBottom: 14,
-      shadowColor: '#000',
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    imgWrap: { position: 'relative', marginBottom: 10 },
-    imgWrapSmall: { width: 56, height: 56, borderRadius: 10, overflow: 'hidden' },
-    foodImg: { width: '100%', height: 140, borderRadius: 12 },
-    imgPh: {
-      backgroundColor: theme.sky,
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: 140,
-    },
-    hotRibbon: {
-      position: 'absolute',
-      top: 10,
-      right: -6,
-      backgroundColor: '#EA580C',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 4,
-      transform: [{ rotate: '12deg' }],
-    },
-    hotText: { color: theme.white, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
-    restTitle: { fontSize: 17, fontWeight: '800', color: theme.navy },
-    metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 },
-    metaText: { fontSize: 12, color: theme.textMuted, fontWeight: '600' },
-    metaSep: { width: 4 },
-    payout: {
-      marginTop: 12,
-      fontSize: 12,
-      fontWeight: '800',
-      color: theme.textMuted,
-      letterSpacing: 0.5,
-    },
-    payoutAmt: { color: theme.red, fontSize: 16 },
-    btnPrimary: {
-      marginTop: 12,
-      backgroundColor: theme.red,
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-    },
-    btnPrimaryText: { color: theme.white, fontWeight: '900', fontSize: 15, letterSpacing: 0.3 },
-    btnSecondary: {
-      marginTop: 12,
-      backgroundColor: theme.skyDeep,
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-    },
-    btnSecondaryText: { color: theme.navy, fontWeight: '900', fontSize: 15 },
-    historyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    histAmt: { fontSize: 16, fontWeight: '800', color: theme.red },
-  });
 }

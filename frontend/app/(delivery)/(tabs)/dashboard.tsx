@@ -1,31 +1,29 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  RefreshControl,
-  Linking,
-  Platform,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Linking, Platform, Alert } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import DeliveryHeader from '@/components/delivery/DeliveryHeader';
-import { DeliveryLayout, getDeliveryTabTheme, type DeliveryTabTheme } from '@/constants/deliveryTheme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { Loader } from '@/components/atoms';
 import { deliveryAPI, type DeliveryProfile, type DeliveryOrderPayload } from '@/services/api/delivery.api';
-import { useAppThemeStore } from '@/stores/appThemeStore';
 import { RecentReviewsSection, type RecentReview } from '@/components/pages/reviews';
-import { getDeliveryReviewPalette } from '@/constants/deliveryReviewPalette';
-
-function fmtUsd(n: number) {
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-}
+import {
+  ActiveDeliveryCard,
+  DeliveryEarningsCard,
+  DeliveryEmptyState,
+  DeliveryOnlineToggle,
+  DeliveryPageHeading,
+  DeliveryStatTile,
+  formatDeliveryCurrency,
+  getDeliveryStep,
+  useDeliveryReviewPalette,
+} from '@/components/pages/delivery';
 
 export default function DeliveryDashboard() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const c = useAppThemeColors();
+  const reviewPalette = useDeliveryReviewPalette();
+
   const [profile, setProfile] = useState<DeliveryProfile | null>(null);
   const [active, setActive] = useState<DeliveryOrderPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,32 +31,31 @@ export default function DeliveryDashboard() {
   const [onlineBusy, setOnlineBusy] = useState(false);
   const [orderActionBusy, setOrderActionBusy] = useState(false);
   const [recentReviews, setRecentReviews] = useState<RecentReview[] | null>(null);
-  const router = useRouter();
 
-  const isDark = useAppThemeStore((s) => s.isDark);
-  const theme = useMemo(() => getDeliveryTabTheme(isDark), [isDark]); // same palette factory as Profile / other delivery tabs
-  const styles = useMemo(() => createDashboardStyles(theme), [theme]);
-  const reviewPalette = useMemo(() => getDeliveryReviewPalette(theme), [theme]);
-  const mapMockGradient = useMemo(
+  const styles = useMemo(
     () =>
-      (theme.isDark
-        ? ['#2A3441', '#243040', '#1E2836']
-        : ['#E8EAED', '#D1D5DB', '#F3F4F6']) as [string, string, string],
-    [theme.isDark],
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: c.screenBackground },
+        loading: { flex: 1, backgroundColor: c.screenBackground },
+        scrollContent: { padding: 20, paddingBottom: 40 },
+        statsRow: { flexDirection: 'row', gap: 10 },
+        sectionTitle: {
+          fontFamily: Fonts.brandBlack,
+          fontSize: 20,
+          color: c.text,
+          marginBottom: 12,
+        },
+        section: { marginTop: 24 },
+      }),
+    [c],
   );
-  const statTimeBg = theme.isDark ? 'rgba(166,124,82,0.28)' : '#F5E6D3';
-  const statRatingBg = theme.isDark ? 'rgba(245,158,11,0.22)' : '#FEF3C7';
 
   const load = useCallback(async () => {
     try {
-      const [me, act] = await Promise.all([
-        deliveryAPI.getMe(),
-        deliveryAPI.getActiveOrder(),
-      ]);
+      const [me, act] = await Promise.all([deliveryAPI.getMe(), deliveryAPI.getActiveOrder()]);
       setProfile(me.profile);
       setActive(act.order);
     } catch {
-      setProfile(null);
       setActive(null);
     } finally {
       setLoading(false);
@@ -96,8 +93,11 @@ export default function DeliveryDashboard() {
     try {
       await deliveryAPI.setOnline(next);
       setProfile({ ...profile, isOnline: next });
-    } catch {
-      /* keep UI */
+    } catch (e) {
+      Alert.alert(
+        next ? 'Could not go online' : 'Could not go offline',
+        e instanceof Error ? e.message : 'Check your connection and try again.',
+      );
     } finally {
       setOnlineBusy(false);
     }
@@ -115,14 +115,7 @@ export default function DeliveryDashboard() {
 
   const advanceOrder = async () => {
     if (!active) return;
-    let next: 'PickedUp' | 'OutForDelivery' | 'Delivered' | null = null;
-    if (active.status === 'Confirmed' || active.status === 'Preparing' || active.status === 'Ready') {
-      next = 'PickedUp';
-    } else if (active.status === 'PickedUp') {
-      next = 'OutForDelivery';
-    } else if (active.status === 'OutForDelivery') {
-      next = 'Delivered';
-    }
+    const next = getDeliveryStep(active.status).next;
     if (!next) return;
     setOrderActionBusy(true);
     try {
@@ -135,158 +128,97 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const orderActionLabel =
-    active?.status === 'PickedUp'
-      ? 'START DELIVERY'
-      : active?.status === 'OutForDelivery'
-        ? 'COMPLETE DELIVERY'
-        : 'MARK PICKED UP';
+  if (loading && !profile) {
+    return (
+      <View style={[styles.loading, { paddingTop: insets.top }]}>
+        <Loader />
+      </View>
+    );
+  }
 
+  const today = new Date();
   const todayDeliveries =
-    profile?.deliveryHistory?.filter((h) => {
-      const d = new Date(h.createdAt);
-      const t = new Date();
-      return d.toDateString() === t.toDateString() && h.status === 'delivered';
-    }).length ?? 0;
-
-  const onlineLabel = '5h 20m'; // session timer can be added later; placeholder matches design
+    profile?.deliveryHistory?.filter(
+      (h) => h.status === 'delivered' && new Date(h.createdAt).toDateString() === today.toDateString(),
+    ).length ?? 0;
+  const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const hasRating = (profile?.stats.totalRatings ?? 0) > 0;
+  const online = profile?.isOnline ?? false;
 
   return (
-    <View style={styles.root}>
-      <DeliveryHeader
-        online={profile?.isOnline}
-        onOnlineToggle={toggleOnline}
-        onlineLoading={onlineBusy}
-        avatarUri={profile?.profileImage ?? undefined}
-      />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.red} />
-        }
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} />}
+        contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.pageTitle}>Dashboard</Text>
-        <Text style={styles.pageSub}>Ready for your next pickup?</Text>
+        <DeliveryPageHeading
+          title={profile?.name ? `Hi, ${profile.name.split(' ')[0]}` : 'Dashboard'}
+          meta={dateStr}
+          right={
+            profile ? <DeliveryOnlineToggle online={online} busy={onlineBusy} onChange={toggleOnline} /> : null
+          }
+        />
 
-        <View style={styles.earnCard}>
-          <Text style={styles.earnLabel}>Today&apos;s Earnings</Text>
-          <View style={styles.earnRow}>
-            <Text style={styles.earnAmt}>
-              {loading ? '—' : fmtUsd(profile?.earnings.today ?? 0)}
-            </Text>
-            <View style={styles.trend}>
-              <Ionicons name="trending-up" size={16} color={theme.online} />
-              <Text style={styles.trendText}>+12%</Text>
-            </View>
-          </View>
-        </View>
+        <DeliveryEarningsCard
+          label="TODAY'S EARNINGS"
+          amount={formatDeliveryCurrency(profile?.earnings.today ?? 0)}
+          footnote={`${todayDeliveries} ${todayDeliveries === 1 ? 'delivery' : 'deliveries'} today`}
+        />
 
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: theme.redLight }]}>
-              <Ionicons name="car-outline" size={22} color={theme.red} />
-            </View>
-            <Text style={styles.statLabel}>Deliveries</Text>
-            <Text style={styles.statVal}>{loading ? '—' : String(todayDeliveries)}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: statTimeBg }]}>
-              <Ionicons name="time-outline" size={22} color={theme.brownMuted} />
-            </View>
-            <Text style={styles.statLabel}>Online Time</Text>
-            <Text style={styles.statVal}>{profile?.isOnline ? onlineLabel : '—'}</Text>
-          </View>
-          <Pressable
-            style={styles.statCard}
+          <DeliveryStatTile
+            label="THIS WEEK"
+            value={formatDeliveryCurrency(profile?.earnings.thisWeek ?? 0)}
+            icon="trending-up"
+          />
+          <DeliveryStatTile
+            label="COMPLETED"
+            value={String(profile?.stats.completedDeliveries ?? 0)}
+            icon="checkmark-done-outline"
+          />
+          <DeliveryStatTile
+            label="RATING"
+            value={hasRating ? profile!.stats.averageRating.toFixed(1) : 'New'}
+            icon="star-outline"
             onPress={() => router.push('/(delivery)/reviews')}
-            accessibilityRole="button"
             accessibilityLabel={
-              profile?.stats.totalRatings
-                ? `Rating ${profile.stats.averageRating.toFixed(1)} from ${profile.stats.totalRatings} ratings. View ratings`
+              hasRating
+                ? `Rating ${profile!.stats.averageRating.toFixed(1)} from ${profile!.stats.totalRatings} ratings. View ratings`
                 : 'No ratings yet. View ratings'
             }
-          >
-            <View style={[styles.statIcon, { backgroundColor: statRatingBg }]}>
-              <Ionicons name="star" size={22} color="#F59E0B" />
-            </View>
-            <Text style={styles.statLabel}>Rating</Text>
-            <Text style={styles.statVal}>
-              {loading || !profile?.stats.totalRatings ? '—' : profile.stats.averageRating.toFixed(1)}
-            </Text>
-          </Pressable>
+          />
         </View>
 
-        <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>Active Task</Text>
-          <View style={styles.badgeOngoing}>
-            <Text style={styles.badgeOngoingText}>ONGOING</Text>
-          </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Active Delivery</Text>
+          {active && active.restaurant ? (
+            <ActiveDeliveryCard
+              order={active}
+              busy={orderActionBusy}
+              onAdvance={advanceOrder}
+              onNavigate={openNav}
+            />
+          ) : online ? (
+            <DeliveryEmptyState
+              framed
+              icon="bicycle-outline"
+              title="No active delivery"
+              message="Accept a nearby request to start your next run."
+              actionLabel="See requests"
+              onAction={() => router.push('/(delivery)/(tabs)/orders')}
+            />
+          ) : (
+            <DeliveryEmptyState
+              framed
+              icon="moon-outline"
+              title="You're offline"
+              message="Go online to start receiving delivery requests."
+              actionLabel="Go online"
+              onAction={() => toggleOnline(true)}
+            />
+          )}
         </View>
-
-        {active && active.restaurant ? (
-          <View style={styles.taskCard}>
-            <LinearGradient colors={mapMockGradient} style={styles.mapMock}>
-              <View style={styles.mapPin}>
-                <Ionicons name="navigate" size={14} color={theme.red} />
-              </View>
-              <Text style={styles.mapDist}>2.4 miles away</Text>
-            </LinearGradient>
-
-            <Text style={styles.pickupLabel}>PICK UP FROM</Text>
-            <Text style={styles.restName}>{active.restaurant.name}</Text>
-            <View style={styles.addrRow}>
-              <Ionicons name="location-outline" size={16} color={theme.textMuted} />
-              <Text style={styles.addrText}>{active.restaurant.addressLine}</Text>
-            </View>
-
-            <View style={styles.orderRow}>
-              <Text style={styles.orderHashLabel}>ORDER #</Text>
-              <Text style={styles.orderHash}>#{active.orderNumber}</Text>
-            </View>
-
-            <View style={styles.itemsBox}>
-              <Text style={styles.burgerEmoji}>🍔</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemsText}>{active.itemsSummary}</Text>
-                <Text style={styles.readyText}>
-                  Ready in approx. {active.estimatedPreparationTime ?? 4} mins
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.actions}>
-              <Pressable
-                style={styles.navBtn}
-                onPress={() => openNav(active.restaurant!.addressLine)}
-              >
-                <Ionicons name="navigate" size={20} color={theme.white} />
-                <Text style={styles.navBtnText}>START NAVIGATION</Text>
-              </Pressable>
-              <Pressable style={styles.callBtn} onPress={() => Linking.openURL('tel:')}>
-                <Ionicons name="call" size={22} color={theme.navy} />
-              </Pressable>
-            </View>
-            <Pressable
-              style={[styles.statusBtn, orderActionBusy && { opacity: 0.75 }]}
-              onPress={advanceOrder}
-              disabled={orderActionBusy}
-            >
-              {orderActionBusy ? (
-                <ActivityIndicator color={theme.white} />
-              ) : (
-                <Text style={styles.statusBtnText}>{orderActionLabel}</Text>
-              )}
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.emptyTask}>
-            <Ionicons name="cube-outline" size={40} color={theme.textMuted} />
-            <Text style={styles.emptyTitle}>No active delivery</Text>
-            <Text style={styles.emptySub}>Go online and accept an order from the Orders tab.</Text>
-          </View>
-        )}
 
         <RecentReviewsSection
           reviews={recentReviews}
@@ -294,207 +226,7 @@ export default function DeliveryDashboard() {
           palette={reviewPalette}
           titleStyle={styles.sectionTitle}
         />
-
-        <View style={styles.bonusCard}>
-          <Text style={styles.bonusFlame}>🔥</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bonusTitle}>Peak Hour Bonus</Text>
-            <Text style={styles.bonusDesc}>
-              Earn an extra <Text style={styles.bonusBold}>+$2.00</Text> per delivery in the Downtown area
-              until 9:00 PM.
-            </Text>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
-}
-
-function createDashboardStyles(theme: DeliveryTabTheme) {
-  const statusBarBg = theme.isDark ? '#1A3A5C' : '#001F3F';
-  return StyleSheet.create({
-    root: { flex: 1, backgroundColor: theme.pageBg },
-    scroll: { flex: 1 },
-    scrollContent: {
-      paddingHorizontal: DeliveryLayout.screenPaddingH,
-      paddingBottom: 32,
-    },
-    pageTitle: {
-      fontSize: 26,
-      fontWeight: '800',
-      color: theme.navy,
-      marginTop: 8,
-    },
-    pageSub: {
-      fontSize: 14,
-      color: theme.brownMuted,
-      marginTop: 4,
-      marginBottom: DeliveryLayout.sectionGap,
-    },
-    earnCard: {
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      padding: 18,
-      shadowColor: '#000',
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
-    },
-    earnLabel: { fontSize: 12, color: theme.textMuted, fontWeight: '600' },
-    earnRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-    earnAmt: { fontSize: 32, fontWeight: '800', color: theme.navy },
-    trend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    trendText: { color: theme.online, fontWeight: '700', fontSize: 14 },
-    statsRow: { flexDirection: 'row', gap: 12, marginTop: 14 },
-    statCard: {
-      flex: 1,
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      padding: 14,
-      shadowColor: '#000',
-      shadowOpacity: 0.05,
-      shadowRadius: 6,
-      elevation: 2,
-    },
-    statIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 8,
-    },
-    statLabel: { fontSize: 12, color: theme.textMuted, fontWeight: '600' },
-    statVal: { fontSize: 22, fontWeight: '800', color: theme.navy, marginTop: 4 },
-    sectionHead: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 26,
-      marginBottom: 10,
-    },
-    sectionTitle: { fontSize: 18, fontWeight: '800', color: theme.navy },
-    badgeOngoing: {
-      backgroundColor: theme.sky,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 8,
-    },
-    badgeOngoingText: { fontSize: 10, fontWeight: '800', color: theme.navy, letterSpacing: 0.5 },
-    taskCard: {
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      padding: 14,
-      shadowColor: '#000',
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    mapMock: {
-      height: 120,
-      borderRadius: 12,
-      marginBottom: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    mapPin: {
-      backgroundColor: theme.white,
-      padding: 8,
-      borderRadius: 20,
-      marginBottom: 6,
-    },
-    mapDist: { fontSize: 12, fontWeight: '700', color: theme.text },
-    pickupLabel: {
-      fontSize: 11,
-      fontWeight: '800',
-      color: theme.red,
-      letterSpacing: 1,
-      marginBottom: 4,
-    },
-    restName: { fontSize: 18, fontWeight: '800', color: theme.navy },
-    addrRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 6 },
-    addrText: { flex: 1, fontSize: 13, color: theme.textMuted, lineHeight: 18 },
-    orderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      marginTop: 12,
-      paddingTop: 12,
-      borderTopWidth: 1,
-      borderTopColor: theme.border,
-    },
-    orderHashLabel: { fontSize: 12, color: theme.textMuted, fontWeight: '600' },
-    orderHash: { fontSize: 15, fontWeight: '800', color: theme.navy },
-    itemsBox: {
-      flexDirection: 'row',
-      gap: 10,
-      backgroundColor: theme.sky,
-      borderRadius: 12,
-      padding: 12,
-      marginTop: 12,
-    },
-    burgerEmoji: { fontSize: 28 },
-    itemsText: { fontSize: 14, fontWeight: '700', color: theme.navy, lineHeight: 20 },
-    readyText: { fontSize: 12, color: theme.textMuted, marginTop: 4 },
-    actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-    navBtn: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: theme.red,
-      paddingVertical: 14,
-      borderRadius: 12,
-    },
-    navBtnText: { color: theme.white, fontWeight: '800', fontSize: 13, letterSpacing: 0.5 },
-    statusBtn: {
-      marginTop: 10,
-      backgroundColor: statusBarBg,
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 48,
-    },
-    statusBtnText: {
-      color: theme.white,
-      fontWeight: '800',
-      fontSize: 14,
-      letterSpacing: 0.5,
-    },
-    callBtn: {
-      width: 52,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.skyDeep,
-      borderRadius: 12,
-    },
-    emptyTask: {
-      alignItems: 'center',
-      paddingVertical: 28,
-      paddingHorizontal: 16,
-      backgroundColor: theme.card,
-      borderRadius: DeliveryLayout.cardRadius,
-      borderWidth: 1,
-      borderColor: theme.border,
-      borderStyle: 'dashed',
-    },
-    emptyTitle: { marginTop: 10, fontSize: 16, fontWeight: '800', color: theme.navy },
-    emptySub: { marginTop: 6, fontSize: 13, color: theme.textMuted, textAlign: 'center' },
-    bonusCard: {
-      flexDirection: 'row',
-      gap: 12,
-      backgroundColor: theme.peach,
-      borderRadius: DeliveryLayout.cardRadius,
-      padding: 16,
-      marginTop: 22,
-      alignItems: 'flex-start',
-    },
-    bonusFlame: { fontSize: 28 },
-    bonusTitle: { fontSize: 16, fontWeight: '800', color: theme.brown },
-    bonusDesc: { fontSize: 13, color: theme.brownMuted, marginTop: 4, lineHeight: 20 },
-    bonusBold: { fontWeight: '800', color: theme.brown },
-  });
 }
