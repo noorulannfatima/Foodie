@@ -1,9 +1,11 @@
+import { BRAND_RED, BRAND_RED_TINT } from './theme';
+
 /** Design tokens for delivery (messenger) app — aligned with FOODIE delivery UI. */
 export const DeliveryColors = {
   navy: '#001F3F',
   navyMuted: '#1A3A5C',
-  red: '#C40018',
-  redLight: '#FFE8EA',
+  red: BRAND_RED,
+  redLight: BRAND_RED_TINT,
   gold: '#E5B80B',
   brown: '#8B6914',
   brownMuted: '#A67C52',
@@ -48,7 +50,7 @@ export function getDeliveryTabTheme(isDark: boolean) {
     navy: '#E2E8F0',
     navyMuted: '#CBD5E1',
     white: '#F8FAFC',
-    redLight: 'rgba(196,0,24,0.22)',
+    redLight: 'rgba(125,6,6,0.28)',
     peach: '#2A231C',
     /** Slightly lifted from pageBg so the app bar reads as a stripe. */
     headerBackground: '#061420',

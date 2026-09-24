@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BRAND_RED } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   chip: {
@@ -11,7 +12,7 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   selected: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: BRAND_RED,
   },
   label: {
     fontSize: 14,

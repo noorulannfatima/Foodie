@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import { useAppThemeStore } from '@/stores/appThemeStore';
 
+/** The one brand red for buttons and accents across the app (customer, restaurant, delivery). */
+export const BRAND_RED = '#7d0606';
+/** Pale wash of BRAND_RED for selected/soft backgrounds. */
+export const BRAND_RED_TINT = '#F6E7E7';
+
 export const Fonts = {
   brand: 'Nunito',
   brandBold: 'Nunito_700Bold',
@@ -11,8 +16,8 @@ export const Fonts = {
 export const Colors = {
   background: '#fff',
   text: '#090801',
-  primary: '#fa1919',
-  secondary: '#7d0606',
+  primary: BRAND_RED,
+  secondary: BRAND_RED,
   dark: '#000000',
   light: '#e6e6e6',
   primaryLight: '#E9F9FF',
@@ -55,8 +60,8 @@ export function getAppColors(isDark: boolean): AppColors {
     return {
       background: '#fff',
       text: '#090801',
-      primary: '#fa1919',
-      secondary: '#7d0606',
+      primary: BRAND_RED,
+      secondary: BRAND_RED,
       dark: '#000000',
       light: '#e6e6e6',
       primaryLight: '#E9F9FF',

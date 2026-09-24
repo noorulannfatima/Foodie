@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '@/components/molecules/AddressCard/AddressCard.styles';
+import { BRAND_RED } from '@/constants/theme';
 
 interface AddressCardProps {
   title: string;
@@ -16,7 +17,7 @@ export default function AddressCard({ title, address, selected, onPress, onEdit,
   return (
     <Pressable onPress={onPress} style={[styles.card, selected && styles.selected]}>
       <View style={styles.content}>
-        <Ionicons name="location" size={24} color="#FF6B6B" />
+        <Ionicons name="location" size={24} color={BRAND_RED} />
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.address}>{address}</Text>
@@ -30,7 +31,7 @@ export default function AddressCard({ title, address, selected, onPress, onEdit,
         )}
         {onDelete && (
           <Pressable onPress={onDelete} style={styles.actionButton}>
-            <Ionicons name="trash" size={18} color="#FF6B6B" />
+            <Ionicons name="trash" size={18} color={BRAND_RED} />
           </Pressable>
         )}
       </View>

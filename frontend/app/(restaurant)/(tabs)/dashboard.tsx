@@ -10,7 +10,6 @@ import {
   KitchenOverviewHero,
   DashboardRevenueCard,
   DashboardStatBox,
-  DashboardQuickActions,
   DashboardRecentOrderCard,
   DashboardRecentOrdersEmpty,
 } from '@/components/pages/restaurant/dashboard';
@@ -81,7 +80,11 @@ export default function RestaurantDashboard() {
         refreshControl={<RefreshControl refreshing={dashboardLoading} onRefresh={onRefresh} />}
         contentContainerStyle={styles.scrollContent}
       >
-        <KitchenOverviewHero isActive={isActive} onToggleActive={(val) => toggleActive(val)} />
+        <KitchenOverviewHero
+          restaurantName={restaurant?.name}
+          isActive={isActive}
+          onToggleActive={(val) => toggleActive(val)}
+        />
 
         <DashboardRevenueCard
           totalRevenue={today?.totalRevenue ?? 0}
@@ -122,11 +125,6 @@ export default function RestaurantDashboard() {
             iconColor={Colors.primary}
           />
         </View>
-
-        <DashboardQuickActions
-          onViewOrders={() => router.push('/(restaurant)/(tabs)/orders')}
-          onManageMenu={() => router.push('/(restaurant)/(tabs)/menu')}
-        />
 
         <Text style={styles.sectionTitle}>Recent Orders</Text>
         {dashboard?.recentOrders && dashboard.recentOrders.length > 0 ? (

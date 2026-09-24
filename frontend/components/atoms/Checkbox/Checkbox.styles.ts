@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BRAND_RED } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: {
@@ -14,8 +15,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checked: {
-    backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
+    backgroundColor: BRAND_RED,
+    borderColor: BRAND_RED,
   },
   disabled: {
     opacity: 0.5,

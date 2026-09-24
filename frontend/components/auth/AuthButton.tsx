@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { BRAND_RED } from '@/constants/theme';
 
 interface AuthButtonProps {
   title: string;
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primary: {
-    backgroundColor: '#c21407',
+    backgroundColor: BRAND_RED,
   },
   secondary: {
     backgroundColor: 'rgba(0,0,0,0.12)',

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BRAND_RED } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   label: {
@@ -8,7 +9,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   required: {
-    color: '#FF6B6B',
+    color: BRAND_RED,
   },
   error: {
     color: '#FF6B6B',

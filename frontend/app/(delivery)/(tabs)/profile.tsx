@@ -19,6 +19,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DeliveryHeader from '@/components/delivery/DeliveryHeader';
 import { DeliveryColors, DeliveryLayout, getDeliveryTabTheme } from '@/constants/deliveryTheme';
+import { BRAND_RED } from '@/constants/theme';
 import {
   DELIVERY_LANGUAGE_LABELS,
   deliveryProfileT,
@@ -402,7 +403,7 @@ export default function DeliveryProfileScreen() {
             </Section>
 
             <Pressable style={styles.dangerOutline} onPress={() => setDeleteOpen(true)}>
-              <Ionicons name="trash-outline" size={20} color="#DC2626" />
+              <Ionicons name="trash-outline" size={20} color={BRAND_RED} />
               <Text style={styles.dangerOutlineText}>{t('deleteAccount')}</Text>
             </Pressable>
           </>
@@ -813,10 +814,10 @@ function createProfileStyles(theme: ReturnType<typeof getDeliveryTabTheme>) {
       paddingVertical: 14,
       borderRadius: 12,
       borderWidth: 2,
-      borderColor: '#DC2626',
+      borderColor: BRAND_RED,
       marginBottom: 8,
     },
-    dangerOutlineText: { fontSize: 15, fontWeight: '800', color: '#DC2626' },
+    dangerOutlineText: { fontSize: 15, fontWeight: '800', color: BRAND_RED },
     switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -924,7 +925,7 @@ function createProfileStyles(theme: ReturnType<typeof getDeliveryTabTheme>) {
       paddingVertical: 14,
       alignItems: 'center',
       borderRadius: 12,
-      backgroundColor: '#DC2626',
+      backgroundColor: BRAND_RED,
     },
     deleteSheet: {
       alignSelf: 'center',

@@ -15,6 +15,7 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { BRAND_RED, BRAND_RED_TINT } from '@/constants/theme';
 
 // Shared visual language for every auth screen (customer, restaurant, delivery).
 // Derived from the customer login, which is the reference design.
@@ -28,8 +29,8 @@ export const AuthColors = {
   placeholder: '#747a8e',
   border: '#e2e5ef',
   hairline: '#d1d5e0',
-  primary: '#c0392b',
-  primaryTint: '#fbeceb',
+  primary: BRAND_RED,
+  primaryTint: BRAND_RED_TINT,
 };
 
 const C = AuthColors;

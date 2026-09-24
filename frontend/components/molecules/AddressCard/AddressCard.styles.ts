@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BRAND_RED, BRAND_RED_TINT } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   card: {
@@ -12,8 +13,8 @@ export const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
   },
   selected: {
-    borderColor: '#FF6B6B',
-    backgroundColor: '#FFF5F5',
+    borderColor: BRAND_RED,
+    backgroundColor: BRAND_RED_TINT,
   },
   content: {
     flexDirection: 'row',

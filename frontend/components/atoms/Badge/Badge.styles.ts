@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BRAND_RED } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   badge: {
@@ -8,7 +9,7 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   primary: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: BRAND_RED,
   },
   success: {
     backgroundColor: '#51CF66',
@@ -17,7 +18,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFA94D',
   },
   danger: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: BRAND_RED,
   },
   text: {
     color: 'white',

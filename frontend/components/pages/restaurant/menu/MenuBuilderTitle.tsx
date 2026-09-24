@@ -8,10 +8,10 @@ export default function MenuBuilderTitle() {
   return (
     <View style={styles.titleRow}>
       <View>
-        <Text style={styles.titleMain}>
-          MENU <Text style={styles.titleAccent}>BUILDER</Text>
+        <Text style={styles.titleMain} accessibilityRole="header">
+          Manage Menu Items
         </Text>
-        <Text style={styles.titleSub}>Manage your culinary offerings and pricing</Text>
+        <Text style={styles.titleSub}>Manage your menu offerings and pricing</Text>
       </View>
     </View>
   );
@@ -24,11 +24,8 @@ function createStyles(c: AppColors) {
     },
     titleMain: {
       fontFamily: Fonts.brandBlack,
-      fontSize: 26,
+      fontSize: 28, // matches the Dashboard and Orders page headings
       color: c.text,
-    },
-    titleAccent: {
-      color: c.primary,
     },
     titleSub: {
       fontFamily: Fonts.brand,

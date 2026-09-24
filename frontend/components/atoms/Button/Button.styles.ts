@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BRAND_RED } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   button: {
@@ -7,7 +8,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primary: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: BRAND_RED,
   },
   secondary: {
     backgroundColor: '#4DABF7',
@@ -15,7 +16,7 @@ export const styles = StyleSheet.create({
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#FF6B6B',
+    borderColor: BRAND_RED,
   },
   small: {
     paddingVertical: 8,
@@ -46,6 +47,6 @@ export const styles = StyleSheet.create({
     color: 'white',
   },
   outlineText: {
-    color: '#FF6B6B',
+    color: BRAND_RED,
   },
 });

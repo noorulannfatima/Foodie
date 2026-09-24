@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
@@ -10,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
+import { Fonts, useAppThemeColors } from '@/constants/theme';
 import {
   RestaurantOrdersStatsBar,
   OrderStatusFilterRow,
@@ -21,6 +23,7 @@ import {
 
 export default function RestaurantOrders() {
   const insets = useSafeAreaInsets();
+  const c = useAppThemeColors();
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
@@ -77,6 +80,9 @@ export default function RestaurantOrders() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+      <Text style={[styles.pageTitle, { color: c.text }]} accessibilityRole="header">
+        View All Orders
+      </Text>
       <RestaurantOrdersStatsBar
         activeCount={activeCount}
         preparingCount={preparingCount}
@@ -124,6 +130,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  // Matches the dashboard's page heading.
+  pageTitle: {
+    fontFamily: Fonts.brandBlack,
+    fontSize: 28,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    marginBottom: 4,
   },
   ordersList: {
     paddingHorizontal: 16,
