@@ -1,7 +1,8 @@
+// Must be the first import: other modules read process.env at import time
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.routes';
 import restaurantRoutes from './routes/restaurant.routes';
@@ -9,8 +10,6 @@ import customerRoutes from './routes/customer.routes';
 import deliveryRoutes from './routes/delivery.routes';
 import paymentRoutes, { webhookRouter as paymentWebhookRouter } from './routes/payment.routes';
 import uploadRoutes from './routes/upload.routes';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
