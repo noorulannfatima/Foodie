@@ -1,19 +1,28 @@
 import { useMemo } from 'react';
-import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleSheet, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import type { DeliveryOrderPayload } from '@/services/api/delivery.api';
 import { formatDeliveryCurrency } from './formatDeliveryCurrency';
 import { getDeliveryStep } from './deliveryStatus';
+import { navigationTarget, type NavigationTarget } from './navigation';
 
 export interface ActiveDeliveryCardProps {
   order: DeliveryOrderPayload;
   busy: boolean;
   onAdvance: () => void;
-  onNavigate: (address: string) => void;
+  onNavigate: (target: NavigationTarget) => void;
+  /** Hand the order back before pickup; the link is hidden once picked up. */
+  onRelease?: () => void;
 }
 
-export default function ActiveDeliveryCard({ order, busy, onAdvance, onNavigate }: ActiveDeliveryCardProps) {
+export default function ActiveDeliveryCard({
+  order,
+  busy,
+  onAdvance,
+  onNavigate,
+  onRelease,
+}: ActiveDeliveryCardProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const step = getDeliveryStep(order.status);
@@ -22,7 +31,11 @@ export default function ActiveDeliveryCard({ order, busy, onAdvance, onNavigate 
   const drop = order.deliveryAddress
     ? [order.deliveryAddress.street, order.deliveryAddress.city].filter(Boolean).join(', ')
     : '';
-  const target = step.headingToCustomer ? drop : pickup;
+  const target = step.headingToCustomer
+    ? navigationTarget(order.deliveryAddress, drop, order.customer?.name)
+    : navigationTarget(order.restaurant?.location, pickup, order.restaurant?.name);
+  const notes = [order.specialInstructions, order.deliveryAddress?.instructions].filter(Boolean);
+  const phone = order.customer?.phone;
 
   return (
     <View style={styles.card}>
@@ -54,12 +67,51 @@ export default function ActiveDeliveryCard({ order, busy, onAdvance, onNavigate 
         />
       </View>
 
+      {order.customer ? (
+        <View style={styles.customerRow}>
+          <Ionicons name="person-circle-outline" size={22} color={c.muted} />
+          <Text style={styles.customerName} numberOfLines={1}>
+            {order.customer.name}
+          </Text>
+          {phone ? (
+            <Pressable
+              style={({ pressed }) => [styles.callBtn, pressed && styles.pressed]}
+              onPress={() => Linking.openURL(`tel:${phone.replace(/[^\d+]/g, '')}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Call ${order.customer.name}`}
+            >
+              <Ionicons name="call-outline" size={16} color={c.text} />
+              <Text style={styles.callText}>Call</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
+      {notes.length ? (
+        <View style={styles.notes}>
+          <Ionicons name="chatbubble-ellipses-outline" size={16} color={c.muted} />
+          <Text style={styles.notesText}>{notes.join('\n')}</Text>
+        </View>
+      ) : null}
+
       <View style={styles.itemsRow}>
         <Text style={styles.items} numberOfLines={2}>
           {order.itemsSummary}
         </Text>
         <Text style={styles.payout}>{formatDeliveryCurrency(order.driverEarnings ?? order.estPayout)}</Text>
       </View>
+
+      {order.cashToCollect > 0 ? (
+        <View style={styles.cashBanner}>
+          <Ionicons name="cash-outline" size={20} color="#fff" />
+          <Text style={styles.cashText}>Collect {formatDeliveryCurrency(order.cashToCollect)} cash</Text>
+        </View>
+      ) : order.payment?.status === 'Completed' ? (
+        <View style={styles.paidRow}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={c.muted} />
+          <Text style={styles.paidText}>Paid online. Nothing to collect.</Text>
+        </View>
+      ) : null}
 
       <View style={styles.actions}>
         <Pressable
@@ -86,6 +138,17 @@ export default function ActiveDeliveryCard({ order, busy, onAdvance, onNavigate 
           )}
         </Pressable>
       </View>
+
+      {onRelease && !step.headingToCustomer ? (
+        <Pressable
+          style={({ pressed }) => [styles.releaseLink, pressed && styles.pressed]}
+          onPress={onRelease}
+          disabled={busy}
+          accessibilityRole="button"
+        >
+          <Text style={styles.releaseText}>Can&apos;t make this delivery?</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -263,6 +326,90 @@ function createStyles(c: AppColors) {
     },
     pressed: {
       opacity: 0.75,
+    },
+    customerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 12,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    customerName: {
+      flex: 1,
+      fontFamily: Fonts.brandBold,
+      fontSize: 15,
+      color: c.text,
+    },
+    callBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 40,
+      paddingHorizontal: 14,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    callText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      color: c.text,
+    },
+    notes: {
+      flexDirection: 'row',
+      gap: 8,
+      padding: 12,
+      marginBottom: 12,
+      borderRadius: 10,
+      backgroundColor: c.screenBackground,
+    },
+    notesText: {
+      flex: 1,
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.text,
+      lineHeight: 18,
+    },
+    cashBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      backgroundColor: c.brand,
+    },
+    cashText: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 16,
+      color: '#fff',
+      fontVariant: ['tabular-nums'],
+    },
+    paidRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 10,
+    },
+    paidText: {
+      fontFamily: Fonts.brand,
+      fontSize: 13,
+      color: c.muted,
+    },
+    releaseLink: {
+      alignSelf: 'center',
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 12,
+      marginTop: 4,
+    },
+    releaseText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 13,
+      color: c.muted,
+      textDecorationLine: 'underline',
     },
     waiting: {
       opacity: 0.5,

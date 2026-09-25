@@ -1,23 +1,39 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Linking, Platform, Alert, AppState } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Linking, Alert, AppState, Modal } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
 import { Loader } from '@/components/atoms';
-import { deliveryAPI, type DeliveryProfile, type DeliveryOrderPayload } from '@/services/api/delivery.api';
+import {
+  deliveryAPI,
+  type ActiveOrderResponse,
+  type CancelledDeliveryPayload,
+  type DeliveryProfile,
+  type DeliveryOrderPayload,
+  type DeliveryReleaseReason,
+} from '@/services/api/delivery.api';
 import { RecentReviewsSection, type RecentReview } from '@/components/pages/reviews';
 import {
   ActiveDeliveryCard,
+  buildNavigationUrl,
+  CancelledDeliveryCard,
   DeliveryEarningsCard,
   DeliveryEmptyState,
   DeliveryOnlineToggle,
   DeliveryPageHeading,
+  DeliveryReleaseSheet,
   DeliveryStatTile,
   formatDeliveryCurrency,
   getDeliveryStep,
   isAwaitingPickup,
   useDeliveryReviewPalette,
+  type NavigationTarget,
 } from '@/components/pages/delivery';
+
+type NextDeliveryStatusBody = {
+  status: Parameters<typeof deliveryAPI.updateOrderStatus>[1];
+  cashCollected?: boolean;
+};
 
 /** How often to check whether the restaurant has marked the order ready. */
 const READY_POLL_MS = 15000;
@@ -30,6 +46,9 @@ export default function DeliveryDashboard() {
 
   const [profile, setProfile] = useState<DeliveryProfile | null>(null);
   const [active, setActive] = useState<DeliveryOrderPayload | null>(null);
+  const [cancelled, setCancelled] = useState<CancelledDeliveryPayload | null>(null);
+  const [dismissBusy, setDismissBusy] = useState(false);
+  const [releaseOpen, setReleaseOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [onlineBusy, setOnlineBusy] = useState(false);
@@ -54,11 +73,16 @@ export default function DeliveryDashboard() {
     [c],
   );
 
+  const applyActive = useCallback((act: ActiveOrderResponse) => {
+    setActive(act.order);
+    setCancelled(act.cancelledOrder);
+  }, []);
+
   const load = useCallback(async () => {
     try {
       const [me, act] = await Promise.all([deliveryAPI.getMe(), deliveryAPI.getActiveOrder()]);
       setProfile(me.profile);
-      setActive(act.order);
+      applyActive(act);
     } catch {
       setActive(null);
     } finally {
@@ -78,7 +102,7 @@ export default function DeliveryDashboard() {
     } catch {
       /* section stays hidden */
     }
-  }, []);
+  }, [applyActive]);
 
   useFocusEffect(
     useCallback(() => {
@@ -95,13 +119,13 @@ export default function DeliveryDashboard() {
       const handle = setInterval(async () => {
         if (AppState.currentState !== 'active') return;
         try {
-          setActive((await deliveryAPI.getActiveOrder()).order);
+          applyActive(await deliveryAPI.getActiveOrder());
         } catch {
           /* try again next tick */
         }
       }, READY_POLL_MS);
       return () => clearInterval(handle);
-    }, [waitingForFood]),
+    }, [waitingForFood, applyActive]),
   );
 
   const onRefresh = () => {
@@ -125,28 +149,63 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const openNav = (address: string) => {
-    const q = encodeURIComponent(address);
-    const url = Platform.select({
-      ios: `maps:0,0?q=${q}`,
-      android: `geo:0,0?q=${q}`,
-      default: `https://www.google.com/maps/search/?api=1&query=${q}`,
-    });
-    if (url) Linking.openURL(url);
+  const openNav = (target: NavigationTarget) => {
+    Linking.openURL(buildNavigationUrl(target));
   };
 
-  const advanceOrder = async () => {
-    if (!active) return;
-    const next = getDeliveryStep(active.status).next;
-    if (!next) return;
+  const sendStatus = async (order: DeliveryOrderPayload, body: NextDeliveryStatusBody) => {
     setOrderActionBusy(true);
     try {
-      await deliveryAPI.updateOrderStatus(active.id, next);
+      await deliveryAPI.updateOrderStatus(order.id, body.status, { cashCollected: body.cashCollected });
       await load();
     } catch (e) {
       Alert.alert('Update failed', e instanceof Error ? e.message : 'Try again.');
+      await load();
     } finally {
       setOrderActionBusy(false);
+    }
+  };
+
+  const advanceOrder = () => {
+    if (!active) return;
+    const next = getDeliveryStep(active.status).next;
+    if (!next) return;
+    // A cash order is only complete once the money is in hand
+    if (next === 'Delivered' && active.cashToCollect > 0) {
+      const amount = formatDeliveryCurrency(active.cashToCollect);
+      Alert.alert(
+        `Collect ${amount} in cash`,
+        `Only mark this order delivered after the customer has paid you ${amount}.`,
+        [
+          { text: 'Not yet', style: 'cancel' },
+          { text: 'Cash collected', onPress: () => sendStatus(active, { status: next, cashCollected: true }) },
+        ],
+      );
+      return;
+    }
+    sendStatus(active, { status: next });
+  };
+
+  const releaseActive = async (reason: DeliveryReleaseReason) => {
+    if (!active) return;
+    try {
+      await deliveryAPI.releaseOrder(active.id, reason);
+    } catch (e) {
+      Alert.alert('Could not release order', e instanceof Error ? e.message : 'Try again.');
+    }
+    await load();
+  };
+
+  const dismissCancelled = async () => {
+    if (!cancelled) return;
+    setDismissBusy(true);
+    try {
+      await deliveryAPI.acknowledgeCancellation(cancelled.id);
+      setCancelled(null);
+    } catch (e) {
+      Alert.alert('Could not dismiss', e instanceof Error ? e.message : 'Try again.');
+    } finally {
+      setDismissBusy(false);
     }
   };
 
@@ -214,12 +273,16 @@ export default function DeliveryDashboard() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Active Delivery</Text>
+          {cancelled ? (
+            <CancelledDeliveryCard order={cancelled} busy={dismissBusy} onDismiss={dismissCancelled} />
+          ) : null}
           {active && active.restaurant ? (
             <ActiveDeliveryCard
               order={active}
               busy={orderActionBusy}
               onAdvance={advanceOrder}
               onNavigate={openNav}
+              onRelease={() => setReleaseOpen(true)}
             />
           ) : online ? (
             <DeliveryEmptyState
@@ -249,6 +312,21 @@ export default function DeliveryDashboard() {
           titleStyle={styles.sectionTitle}
         />
       </ScrollView>
+
+      <Modal
+        visible={releaseOpen && active !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setReleaseOpen(false)}
+      >
+        {active ? (
+          <DeliveryReleaseSheet
+            orderNumber={active.orderNumber}
+            onChoose={releaseActive}
+            onClose={() => setReleaseOpen(false)}
+          />
+        ) : null}
+      </Modal>
     </View>
   );
 }

@@ -85,18 +85,48 @@ export type DeliveryOrderPayload = {
   estimatedPreparationTime: number;
   estPayout: number;
   pricing: { subtotal: number; deliveryFee: number; tax: number; tip: number; total: number };
+  payment: { method: string; status: string };
+  /** Cash to take at the door; 0 when already paid online. */
+  cashToCollect: number;
   restaurant: {
     id: string;
     name: string;
     image?: string;
     addressLine: string;
+    location?: { latitude: number; longitude: number };
   } | null;
-  deliveryAddress: { street: string; city: string; zipCode: string };
+  deliveryAddress: {
+    street: string;
+    city: string;
+    zipCode: string;
+    latitude?: number;
+    longitude?: number;
+    instructions?: string;
+  };
+  /** Only on your own orders: name and phone while active, name alone in history. */
+  customer?: { name: string; phone?: string } | null;
+  specialInstructions?: string;
   milesAway?: number;
   prepMinutes?: number;
   tag?: 'HOT_ORDER';
   driverEarnings?: number;
   completedAt?: string;
+};
+
+/** An order the customer cancelled after you accepted it, until you dismiss it. */
+export type CancelledDeliveryPayload = {
+  id: string;
+  orderNumber: string;
+  restaurantName: string;
+  cancellationReason: string | null;
+  cancelledAt: string;
+};
+
+export type DeliveryReleaseReason = 'vehicle_issue' | 'too_far' | 'restaurant_delay' | 'personal' | 'other';
+
+export type ActiveOrderResponse = {
+  order: DeliveryOrderPayload | null;
+  cancelledOrder: CancelledDeliveryPayload | null;
 };
 
 export const deliveryAPI = {
@@ -112,10 +142,8 @@ export const deliveryAPI = {
     return data;
   },
 
-  async getActiveOrder(): Promise<{ order: DeliveryOrderPayload | null }> {
-    const { data } = await apiClient.get<{ order: DeliveryOrderPayload | null }>(
-      '/api/delivery/orders/active',
-    );
+  async getActiveOrder(): Promise<ActiveOrderResponse> {
+    const { data } = await apiClient.get<ActiveOrderResponse>('/api/delivery/orders/active');
     return data;
   },
 
@@ -147,13 +175,30 @@ export const deliveryAPI = {
     return data;
   },
 
+  /** `cashCollected` confirms the COD cash was taken; required to deliver an unpaid cash order. */
   async updateOrderStatus(
     orderId: string,
     status: 'PickedUp' | 'OutForDelivery' | 'Delivered',
+    opts: { cashCollected?: boolean } = {},
   ): Promise<{ ok: boolean }> {
     const { data } = await apiClient.patch<{ ok: boolean }>(
       `/api/delivery/orders/${orderId}/status`,
-      { status },
+      { status, ...opts },
+    );
+    return data;
+  },
+
+  async releaseOrder(orderId: string, reason: DeliveryReleaseReason): Promise<{ ok: boolean }> {
+    const { data } = await apiClient.post<{ ok: boolean }>(
+      `/api/delivery/orders/${orderId}/release`,
+      { reason },
+    );
+    return data;
+  },
+
+  async acknowledgeCancellation(orderId: string): Promise<{ ok: boolean }> {
+    const { data } = await apiClient.post<{ ok: boolean }>(
+      `/api/delivery/orders/${orderId}/acknowledge-cancellation`,
     );
     return data;
   },
