@@ -74,10 +74,20 @@ interface OrderCustomer {
   phone?: string;
 }
 
+/** The rider assigned to an order, as the restaurant sees them. */
+export interface OrderRider {
+  _id: string;
+  name: string;
+  phone?: string;
+  vehicle?: { type: string; plateNumber: string };
+  profileImage?: string | null;
+}
+
 export interface OrderItem {
   _id: string;
   orderNumber: string;
   customer: OrderCustomer;
+  deliveryPerson?: OrderRider | null;
   items: Array<{
     name: string;
     quantity: number;

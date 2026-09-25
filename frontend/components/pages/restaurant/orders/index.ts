@@ -5,3 +5,4 @@ export { default as OrderPipelineTitle } from './OrderPipelineTitle';
 export { default as RestaurantOrderCard } from './RestaurantOrderCard';
 export { default as RestaurantOrdersEmptyState } from './RestaurantOrdersEmptyState';
 export { default as OrderDetailModal } from './OrderDetailModal';
+export { default as AssignedRiderRow } from './AssignedRiderRow';

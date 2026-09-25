@@ -7,6 +7,7 @@ import { OrderItem } from '@/stores/restaurantStore';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 import { formatRestaurantCurrency } from '@/components/pages/restaurant/shared/orderUtils';
 import { NEXT_STATUS } from './constants';
+import AssignedRiderRow from './AssignedRiderRow';
 
 export interface OrderDetailModalProps {
   order: OrderItem | null;
@@ -105,6 +106,8 @@ export default function OrderDetailModal({ order, onClose, onStatusUpdate }: Ord
             </View>
           </View>
         </View>
+
+        <AssignedRiderRow order={order} variant="full" />
 
         <View style={styles.modalSection}>
           <Text style={styles.modalSectionLabel}>{t('ordersDetailAddress')}</Text>

@@ -8,6 +8,7 @@ import { OrderItem } from '@/stores/restaurantStore';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
 import { NEXT_STATUS } from './constants';
+import AssignedRiderRow from './AssignedRiderRow';
 
 export interface RestaurantOrderCardProps {
   order: OrderItem;
@@ -68,6 +69,7 @@ export default function RestaurantOrderCard({
             {getOrderTimeAgo(order.createdAt, t)}
           </Text>
         </View>
+        <AssignedRiderRow order={order} variant="compact" />
 
         {next ? (
           <View style={styles.actionRow}>

@@ -42,6 +42,9 @@ export default defineStrings(
     ordersDetailCustomer: 'CUSTOMER',
     ordersDetailAddress: 'DELIVERY ADDRESS',
     ordersDetailDriverNote: 'DRIVER NOTE',
+    ordersRiderLabel: 'RIDER',
+    ordersRiderWaiting: 'Waiting for a rider',
+    ordersRiderCall: 'Call rider',
   },
   {
     ur: {
@@ -84,6 +87,9 @@ export default defineStrings(
       ordersDetailCustomer: 'گاہک',
       ordersDetailAddress: 'ڈیلیوری کا پتہ',
       ordersDetailDriverNote: 'رائیڈر کے لیے ہدایت',
+      ordersRiderLabel: 'رائیڈر',
+      ordersRiderWaiting: 'رائیڈر کا انتظار ہے',
+      ordersRiderCall: 'رائیڈر کو کال کریں',
     },
     es: {
       ordersPageTitle: 'Todos los pedidos',
@@ -125,6 +131,9 @@ export default defineStrings(
       ordersDetailCustomer: 'CLIENTE',
       ordersDetailAddress: 'DIRECCIÓN DE ENTREGA',
       ordersDetailDriverNote: 'NOTA PARA EL REPARTIDOR',
+      ordersRiderLabel: 'REPARTIDOR',
+      ordersRiderWaiting: 'Esperando repartidor',
+      ordersRiderCall: 'Llamar al repartidor',
     },
     fr: {
       ordersPageTitle: 'Toutes les commandes',
@@ -166,6 +175,9 @@ export default defineStrings(
       ordersDetailCustomer: 'CLIENT',
       ordersDetailAddress: 'ADRESSE DE LIVRAISON',
       ordersDetailDriverNote: 'NOTE POUR LE LIVREUR',
+      ordersRiderLabel: 'LIVREUR',
+      ordersRiderWaiting: 'En attente d’un livreur',
+      ordersRiderCall: 'Appeler le livreur',
     },
   },
 );
