@@ -349,28 +349,81 @@ export async function patchOnline(req: AuthRequest, res: Response): Promise<void
   }
 }
 
+/** How long a customer cancellation stays on the rider's dashboard if never dismissed. */
+const CANCELLED_NOTICE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /**
  * GET /api/delivery/orders/active
- * Current assignment (pickup / en route).
+ * Current assignment (pickup / en route), plus the latest order the customer
+ * cancelled out from under this rider, until the rider dismisses it.
  */
 export async function getActiveOrder(req: AuthRequest, res: Response): Promise<void> {
   try {
     const uid = new mongoose.Types.ObjectId(req.user!.id);
-    const order = await Order.findOne({
-      deliveryPerson: uid,
-      status: { $in: [...ACTIVE_DRIVER_STATUSES] },
-    })
-      .populate('restaurant', 'name image logo address')
-      .sort({ updatedAt: -1 })
-      .lean();
+    const [order, cancelled] = await Promise.all([
+      Order.findOne({
+        deliveryPerson: uid,
+        status: { $in: [...ACTIVE_DRIVER_STATUSES] },
+      })
+        .populate('restaurant', 'name image logo address coordinates')
+        .populate('customer', 'name phone')
+        .sort({ updatedAt: -1 })
+        .lean(),
+      Order.findOne({
+        deliveryPerson: uid,
+        status: 'Cancelled',
+        riderCancellationAckAt: null,
+        updatedAt: { $gte: new Date(Date.now() - CANCELLED_NOTICE_WINDOW_MS) },
+      })
+        .select('orderNumber restaurant cancellationReason updatedAt')
+        .populate('restaurant', 'name')
+        .sort({ updatedAt: -1 })
+        .lean(),
+    ]);
 
-    if (!order) {
-      res.json({ order: null });
-      return;
-    }
-    res.json({ order: toDeliveryOrderView(order, 'active') });
+    res.json({
+      order: order ? toDeliveryOrderView(order, 'active') : null,
+      cancelledOrder: cancelled
+        ? {
+            id: String(cancelled._id),
+            orderNumber: cancelled.orderNumber,
+            restaurantName: (cancelled.restaurant as any)?.name ?? 'The restaurant',
+            cancellationReason: cancelled.cancellationReason ?? null,
+            cancelledAt: cancelled.updatedAt,
+          }
+        : null,
+    });
   } catch (e) {
     console.error('getActiveOrder:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+/**
+ * POST /api/delivery/orders/:id/acknowledge-cancellation
+ * Dismisses the cancelled-order notice. Safe to repeat.
+ */
+export async function acknowledgeCancellation(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const result = await Order.updateOne(
+      {
+        _id: req.params.id,
+        deliveryPerson: new mongoose.Types.ObjectId(req.user!.id),
+        status: 'Cancelled',
+      },
+      { $set: { riderCancellationAckAt: new Date() } },
+    );
+    if (result.matchedCount === 0) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    if (e instanceof mongoose.Error.CastError) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+    console.error('acknowledgeCancellation:', e);
     res.status(500).json({ message: 'Server error' });
   }
 }

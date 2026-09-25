@@ -48,7 +48,12 @@ async function createRider(overrides: Record<string, unknown> = {}) {
 
 async function createOrder(status: string, extra: Record<string, unknown> = {}) {
   seq += 1;
-  const customer = await User.create({ name: 'Noor', email: `customer${seq}@test.com`, password: 'password123' });
+  const customer = await User.create({
+    name: 'Noor',
+    email: `customer${seq}@test.com`,
+    password: 'password123',
+    phone: '0300 7654321',
+  });
   const restaurant = await Restaurant.create({
     name: 'Beef House',
     email: `restaurant${seq}@test.com`,
@@ -78,11 +83,28 @@ function accept(token: string, orderId: unknown) {
     .set('Authorization', `Bearer ${token}`);
 }
 
-function setStatus(token: string, orderId: unknown, status: string) {
+function setStatus(token: string, orderId: unknown, status: string, extra: Record<string, unknown> = {}) {
   return request(app)
     .patch(`/api/delivery/orders/${String(orderId)}/status`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ status });
+    .send({ status, ...extra });
+}
+
+function getActive(token: string) {
+  return request(app).get('/api/delivery/orders/active').set('Authorization', `Bearer ${token}`);
+}
+
+function acknowledge(token: string, orderId: unknown) {
+  return request(app)
+    .post(`/api/delivery/orders/${String(orderId)}/acknowledge-cancellation`)
+    .set('Authorization', `Bearer ${token}`);
+}
+
+function customerCancel(order: { _id: unknown; customer: unknown }) {
+  return request(app)
+    .post(`/api/customer/orders/${String(order._id)}/cancel`)
+    .set('Authorization', `Bearer ${generateToken(String(order.customer), 'customer')}`)
+    .send({ reason: 'Changed my mind' });
 }
 
 // ---------------------------------------------------------------------------
@@ -280,5 +302,84 @@ describe('GET /api/delivery/me earnings', () => {
     const res = await request(app).get('/api/delivery/me').set('Authorization', `Bearer ${token}`);
 
     expect(res.body.profile.earnings).toMatchObject({ today: 0, thisWeek: 0, thisMonth: 0 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Active order: customer details and cancellation notice
+// ---------------------------------------------------------------------------
+
+describe('GET /api/delivery/orders/active', () => {
+  it("gives the assigned rider the customer's contact and the cash to collect", async () => {
+    const { rider, token } = await createRider();
+    await createOrder('Ready', { deliveryPerson: rider._id, specialInstructions: 'Extra napkins' });
+
+    const res = await getActive(token);
+
+    expect(res.status).toBe(200);
+    expect(res.body.order.customer).toEqual({ name: 'Noor', phone: '0300 7654321' });
+    expect(res.body.order.specialInstructions).toBe('Extra napkins');
+    expect(res.body.order.cashToCollect).toBe(200);
+    expect(res.body.cancelledOrder).toBeNull();
+  });
+
+  it('never shows customer details in the request list', async () => {
+    const { token } = await createRider();
+    await createOrder('Ready');
+
+    const res = await request(app)
+      .get('/api/delivery/orders/requests')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.body.orders).toHaveLength(1);
+    expect(res.body.orders[0].customer).toBeUndefined();
+  });
+
+  it('tells the rider when the customer cancels an order they accepted', async () => {
+    const { token } = await createRider();
+    const order = await createOrder('Preparing');
+    await accept(token, order._id);
+
+    expect((await customerCancel(order)).status).toBe(200);
+    const res = await getActive(token);
+
+    expect(res.body.order).toBeNull();
+    expect(res.body.cancelledOrder).toMatchObject({
+      id: String(order._id),
+      orderNumber: order.orderNumber,
+      restaurantName: 'Beef House',
+      cancellationReason: 'Changed my mind',
+    });
+  });
+
+  it('stops showing the cancellation once the rider dismisses it', async () => {
+    const { token } = await createRider();
+    const order = await createOrder('Preparing');
+    await accept(token, order._id);
+    await customerCancel(order);
+
+    expect((await acknowledge(token, order._id)).status).toBe(200);
+    expect((await acknowledge(token, order._id)).status).toBe(200); // idempotent
+
+    expect((await getActive(token)).body.cancelledOrder).toBeNull();
+  });
+
+  it("does not let a rider dismiss another rider's cancellation", async () => {
+    const owner = await createRider();
+    const other = await createRider();
+    const order = await createOrder('Cancelled', { deliveryPerson: owner.rider._id });
+
+    expect((await acknowledge(other.token, order._id)).status).toBe(404);
+  });
+
+  it('ignores cancellations older than a day', async () => {
+    const { rider, token } = await createRider();
+    const order = await createOrder('Cancelled', { deliveryPerson: rider._id });
+    await Order.collection.updateOne(
+      { _id: order._id },
+      { $set: { updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } },
+    );
+
+    expect((await getActive(token)).body.cancelledOrder).toBeNull();
   });
 });
