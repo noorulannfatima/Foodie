@@ -17,9 +17,10 @@ import {
   SearchPopularChips,
   type SearchRestaurantResult,
 } from '@/components/pages/customer/search';
+import { formatCurrency } from '@/utils/currency';
 
 function formatSearchCurrency(amount: number) {
-  return `Rs. ${amount.toLocaleString()}`;
+  return formatCurrency(amount);
 }
 
 export default function CustomerSearch() {

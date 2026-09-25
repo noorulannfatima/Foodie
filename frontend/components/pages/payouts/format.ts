@@ -1,7 +1,8 @@
-/** `PKR 1,234`, or `−PKR 150` for negatives (restaurant owes Foodie). */
+import { formatCurrency } from '@/utils/currency';
+
+/** `Rs. 1,234`, or `−Rs. 150` for negatives (restaurant owes Foodie). */
 export function formatPKR(amount: number): string {
-  const formatted = `PKR ${Math.abs(amount).toLocaleString('en-PK', { maximumFractionDigits: 2 })}`;
-  return amount < 0 ? `−${formatted}` : formatted;
+  return formatCurrency(amount);
 }
 
 export function formatShortDate(iso: string): string {

@@ -9,6 +9,7 @@ import Review from '../models/review';
 import { notifyRestaurant } from '../services/push.service';
 import { roundedAverage } from '../services/rating.service';
 import { rollbackUnpaidOrder } from '../services/orderRollback.service';
+import { formatPKR, roundPKR } from '../utils/currency';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,9 +57,9 @@ async function findReviewedOrderIds(orderIds: mongoose.Types.ObjectId[]): Promis
   return new Set(reviews.map((r) => r.order.toString()));
 }
 
-/** Standard 5% tax rule, kept in one place. */
+/** Standard 5% tax rule, kept in one place. Whole rupees — PKR has no paisa. */
 function calcTax(subtotal: number): number {
-  return Math.round(subtotal * 0.05 * 100) / 100;
+  return roundPKR(subtotal * 0.05);
 }
 
 // ========== Home ==========
@@ -603,7 +604,7 @@ export async function createOrder(req: AuthRequest, res: Response): Promise<void
     const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
     void notifyRestaurant(restaurant._id, 'newOrders', {
       title: 'New order received',
-      body: `Order #${order.orderNumber} · ${itemCount} item${itemCount === 1 ? '' : 's'} · Rs. ${Math.round(total).toLocaleString()}`,
+      body: `Order #${order.orderNumber} · ${itemCount} item${itemCount === 1 ? '' : 's'} · ${formatPKR(total)}`,
       data: { type: 'new_order', orderId: order._id.toString() },
     });
 

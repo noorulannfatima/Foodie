@@ -18,6 +18,7 @@ import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import CustomerScreenHeader from '@/components/pages/customer/CustomerScreenHeader';
 import { useCustomerT } from '@/stores/customerPreferencesStore';
 import { orderStatusKey } from '@/constants/customerStrings';
+import { formatCurrency } from '@/utils/currency';
 
 interface OrderListItem {
   _id: string;
@@ -57,7 +58,7 @@ function formatDate(iso: string) {
 }
 
 function formatPKR(value: number) {
-  return `Rs. ${value.toFixed(0)}`;
+  return formatCurrency(value);
 }
 
 export default function OrderHistoryScreen() {

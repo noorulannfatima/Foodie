@@ -4,10 +4,11 @@ import { AuthRequest } from '../middleware/auth';
 import DeliveryPerson from '../models/deliveryperson';
 import Order from '../models/order';
 import { notifyOrderStatus, NotifiedOrderStatus } from '../services/orderStatusPush';
+import { roundPKR } from '../utils/currency';
 
 function estDriverPayout(pricing: { deliveryFee: number; tip: number }): number {
   const raw = pricing.deliveryFee * 0.6 + pricing.tip * 0.85;
-  return Math.round(raw * 100) / 100;
+  return roundPKR(raw);
 }
 
 const DELIVERY_LANGS = ['en', 'es', 'fr', 'ur'] as const;

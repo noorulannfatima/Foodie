@@ -1,5 +1,7 @@
+import { formatCurrency } from '@/utils/currency';
+
 export function formatRestaurantCurrency(amount: number): string {
-  return `Rs. ${amount.toLocaleString()}`;
+  return formatCurrency(amount);
 }
 
 export function getOrderTimeAgo(dateStr: string): string {

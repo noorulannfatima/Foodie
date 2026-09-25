@@ -1,3 +1,4 @@
+import { formatPKR } from '../utils/currency';
 import mongoose from 'mongoose';
 import Order from '../models/order';
 import Restaurant from '../models/restaurant';
@@ -186,13 +187,13 @@ export async function markPayoutPaid(id: string, reference: string): Promise<IPa
   payout.accountSnapshot = restaurant.payoutAccount;
   await payout.save();
 
-  const amount = Math.abs(payout.netAmount).toLocaleString('en-PK');
+  const amount = formatPKR(payout.netAmount);
   void notifyRestaurant(payout.restaurant, 'payouts', {
     title: payout.netAmount >= 0 ? 'Payout sent' : 'Payment received',
     body:
       payout.netAmount >= 0
-        ? `PKR ${amount} for ${formatPeriod(payout)} (ref ${reference})`
-        : `Your PKR ${amount} payment for ${formatPeriod(payout)} was received (ref ${reference})`,
+        ? `${amount} for ${formatPeriod(payout)} (ref ${reference})`
+        : `Your ${amount} payment for ${formatPeriod(payout)} was received (ref ${reference})`,
     data: { type: 'payout', payoutId: String(payout._id) },
   });
 

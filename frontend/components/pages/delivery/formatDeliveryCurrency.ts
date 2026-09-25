@@ -1,3 +1,5 @@
-export function formatDeliveryCurrency(amount: number) {
-  return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+import { formatCurrency } from '@/utils/currency';
+
+export function formatDeliveryCurrency(amount: number): string {
+  return formatCurrency(amount);
 }

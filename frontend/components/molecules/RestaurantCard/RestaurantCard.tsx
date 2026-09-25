@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { formatCurrency } from '@/utils/currency';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32;
@@ -82,7 +83,7 @@ export default function RestaurantCard({
     image?.[0] ??
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format';
 
-  const feeLabel = deliveryFee === 0 ? labels.free : `Rs. ${deliveryFee}`;
+  const feeLabel = deliveryFee === 0 ? labels.free : formatCurrency(deliveryFee);
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleRef }] }}>
@@ -117,7 +118,7 @@ export default function RestaurantCard({
               {name}
             </Text>
             <Text style={styles.minOrder}>
-              <Text style={styles.primaryText}>Rs. {minimumOrder}</Text>
+              <Text style={styles.primaryText}>{formatCurrency(minimumOrder)}</Text>
               <Text style={styles.mutedSm}> • Avg</Text>
             </Text>
           </View>

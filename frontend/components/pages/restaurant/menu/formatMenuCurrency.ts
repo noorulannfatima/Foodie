@@ -1,3 +1,5 @@
+import { formatCurrency } from '@/utils/currency';
+
 export function formatMenuCurrency(amount: number): string {
-  return `Rs. ${amount.toLocaleString()}`;
+  return formatCurrency(amount);
 }

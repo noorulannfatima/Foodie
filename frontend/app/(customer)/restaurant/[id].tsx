@@ -22,6 +22,7 @@ import { customerAPI } from '@/services/api/customer.api';
 import { useCartStore } from '@/stores/cartStore';
 import { Loader } from '@/components/atoms';
 import { useCustomerT } from '@/stores/customerPreferencesStore';
+import { formatCurrency } from '@/utils/currency';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_HEIGHT = 220;
@@ -149,8 +150,6 @@ export default function RestaurantDetailScreen() {
       Alert.alert(t('error'), err.message || t('addToCartFailed'));
     }
   };
-
-  const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
 
   if (loading) {
     return (

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { formatCurrency } from '@/utils/currency';
 import { DEFAULT_RESTAURANT_CARD_LABELS as DEFAULT_LABELS, type RestaurantCardLabels } from '../RestaurantCard/RestaurantCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -124,7 +125,7 @@ export default function RestaurantListCard({
                                 deliveryFee === 0 && styles.freeText,
                             ]}
                         >
-                            {deliveryFee === 0 ? labels.free : `Rs. ${deliveryFee}`}
+                            {deliveryFee === 0 ? labels.free : formatCurrency(deliveryFee)}
                         </Text>
                     </View>
                 </View>

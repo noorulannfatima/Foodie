@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppThemeColors, type AppColors } from '@/constants/theme';
+import { formatCurrency } from '@/utils/currency';
 import CustomerScreenHeader from '@/components/pages/customer/CustomerScreenHeader';
 
 const STATUS = { error: '#EF4444', success: '#10B981' } as const;
@@ -30,7 +31,7 @@ interface PaymentMethod {
 
 const INITIAL_METHODS: PaymentMethod[] = [
     { id: '1', type: 'cash', label: 'Cash on Delivery', detail: 'Pay when you receive', isDefault: true },
-    { id: '2', type: 'wallet', label: 'Foodie Wallet', detail: 'Balance: PKR 0.00', isDefault: false },
+    { id: '2', type: 'wallet', label: 'Foodie Wallet', detail: `Balance: ${formatCurrency(0)}`, isDefault: false },
 ];
 
 function typeIconBg(type: PaymentType, c: AppColors): string {
