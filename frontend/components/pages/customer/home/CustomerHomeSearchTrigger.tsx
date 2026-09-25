@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface CustomerHomeSearchTriggerProps {
   onPress: () => void;
@@ -10,15 +11,16 @@ export interface CustomerHomeSearchTriggerProps {
 
 export default function CustomerHomeSearchTrigger({
   onPress,
-  placeholder = 'Search for sushi, pasta, or burgers…',
+  placeholder,
 }: CustomerHomeSearchTriggerProps) {
+  const t = useCustomerT();
   const c = useAppThemeColors(); // search chip uses customerSurface + subtle border in dark mode
   const styles = useMemo(() => createSearchStyles(c), [c]);
 
   return (
     <Pressable style={styles.searchBar} onPress={onPress}>
       <Ionicons name="search" size={18} color={c.customerTextMuted} />
-      <Text style={styles.searchPlaceholder}>{placeholder}</Text>
+      <Text style={styles.searchPlaceholder}>{placeholder ?? t('homeSearchPlaceholder')}</Text>
       <View style={styles.filterBtn}>
         <Ionicons name="options-outline" size={16} color={c.primary} />
       </View>

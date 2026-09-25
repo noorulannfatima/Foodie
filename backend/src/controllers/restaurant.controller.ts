@@ -5,7 +5,8 @@ import Restaurant, {
   normalizeNotificationPreferences,
   type RestaurantNotificationKey,
 } from '../models/restaurant';
-import { isExpoPushToken } from '../services/push.service';
+import { claimPushToken, isExpoPushToken, releasePushToken } from '../services/push.service';
+import { notifyOrderStatus } from '../services/orderStatusPush';
 import Menu from '../models/menu';
 import Order from '../models/order';
 
@@ -282,7 +283,6 @@ export async function updateNotificationPreferences(req: AuthRequest, res: Respo
 
 // ========== Push Tokens ==========
 
-const MAX_PUSH_TOKENS_PER_RESTAURANT = 10;
 
 function readPushToken(req: AuthRequest, res: Response): string | null {
   const { token } = (req.body ?? {}) as { token?: unknown };
@@ -302,20 +302,8 @@ export async function registerPushToken(req: AuthRequest, res: Response): Promis
     const token = readPushToken(req, res);
     if (!token) return;
 
-    // A device belongs to whoever signed in last on it
-    await Restaurant.updateMany(
-      { _id: { $ne: req.user!.id }, pushTokens: token },
-      { $pull: { pushTokens: token } }
-    );
-
-    // Move the token to the end, keeping only the most recent devices
-    await Restaurant.updateOne({ _id: req.user!.id }, { $pull: { pushTokens: token } });
-    const result = await Restaurant.updateOne(
-      { _id: req.user!.id },
-      { $push: { pushTokens: { $each: [token], $slice: -MAX_PUSH_TOKENS_PER_RESTAURANT } } }
-    );
-
-    if (result.matchedCount === 0) {
+    const found = await claimPushToken('restaurant', req.user!.id, token);
+    if (!found) {
       res.status(404).json({ message: 'Restaurant not found' });
       return;
     }
@@ -335,7 +323,7 @@ export async function unregisterPushToken(req: AuthRequest, res: Response): Prom
     const token = readPushToken(req, res);
     if (!token) return;
 
-    await Restaurant.updateOne({ _id: req.user!.id }, { $pull: { pushTokens: token } });
+    await releasePushToken('restaurant', req.user!.id, token);
     res.json({ registered: false });
   } catch (error) {
     console.error('Unregister push token error:', error);
@@ -442,6 +430,7 @@ export async function updateOrderStatus(req: AuthRequest, res: Response): Promis
     }
 
     await order.updateStatus(status, note);
+    void notifyOrderStatus(order, status);
 
     res.json({ order });
   } catch (error) {

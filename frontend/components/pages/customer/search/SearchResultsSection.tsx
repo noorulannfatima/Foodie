@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 import SearchResultRow from './SearchResultRow';
 import type { SearchRestaurantResult } from './types';
 
@@ -16,10 +17,11 @@ export default function SearchResultsSection({
   onSelectRestaurant,
 }: SearchResultsSectionProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View>
-      <Text style={styles.sectionTitle}>Results ({results.length})</Text>
+      <Text style={styles.sectionTitle}>{t('searchResults', { count: results.length })}</Text>
       {results.map((r) => (
         <SearchResultRow
           key={r._id}

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface CartCheckoutBarProps {
   onCheckout: () => void;
@@ -11,16 +12,17 @@ export interface CartCheckoutBarProps {
 
 export default function CartCheckoutBar({ onCheckout, total }: CartCheckoutBarProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.bar}>
       <Pressable
         onPress={onCheckout}
         accessibilityRole="button"
-        accessibilityLabel={total ? `Checkout, total ${total}` : 'Checkout'}
+        accessibilityLabel={total ? t('checkoutWithTotal', { total }) : t('checkout')}
         style={({ pressed }) => [styles.btn, pressed && styles.pressed]}
       >
-        <Text style={styles.btnText}>Checkout</Text>
+        <Text style={styles.btnText}>{t('checkout')}</Text>
         <View style={styles.right}>
           {total ? <Text style={styles.total}>{total}</Text> : null}
           <Ionicons name="arrow-forward" size={18} color="#fff" />

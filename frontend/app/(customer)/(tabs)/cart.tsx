@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCartStore, CartItem } from '@/stores/cartStore';
-import { customerAPI } from '@/services/api/customer.api';
+import { customerAPI, type CartSuggestions } from '@/services/api/customer.api';
 import { paymentAPI } from '@/services/api/payment.api';
 import { payWithSafepay } from '@/services/safepay';
 import { Loader } from '@/components/atoms';
 import { useAppThemeColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 import { customerHeaderBg } from '@/components/pages/customer/CustomerHeader';
 import {
   CartHeader,
@@ -26,6 +27,7 @@ export default function CustomerCart() {
     useCartStore();
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const c = useAppThemeColors();
+  const t = useCustomerT();
   // Header has no bar of its own; the safe area and body share the page color
   // so the screen reads as one surface in both light and dark mode.
   const safe = [styles.safe, { backgroundColor: customerHeaderBg(c, 'page') }];
@@ -34,12 +36,52 @@ export default function CustomerCart() {
     fetchCart();
   }, []);
 
+  // Empty-cart ideas: last order + what others order. Refetched on each visit
+  // while the cart is empty, and right after checkout empties it.
+  const isEmpty = !cart || cart.items.length === 0;
+  const [suggestions, setSuggestions] = useState<CartSuggestions | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [reordering, setReordering] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isEmpty) return;
+      let active = true;
+      setSuggestionsLoading(true);
+      customerAPI
+        .getCartSuggestions()
+        .then((data) => active && setSuggestions(data))
+        .catch(() => {
+          // Suggestions are optional; the plain empty state still works.
+        })
+        .finally(() => active && setSuggestionsLoading(false));
+      return () => {
+        active = false;
+      };
+    }, [isEmpty])
+  );
+
+  const handleReorder = async (orderId: string) => {
+    setReordering(true);
+    try {
+      const result = await customerAPI.reorder(orderId);
+      useCartStore.setState({ cart: result.cart });
+      if (result.skipped?.length) {
+        Alert.alert(t('someItemsUnavailable'), t('notAdded', { items: result.skipped.join(', ') }));
+      }
+    } catch (err: unknown) {
+      Alert.alert(t('reorderFailed'), err instanceof Error ? err.message : t('pleaseTryAgain'));
+    } finally {
+      setReordering(false);
+    }
+  };
+
   const handleQuantityChange = (item: CartItem, delta: number) => {
     const newQty = item.quantity + delta;
     if (newQty <= 0) {
-      Alert.alert('Remove Item', `Remove ${item.name} from cart?`, [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => removeItem(item._id) },
+      Alert.alert(t('removeItem'), t('removeItemConfirm', { name: item.name }), [
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('remove'), style: 'destructive', onPress: () => removeItem(item._id) },
       ]);
     } else {
       updateQuantity(item._id, newQty);
@@ -60,7 +102,15 @@ export default function CustomerCart() {
     return (
       <SafeAreaView style={safe} edges={['top']}>
         <CartHeader />
-        <CartEmptyState onBrowseRestaurants={() => router.push('/(customer)/(tabs)/home')} />
+        <CartEmptyState
+          onBrowseRestaurants={() => router.push('/(customer)/(tabs)/home')}
+          suggestions={suggestions}
+          suggestionsLoading={suggestionsLoading}
+          reordering={reordering}
+          onReorder={handleReorder}
+          onOpenOrder={(id) => router.push({ pathname: '/(customer)/order/[id]', params: { id } })}
+          onPopularItemPress={(item) => router.push(`/(customer)/restaurant/${item.restaurant._id}`)}
+        />
       </SafeAreaView>
     );
   }
@@ -76,9 +126,9 @@ export default function CustomerCart() {
       <CartHeader
         showClearAction
         onClearCart={() =>
-          Alert.alert('Clear Cart', 'Remove all items?', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Clear', style: 'destructive', onPress: clearCart },
+          Alert.alert(t('clearCart'), t('clearCartConfirm'), [
+            { text: t('cancel'), style: 'cancel' },
+            { text: t('clear'), style: 'destructive', onPress: clearCart },
           ])
         }
       />
@@ -139,13 +189,13 @@ export default function CustomerCart() {
               await useCartStore.getState().fetchCart();
               const restored = (useCartStore.getState().cart?.items.length ?? 0) > 0;
               if (restored) {
-                Alert.alert(title, `${message}\n\nYour order was not placed and your cart has been restored.`);
+                Alert.alert(title, `${message}\n\n${t('orderNotPlacedCartRestored')}`);
               } else {
-                Alert.alert(title, `${message}\n\nOrder #${placedOrder.orderNumber} could not be undone.`, [
+                Alert.alert(title, `${message}\n\n${t('orderNotUndone', { number: placedOrder.orderNumber })}`, [
                   {
-                    text: 'View Order',
+                    text: t('viewOrder'),
                     onPress: () =>
-                      router.replace({
+                      router.push({
                         pathname: '/(customer)/order/[id]',
                         params: { id: placedOrder._id },
                       }),
@@ -169,13 +219,13 @@ export default function CustomerCart() {
 
                 if (outcome.kind === 'success') {
                   Alert.alert(
-                    'Payment Successful',
-                    `Order #${order.orderNumber} confirmed and paid via Safepay.`,
+                    t('paymentSuccessful'),
+                    t('paymentSuccessfulMessage', { number: order.orderNumber }),
                     [
                       {
-                        text: 'OK',
+                        text: t('ok'),
                         onPress: () =>
-                          router.replace({
+                          router.push({
                             pathname: '/(customer)/order/[id]',
                             params: { id: order._id },
                           }),
@@ -184,13 +234,13 @@ export default function CustomerCart() {
                   );
                 } else if (outcome.kind === 'pending') {
                   Alert.alert(
-                    'Payment Pending',
-                    `Order #${order.orderNumber} was placed. We'll confirm payment shortly.`,
+                    t('paymentPending'),
+                    t('paymentPendingMessage', { number: order.orderNumber }),
                     [
                       {
-                        text: 'OK',
+                        text: t('ok'),
                         onPress: () =>
-                          router.replace({
+                          router.push({
                             pathname: '/(customer)/order/[id]',
                             params: { id: order._id },
                           }),
@@ -198,13 +248,13 @@ export default function CustomerCart() {
                     ]
                   );
                 } else if (outcome.kind === 'cancelled') {
-                  await undoCheckout('Payment Cancelled', 'You cancelled the payment.');
+                  await undoCheckout(t('paymentCancelled'), t('paymentCancelledMessage'));
                 } else {
                   await undoCheckout(
-                    'Payment Failed',
+                    t('paymentFailed'),
                     outcome.reason
-                      ? `Safepay reported: ${outcome.reason}.`
-                      : 'Your payment did not go through.'
+                      ? t('paymentFailedReason', { reason: outcome.reason })
+                      : t('paymentFailedMessage')
                   );
                 }
                 return;
@@ -215,13 +265,13 @@ export default function CustomerCart() {
               setCheckoutVisible(false);
               await useCartStore.getState().fetchCart();
               Alert.alert(
-                'Order Placed!',
-                `Your order #${order.orderNumber} has been placed. Pay the rider on delivery.`,
+                t('orderPlaced'),
+                t('orderPlacedCashMessage', { number: order.orderNumber }),
                 [
                   {
-                    text: 'OK',
+                    text: t('ok'),
                     onPress: () =>
-                      router.replace({
+                      router.push({
                         pathname: '/(customer)/order/[id]',
                         params: { id: order._id },
                       }),
@@ -229,12 +279,12 @@ export default function CustomerCart() {
                 ]
               );
             } catch (err: unknown) {
-              const message = err instanceof Error ? err.message : 'Failed to place order';
+              const message = err instanceof Error ? err.message : t('placeOrderFailed');
               if (!order) {
-                Alert.alert('Error', message);
+                Alert.alert(t('error'), message);
                 return;
               }
-              await undoCheckout('Checkout Failed', message);
+              await undoCheckout(t('checkoutFailed'), message);
             }
           }}
         />

@@ -21,6 +21,7 @@ import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { customerAPI } from '@/services/api/customer.api';
 import { useCartStore } from '@/stores/cartStore';
 import { Loader } from '@/components/atoms';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_HEIGHT = 220;
@@ -80,6 +81,7 @@ export default function RestaurantDetailScreen() {
   const insets = useSafeAreaInsets();
   const { addToCart, cart, itemCount } = useCartStore();
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createRestaurantDetailStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -127,7 +129,7 @@ export default function RestaurantDetailScreen() {
       }
     } catch (error) {
       console.error('Failed to load restaurant:', error);
-      Alert.alert('Error', 'Failed to load restaurant details');
+      Alert.alert(t('error'), t('loadRestaurantFailed'));
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export default function RestaurantDetailScreen() {
         quantity: 1,
       });
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to add to cart');
+      Alert.alert(t('error'), err.message || t('addToCartFailed'));
     }
   };
 
@@ -161,7 +163,7 @@ export default function RestaurantDetailScreen() {
   if (!restaurant) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Restaurant not found</Text>
+        <Text style={styles.errorText}>{t('restaurantNotFound')}</Text>
       </View>
     );
   }
@@ -221,7 +223,7 @@ export default function RestaurantDetailScreen() {
           <View style={styles.bannerInfo}>
             {restaurant.isPremium && (
               <View style={styles.premiumBadge}>
-                <Text style={styles.premiumText}>PREMIUM DELIVERY</Text>
+                <Text style={styles.premiumText}>{t('premiumDelivery')}</Text>
               </View>
             )}
             <View style={styles.ratingBadge}>
@@ -239,17 +241,17 @@ export default function RestaurantDetailScreen() {
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Ionicons name="time-outline" size={14} color={c.muted} />
-              <Text style={styles.metaText}>{restaurant.estimatedDeliveryTime} min</Text>
+              <Text style={styles.metaText}>{t('minutesShort', { count: restaurant.estimatedDeliveryTime })}</Text>
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="bicycle-outline" size={14} color={c.muted} />
               <Text style={styles.metaText}>
-                {restaurant.deliveryFee === 0 ? 'Free' : formatCurrency(restaurant.deliveryFee)}
+                {restaurant.deliveryFee === 0 ? t('free') : formatCurrency(restaurant.deliveryFee)}
               </Text>
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="receipt-outline" size={14} color={c.muted} />
-              <Text style={styles.metaText}>Min {formatCurrency(restaurant.minimumOrder)}</Text>
+              <Text style={styles.metaText}>{t('minOrder', { amount: formatCurrency(restaurant.minimumOrder) })}</Text>
             </View>
           </View>
         </View>
@@ -297,7 +299,10 @@ export default function RestaurantDetailScreen() {
                         <View
                           style={styles.menuItemRating}
                           accessible
-                          accessibilityLabel={`Rated ${item.averageRating.toFixed(1)} out of 5 from ${item.ratingCount} review${item.ratingCount === 1 ? '' : 's'}`}
+                          accessibilityLabel={t(item.ratingCount === 1 ? 'ratingA11yOne' : 'ratingA11yOther', {
+                            rating: item.averageRating.toFixed(1),
+                            count: item.ratingCount,
+                          })}
                         >
                           <Ionicons name="star" size={12} color="#FFA94D" />
                           <Text style={styles.menuItemRatingValue}>{item.averageRating.toFixed(1)}</Text>
@@ -311,9 +316,9 @@ export default function RestaurantDetailScreen() {
 
                       {/* Tags */}
                       <View style={styles.menuItemTags}>
-                        {item.isVegetarian && <Text style={styles.tagBadge}>VEG</Text>}
-                        {item.isVegan && <Text style={styles.tagBadge}>VEGAN</Text>}
-                        {item.isGlutenFree && <Text style={styles.tagBadge}>GF</Text>}
+                        {item.isVegetarian && <Text style={styles.tagBadge}>{t('tagVeg')}</Text>}
+                        {item.isVegan && <Text style={styles.tagBadge}>{t('tagVegan')}</Text>}
+                        {item.isGlutenFree && <Text style={styles.tagBadge}>{t('tagGlutenFree')}</Text>}
                       </View>
 
                       <TouchableOpacity
@@ -323,7 +328,7 @@ export default function RestaurantDetailScreen() {
                       >
                         <Ionicons name="cart-outline" size={16} color="#fff" />
                         <Text style={styles.addBtnText}>
-                          {item.isAvailable ? 'Add to Cart' : 'Unavailable'}
+                          {item.isAvailable ? t('addToCart') : t('unavailable')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -336,7 +341,7 @@ export default function RestaurantDetailScreen() {
           {categories.length === 0 && (
             <View style={styles.emptyMenu}>
               <Ionicons name="restaurant-outline" size={48} color={c.muted} />
-              <Text style={styles.emptyMenuText}>No menu items available</Text>
+              <Text style={styles.emptyMenuText}>{t('noMenuItems')}</Text>
             </View>
           )}
         </View>
@@ -363,7 +368,7 @@ export default function RestaurantDetailScreen() {
         style={[styles.backBtn, collapsed && styles.backBtnCollapsed, { top: insets.top + 8 }]}
         onPress={() => router.back()}
         accessibilityRole="button"
-        accessibilityLabel="Back"
+        accessibilityLabel={t('back')}
       >
         <Ionicons name="arrow-back" size={22} color={collapsed ? c.text : '#fff'} />
       </TouchableOpacity>
@@ -374,12 +379,12 @@ export default function RestaurantDetailScreen() {
           style={[styles.cartFooter, { bottom: Math.max(insets.bottom, 12) }]}
           onPress={() => router.push('/(customer)/(tabs)/cart')}
           accessibilityRole="button"
-          accessibilityLabel={`View cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+          accessibilityLabel={t(cartCount === 1 ? 'viewCartA11yOne' : 'viewCartA11yOther', { count: cartCount })}
         >
           <View style={styles.cartBadge}>
             <Text style={styles.cartBadgeText}>{cartCount}</Text>
           </View>
-          <Text style={styles.cartFooterText}>VIEW CART</Text>
+          <Text style={styles.cartFooterText}>{t('viewCart')}</Text>
           <Text style={styles.cartFooterPrice}>
             {formatCurrency(useCartStore.getState().total())}
           </Text>

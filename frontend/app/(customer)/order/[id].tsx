@@ -15,37 +15,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { customerAPI } from '@/services/api/customer.api';
 import ReviewModal, { type ReviewableOrder } from '@/components/organisms/Modals/ReviewModal';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
-
-// Visual stepper collapses the 8-state backend lifecycle into 4 phases the
-// customer cares about. Cancelled is rendered as a terminal alt state.
-type Phase = 'placed' | 'preparing' | 'on_the_way' | 'delivered';
-
-const PHASES: { key: Phase; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'placed', label: 'Order Placed', icon: 'receipt-outline' },
-  { key: 'preparing', label: 'Preparing', icon: 'restaurant-outline' },
-  { key: 'on_the_way', label: 'On the Way', icon: 'bicycle-outline' },
-  { key: 'delivered', label: 'Delivered', icon: 'checkmark-done-outline' },
-];
-
-function phaseFor(status: string): Phase | 'cancelled' {
-  switch (status) {
-    case 'Pending':
-    case 'Confirmed':
-      return 'placed';
-    case 'Preparing':
-    case 'Ready':
-      return 'preparing';
-    case 'PickedUp':
-    case 'OutForDelivery':
-      return 'on_the_way';
-    case 'Delivered':
-      return 'delivered';
-    case 'Cancelled':
-      return 'cancelled';
-    default:
-      return 'placed';
-  }
-}
+import { ORDER_PHASES as PHASES, phaseFor } from '@/components/pages/customer/shared/orderPhases';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
+import { orderStatusKey } from '@/constants/customerStrings';
 
 interface TrackPayload {
   orderNumber: string;
@@ -59,6 +31,7 @@ interface TrackPayload {
 export default function OrderStatusScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const [data, setData] = useState<TrackPayload | null>(null);
@@ -94,7 +67,7 @@ export default function OrderStatusScreen() {
         lastStatus.current = payload.status;
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Could not load order status');
+        setError(err instanceof Error ? err.message : t('loadOrderFailed'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -141,12 +114,13 @@ export default function OrderStatusScreen() {
 
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          // Opened from a notification there may be nothing to go back to.
+          onPress={() => (router.canGoBack() ? router.back() : router.dismissTo('/(customer)/(tabs)/home'))}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order Status</Text>
+        <Text style={styles.headerTitle}>{t('orderStatusTitle')}</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -154,7 +128,7 @@ export default function OrderStatusScreen() {
         {loading && !data ? (
           <View style={styles.loadingWrap}>
             <ActivityIndicator color={c.primary} />
-            <Text style={styles.loadingText}>Loading your order...</Text>
+            <Text style={styles.loadingText}>{t('loadingOrder')}</Text>
           </View>
         ) : error && !data ? (
           <View style={styles.loadingWrap}>
@@ -166,13 +140,15 @@ export default function OrderStatusScreen() {
             <View style={styles.card}>
               <Text style={styles.orderNumber}>#{data.orderNumber}</Text>
               <Animated.View style={[styles.statusBadge, { transform: [{ scale: pulse }] }]}>
-                <Text style={styles.statusBadgeText}>{data.status.toUpperCase()}</Text>
+                <Text style={styles.statusBadgeText}>{(orderStatusKey(data.status) ? t(orderStatusKey(data.status)!) : data.status).toUpperCase()}</Text>
               </Animated.View>
               {data.estimatedDeliveryTime && current !== 'cancelled' && current !== 'delivered' ? (
                 <Text style={styles.eta}>
-                  Est. arrival {new Date(data.estimatedDeliveryTime).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  {t('estArrival', {
+                    time: new Date(data.estimatedDeliveryTime).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
                   })}
                 </Text>
               ) : null}
@@ -181,9 +157,9 @@ export default function OrderStatusScreen() {
             {current === 'cancelled' ? (
               <View style={styles.cancelledCard}>
                 <Ionicons name="close-circle-outline" size={40} color={c.primary} />
-                <Text style={styles.cancelledTitle}>Order Cancelled</Text>
+                <Text style={styles.cancelledTitle}>{t('orderCancelledTitle')}</Text>
                 <Text style={styles.cancelledSub}>
-                  This order was cancelled. If this was unexpected, please contact support.
+                  {t('orderCancelledHint')}
                 </Text>
               </View>
             ) : (
@@ -226,9 +202,9 @@ export default function OrderStatusScreen() {
                             isActive && styles.stepLabelActive,
                           ]}
                         >
-                          {phase.label}
+                          {t(phase.label)}
                         </Text>
-                        {isActive ? <Text style={styles.stepHint}>In progress…</Text> : null}
+                        {isActive ? <Text style={styles.stepHint}>{t('inProgress')}</Text> : null}
                       </View>
                     </View>
                   );
@@ -240,28 +216,28 @@ export default function OrderStatusScreen() {
               reviewOrder.isReviewed ? (
                 <View style={styles.reviewedRow}>
                   <Ionicons name="checkmark-circle" size={18} color="#15803D" />
-                  <Text style={styles.reviewedText}>Thanks for your review</Text>
+                  <Text style={styles.reviewedText}>{t('thanksForReview')}</Text>
                 </View>
               ) : (
                 <TouchableOpacity style={styles.rateBtn} onPress={() => setReviewOpen(true)}>
                   <Ionicons name="star" size={18} color={c.primary} />
-                  <Text style={styles.rateBtnText}>Rate your order</Text>
+                  <Text style={styles.rateBtnText}>{t('rateYourOrder')}</Text>
                 </TouchableOpacity>
               )
             ) : null}
 
             <TouchableOpacity
               style={styles.primaryBtn}
-              onPress={() => router.replace('/(customer)/(tabs)/home')}
+              onPress={() => router.dismissTo('/(customer)/(tabs)/home')}
             >
-              <Text style={styles.primaryBtnText}>Continue Shopping</Text>
+              <Text style={styles.primaryBtnText}>{t('continueShopping')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.secondaryBtn}
               onPress={() => router.push('/(customer)/orders')}
             >
-              <Text style={styles.secondaryBtnText}>View All Orders</Text>
+              <Text style={styles.secondaryBtnText}>{t('viewAllOrders')}</Text>
             </TouchableOpacity>
           </>
         ) : null}

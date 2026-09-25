@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface SearchRecentSectionProps {
   terms: string[];
@@ -15,13 +16,14 @@ export default function SearchRecentSection({
   onRemoveTerm,
 }: SearchRecentSectionProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
 
   if (terms.length === 0) return null;
 
   return (
     <>
-      <Text style={styles.sectionTitle}>Recent searches</Text>
+      <Text style={styles.sectionTitle}>{t('recentSearches')}</Text>
       {terms.map((s) => (
         <TouchableOpacity key={s} style={styles.recentRow} onPress={() => onSelectTerm(s)}>
           <Ionicons name="time-outline" size={18} color={c.muted} />

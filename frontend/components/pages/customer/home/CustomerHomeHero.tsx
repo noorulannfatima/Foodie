@@ -1,33 +1,60 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
+import { useAddressStore, selectDefaultAddress } from '@/stores/addressStore';
+import { AddressPickerSheet, displayLabel } from '@/components/pages/customer/addresses';
 import { getGreeting } from './getGreeting';
 
 export interface CustomerHomeHeroProps {
   userName: string;
-  addressLine?: string;
 }
 
-export default function CustomerHomeHero({
-  userName,
-  addressLine = 'Home – 123 Street Name',
-}: CustomerHomeHeroProps) {
+export default function CustomerHomeHero({ userName }: CustomerHomeHeroProps) {
+  const t = useCustomerT();
   const c = useAppThemeColors(); // hero block background/text follow light or dark customer palette
   const styles = useMemo(() => createHeroStyles(c), [c]);
+  const defaultAddress = useAddressStore(selectDefaultAddress);
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  const openAddresses = (add: boolean) =>
+    router.push({ pathname: '/(customer)/addresses', params: add ? { add: '1' } : {} });
 
   return (
     <View style={styles.heroSection}>
-      <Pressable style={styles.locationRow}>
+      <Pressable
+        style={styles.locationRow}
+        onPress={() => (defaultAddress ? setPickerVisible(true) : openAddresses(true))}
+        accessibilityRole="button"
+      >
         <Ionicons name="location-sharp" size={14} color={c.primary} />
-        <Text style={styles.locationLabel}>Deliver to</Text>
-        <Text style={styles.locationValue} numberOfLines={1}>
-          {addressLine}
-        </Text>
-        <Ionicons name="chevron-down" size={14} color={c.customerTextMuted} />
+        {defaultAddress ? (
+          <>
+            <Text style={styles.locationLabel}>{t('deliverTo')}</Text>
+            <Text style={styles.locationValue} numberOfLines={1}>
+              {displayLabel(defaultAddress.label, t)} – {defaultAddress.streetAddress}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={c.customerTextMuted} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.addPrompt}>{t('addDeliveryAddress')}</Text>
+            <Ionicons name="add" size={14} color={c.primary} />
+          </>
+        )}
       </Pressable>
+      <AddressPickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onManage={({ add }) => {
+          setPickerVisible(false);
+          openAddresses(add);
+        }}
+      />
       <Text style={styles.greeting}>
-        {getGreeting()},{'\n'}
+        {getGreeting(t)},{'\n'}
         <Text style={styles.greetingName}>{userName}!</Text>
       </Text>
     </View>
@@ -59,6 +86,11 @@ function createHeroStyles(c: ReturnType<typeof useAppThemeColors>) {
       fontFamily: Fonts.brandBold,
       color: c.customerTextPrimary,
       flex: 1,
+    },
+    addPrompt: {
+      fontSize: 12,
+      fontFamily: Fonts.brandBold,
+      color: c.primary,
     },
     greeting: {
       fontSize: 15,

@@ -2,15 +2,17 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export default function SearchNoResults() {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.noResults}>
       <Ionicons name="search-outline" size={48} color={c.muted} />
-      <Text style={styles.noResultsTitle}>No results found</Text>
-      <Text style={styles.noResultsText}>Try a different search term</Text>
+      <Text style={styles.noResultsTitle}>{t('noResults')}</Text>
+      <Text style={styles.noResultsText}>{t('noResultsHint')}</Text>
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL as BASE_URL } from './baseUrl';
 import type { SubmitReviewBody } from './review.types';
+import type { CustomerLanguage } from '@/constants/customerStrings';
 
 async function getAuthHeaders() {
   const token = await AsyncStorage.getItem('token');
@@ -19,7 +20,153 @@ async function handleResponse(res: Response) {
   return data;
 }
 
+export interface CustomerNotificationPreferences {
+  push: boolean;
+  orderUpdates: boolean;
+  promotions: boolean;
+}
+
+export interface CustomerPreferences {
+  notifications: CustomerNotificationPreferences;
+  language: CustomerLanguage;
+}
+
+/** Lean order shape returned by GET /orders/active for the home status card */
+export interface ActiveOrder {
+  _id: string;
+  orderNumber: string;
+  status: string;
+  estimatedDeliveryTime?: string;
+  cancellationReason?: string;
+  updatedAt: string;
+  restaurant: { _id: string; name: string; logo?: string } | null;
+  deliveryPerson: { _id: string; name: string } | null;
+  isReviewed: boolean;
+}
+
+/** A delivery address saved to the customer's profile. */
+export interface SavedAddress {
+  _id: string;
+  label: string;
+  streetAddress: string;
+  city: string;
+  zipCode: string;
+  instructions?: string;
+  isDefault: boolean;
+}
+
+export type SavedAddressInput = Omit<SavedAddress, '_id' | 'isDefault'>;
+
+/** Ideas shown on the empty cart screen. */
+export interface CartSuggestions {
+  lastOrder: {
+    _id: string;
+    orderNumber: string;
+    createdAt: string;
+    total: number;
+    restaurant: { _id: string; name: string; logo?: string; image?: string[] } | null;
+    items: Array<{ name: string; quantity: number }>;
+  } | null;
+  /** Dishes in the most delivered orders across all customers lately, most ordered first. */
+  popularItems: Array<{
+    menuItem: string;
+    name: string;
+    price: number;
+    image: string | null;
+    orderCount: number;
+    restaurant: { _id: string; name: string };
+  }>;
+}
+
 export const customerAPI = {
+  // ========== Preferences ==========
+  getPreferences: async (): Promise<CustomerPreferences> => {
+    const res = await fetch(`${BASE_URL}/api/customer/preferences`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  updatePreferences: async (
+    update: { notifications?: Partial<CustomerNotificationPreferences>; language?: CustomerLanguage },
+  ): Promise<CustomerPreferences> => {
+    const res = await fetch(`${BASE_URL}/api/customer/preferences`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(update),
+    });
+    return handleResponse(res);
+  },
+
+  // ========== Push Notifications ==========
+  registerPushToken: async (token: string) => {
+    const res = await fetch(`${BASE_URL}/api/customer/push-token`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ token }),
+    });
+    return handleResponse(res);
+  },
+
+  unregisterPushToken: async (token: string) => {
+    const res = await fetch(`${BASE_URL}/api/customer/push-token`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ token }),
+    });
+    return handleResponse(res);
+  },
+
+  // ========== Saved addresses ==========
+  // Every call returns the full list: default first, then newest first.
+
+  getAddresses: async (): Promise<{ addresses: SavedAddress[] }> => {
+    const res = await fetch(`${BASE_URL}/api/customer/addresses`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  /** Saving an address that already exists returns the list unchanged. */
+  addAddress: async (
+    address: SavedAddressInput & { isDefault?: boolean },
+  ): Promise<{ addresses: SavedAddress[] }> => {
+    const res = await fetch(`${BASE_URL}/api/customer/addresses`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(address),
+    });
+    return handleResponse(res);
+  },
+
+  updateAddress: async (
+    id: string,
+    update: Partial<SavedAddressInput>,
+  ): Promise<{ addresses: SavedAddress[] }> => {
+    const res = await fetch(`${BASE_URL}/api/customer/addresses/${id}`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(update),
+    });
+    return handleResponse(res);
+  },
+
+  setDefaultAddress: async (id: string): Promise<{ addresses: SavedAddress[] }> => {
+    const res = await fetch(`${BASE_URL}/api/customer/addresses/${id}/default`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  deleteAddress: async (id: string): Promise<{ addresses: SavedAddress[] }> => {
+    const res = await fetch(`${BASE_URL}/api/customer/addresses/${id}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
   // ========== Home ==========
   getHome: async () => {
     const res = await fetch(`${BASE_URL}/api/customer/home`, {
@@ -47,6 +194,14 @@ export const customerAPI = {
   // ========== Cart ==========
   getCart: async () => {
     const res = await fetch(`${BASE_URL}/api/customer/cart`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  /** Last delivered order and popular dishes, for the empty cart screen. */
+  getCartSuggestions: async (): Promise<CartSuggestions> => {
+    const res = await fetch(`${BASE_URL}/api/customer/cart/suggestions`, {
       headers: await getAuthHeaders(),
     });
     return handleResponse(res);
@@ -136,6 +291,13 @@ export const customerAPI = {
     if (params?.page) query.set('page', String(params.page));
 
     const res = await fetch(`${BASE_URL}/api/customer/orders?${query.toString()}`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  getActiveOrders: async (): Promise<{ orders: ActiveOrder[] }> => {
+    const res = await fetch(`${BASE_URL}/api/customer/orders/active`, {
       headers: await getAuthHeaders(),
     });
     return handleResponse(res);

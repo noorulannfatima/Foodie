@@ -6,6 +6,7 @@ import {
   getRestaurantDetail,
   searchRestaurants,
   getCart,
+  getCartSuggestions,
   addToCart,
   updateCartItem,
   removeCartItem,
@@ -13,12 +14,26 @@ import {
   createOrder,
   getOrders,
   getOrderDetail,
+  getActiveOrders,
   cancelOrder,
   rollbackOrder,
   reorder,
   trackOrder,
 } from '../controllers/customer.controller';
 import { submitOrderReview } from '../controllers/review.controller';
+import {
+  getPreferences,
+  updatePreferences,
+  registerPushToken,
+  unregisterPushToken,
+} from '../controllers/customerPreferences.controller';
+import {
+  listAddresses,
+  addAddress,
+  updateAddress,
+  setDefaultAddress,
+  deleteAddress,
+} from '../controllers/customerAddresses.controller';
 
 const router = Router();
 
@@ -28,6 +43,19 @@ router.use(authMiddleware);
 // Home
 router.get('/home', getHome);
 
+// Preferences & push devices
+router.get('/preferences', requireRole('customer'), getPreferences);
+router.patch('/preferences', requireRole('customer'), updatePreferences);
+router.post('/push-token', requireRole('customer'), registerPushToken);
+router.delete('/push-token', requireRole('customer'), unregisterPushToken);
+
+// Saved delivery addresses
+router.get('/addresses', requireRole('customer'), listAddresses);
+router.post('/addresses', requireRole('customer'), addAddress);
+router.patch('/addresses/:id', requireRole('customer'), updateAddress);
+router.delete('/addresses/:id', requireRole('customer'), deleteAddress);
+router.post('/addresses/:id/default', requireRole('customer'), setDefaultAddress);
+
 // Restaurants
 router.get('/restaurants/:id', getRestaurantDetail);
 
@@ -36,6 +64,7 @@ router.get('/search', searchRestaurants);
 
 // Cart
 router.get('/cart', getCart);
+router.get('/cart/suggestions', getCartSuggestions);
 router.post('/cart/add', addToCart);
 router.put('/cart/update', updateCartItem);
 router.delete('/cart/item/:itemId', removeCartItem);
@@ -44,6 +73,8 @@ router.delete('/cart', clearCart);
 // Orders
 router.post('/orders', createOrder);
 router.get('/orders', getOrders);
+// Before /orders/:id so "active" isn't read as an order id
+router.get('/orders/active', requireRole('customer'), getActiveOrders);
 router.get('/orders/:id', getOrderDetail);
 
 // Order actions

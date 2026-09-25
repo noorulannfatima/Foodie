@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
 import DeliveryPerson from '../models/deliveryperson';
 import Order from '../models/order';
+import { notifyOrderStatus, NotifiedOrderStatus } from '../services/orderStatusPush';
 
 function estDriverPayout(pricing: { deliveryFee: number; tip: number }): number {
   const raw = pricing.deliveryFee * 0.6 + pricing.tip * 0.85;
@@ -524,6 +525,7 @@ export async function patchOrderStatus(req: AuthRequest, res: Response): Promise
         status === 'OutForDelivery' ? 'Courier en route to customer' : 'Picked up from restaurant';
       await order.updateStatus(status, note);
     }
+    void notifyOrderStatus(order, status as NotifiedOrderStatus); // validated above
 
     res.json({ ok: true });
   } catch (e) {

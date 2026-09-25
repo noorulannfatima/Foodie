@@ -2,6 +2,7 @@ import { useMemo, type RefObject } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface SearchInputHeaderProps {
   inputRef: RefObject<TextInput | null>;
@@ -19,6 +20,7 @@ export default function SearchInputHeader({
   onClear,
 }: SearchInputHeaderProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.searchHeader}>
@@ -27,7 +29,7 @@ export default function SearchInputHeader({
         <TextInput
           ref={inputRef}
           style={styles.searchInput}
-          placeholder="Search for restaurants and groceries"
+          placeholder={t('searchPlaceholder')}
           placeholderTextColor={c.muted}
           value={query}
           onChangeText={onChangeText}

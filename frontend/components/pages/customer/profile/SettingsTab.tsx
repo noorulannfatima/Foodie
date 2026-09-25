@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,16 @@ import {
   Linking,
   StyleSheet,
   Switch,
+  Modal,
 } from 'react-native';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import ListRow from './ListRow';
+import LanguageSheet from './LanguageSheet';
+import NotificationSettingsSheet from './NotificationSettingsSheet';
 import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
 import { useAppThemeStore } from '@/stores/appThemeStore';
+import { CUSTOMER_LANGUAGES } from '@/constants/customerStrings';
+import { useCustomerPreferencesStore, useCustomerT } from '@/stores/customerPreferencesStore';
 
 interface SettingsTabProps {
   user: { email: string } | null;
@@ -22,6 +27,17 @@ export default function SettingsTab({ user, onLogout }: SettingsTabProps) {
   const { Colors, sharedStyles } = useCustomerProfileStyles();
   const isDark = useAppThemeStore((s) => s.isDark);
   const setIsDark = useAppThemeStore((s) => s.setIsDark);
+  const t = useCustomerT();
+  const language = useCustomerPreferencesStore((s) => s.language);
+  const pushOn = useCustomerPreferencesStore((s) => s.notifications.push);
+  const loadPreferences = useCustomerPreferencesStore((s) => s.load);
+  const [sheet, setSheet] = useState<'language' | 'notifications' | null>(null);
+
+  useEffect(() => {
+    loadPreferences().catch(() => {}); // Cached copy is fine offline
+  }, [loadPreferences]);
+
+  const languageLabel = CUSTOMER_LANGUAGES.find((l) => l.code === language)?.nativeLabel ?? 'English';
 
   const styles = useMemo(
     () =>
@@ -69,86 +85,96 @@ export default function SettingsTab({ user, onLogout }: SettingsTabProps) {
   );
 
   return (
-    <ScrollView
-      style={sharedStyles.tabContent}
-      contentContainerStyle={sharedStyles.tabContentInner}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.sectionLabel}>PREFERENCES</Text>
-      <View style={sharedStyles.listCard}>
-        <View style={styles.darkRow}>
-          <View style={styles.darkLabelWrap}>
-            <Text style={styles.darkTitle}>Dark mode</Text>
-            <Text style={styles.darkSub}>Easier on the eyes in low light</Text>
+    <>
+      <ScrollView
+        style={sharedStyles.tabContent}
+        contentContainerStyle={sharedStyles.tabContentInner}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.sectionLabel}>{t('preferences')}</Text>
+        <View style={sharedStyles.listCard}>
+          <View style={styles.darkRow}>
+            <View style={styles.darkLabelWrap}>
+              <Text style={styles.darkTitle}>{t('darkMode')}</Text>
+              <Text style={styles.darkSub}>{t('darkModeHint')}</Text>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={setIsDark}
+              trackColor={{ false: Colors.border, true: Colors.brand }}
+              thumbColor="#FFFFFF"
+              accessibilityLabel={t('darkMode')}
+            />
           </View>
-          <Switch
-            value={isDark}
-            onValueChange={setIsDark}
-            trackColor={{ false: Colors.border, true: Colors.brand }}
-            thumbColor="#FFFFFF"
+          <View style={sharedStyles.divider} />
+          <ListRow
+            icon={
+              <Ionicons name="notifications-outline" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
+            }
+            label={t('notificationSettings')}
+            onPress={() => setSheet('notifications')}
+            rightElement={
+              <View style={styles.settingValueRow}>
+                <Text style={styles.settingValue}>
+                  {pushOn ? t('notificationSettingsHintOn') : t('notificationSettingsHintOff')}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </View>
+            }
+          />
+          <View style={sharedStyles.divider} />
+          <ListRow
+            icon={
+              <Ionicons name="globe-outline" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
+            }
+            label={t('language')}
+            onPress={() => setSheet('language')}
+            rightElement={
+              <View style={styles.settingValueRow}>
+                <Text style={styles.settingValue}>{languageLabel}</Text>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </View>
+            }
           />
         </View>
-        <View style={sharedStyles.divider} />
-        <ListRow
-          icon={
-            <Ionicons name="notifications-outline" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
-          }
-          label="Notification Settings"
-          onPress={() => {}}
-        />
-        <View style={sharedStyles.divider} />
-        <ListRow
-          icon={
-            <Ionicons name="globe-outline" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
-          }
-          label="Language"
-          onPress={() => {}}
-          rightElement={
-            <View style={styles.settingValueRow}>
-              <Text style={styles.settingValue}>English (US)</Text>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-            </View>
-          }
-        />
-        <View style={sharedStyles.divider} />
-        <ListRow
-          icon={
-            <MaterialCommunityIcons name="ruler" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
-          }
-          label="Measurement System"
-          onPress={() => {}}
-          rightElement={
-            <View style={styles.settingValueRow}>
-              <Text style={styles.settingValue}>Metric (kg, km)</Text>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-            </View>
-          }
-        />
-      </View>
 
-      <Text style={[styles.sectionLabel, { marginTop: 24 }]}>LEGAL & ABOUT</Text>
-      <View style={sharedStyles.listCard}>
-        <ListRow
-          label="Privacy Policy"
-          onPress={() => Linking.openURL('https://example.com/privacy')}
-          rightElement={<MaterialIcons name="open-in-new" size={18} color={Colors.textMuted} />}
-        />
-        <View style={sharedStyles.divider} />
-        <ListRow
-          label="Terms of Service"
-          onPress={() => Linking.openURL('https://example.com/terms')}
-          rightElement={<MaterialIcons name="open-in-new" size={18} color={Colors.textMuted} />}
-        />
-        <View style={sharedStyles.divider} />
-        <ListRow label="App Version" rightElement={<Text style={styles.versionText}>v4.12.0 (Build 892)</Text>} />
-      </View>
+        <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('legalAbout')}</Text>
+        <View style={sharedStyles.listCard}>
+          <ListRow
+            label={t('privacyPolicy')}
+            onPress={() => Linking.openURL('https://example.com/privacy')}
+            rightElement={<MaterialIcons name="open-in-new" size={18} color={Colors.textMuted} />}
+          />
+          <View style={sharedStyles.divider} />
+          <ListRow
+            label={t('termsOfService')}
+            onPress={() => Linking.openURL('https://example.com/terms')}
+            rightElement={<MaterialIcons name="open-in-new" size={18} color={Colors.textMuted} />}
+          />
+          <View style={sharedStyles.divider} />
+          <ListRow label={t('appVersion')} rightElement={<Text style={styles.versionText}>v4.12.0 (Build 892)</Text>} />
+        </View>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={onLogout} activeOpacity={0.85}>
-        <Ionicons name="log-out-outline" size={20} color="#fff" />
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutBtn} onPress={onLogout} activeOpacity={0.85}>
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <Text style={styles.logoutText}>{t('logOut')}</Text>
+        </TouchableOpacity>
 
-      {user?.email && <Text style={styles.loggedInAs}>Logged in as {user.email}</Text>}
-    </ScrollView>
+        {user?.email && <Text style={styles.loggedInAs}>{t('loggedInAs', { email: user.email })}</Text>}
+      </ScrollView>
+
+      <Modal
+        visible={sheet !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSheet(null)}
+      >
+        {sheet === 'language' ? (
+          <LanguageSheet onClose={() => setSheet(null)} />
+        ) : sheet === 'notifications' ? (
+          <NotificationSettingsSheet onClose={() => setSheet(null)} />
+        ) : null}
+      </Modal>
+    </>
   );
 }

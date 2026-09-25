@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,26 +8,42 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BRAND_RED_TINT, Fonts, tintBg, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
+import type { CustomerStringKey } from '@/constants/customerStrings';
+import { useAddressStore, selectDefaultAddress } from '@/stores/addressStore';
+import {
+  AddressFields,
+  AddressOption,
+  EMPTY_ADDRESS_DRAFT,
+  isDraftComplete,
+  type AddressDraft,
+} from '@/components/pages/customer/addresses';
 
 // Two payment options the backend supports end-to-end:
 //   - Safepay  (online card / wallet via hosted checkout)
 //   - Cash     (Cash on Delivery, paid to the rider)
-const PAYMENTS = [
+const PAYMENTS: {
+  key: string;
+  icon: 'card-outline' | 'cash-outline';
+  label: CustomerStringKey;
+  sub: CustomerStringKey;
+}[] = [
   {
     key: 'Safepay',
-    icon: 'card-outline' as const,
-    label: 'Pay with Safepay',
-    sub: 'Card / Wallet — secure online checkout',
+    icon: 'card-outline',
+    label: 'payWithSafepay',
+    sub: 'payWithSafepayHint',
   },
   {
     key: 'Cash',
-    icon: 'cash-outline' as const,
-    label: 'Cash on Delivery',
-    sub: 'Pay the rider in cash on arrival',
+    icon: 'cash-outline',
+    label: 'cashOnDelivery',
+    sub: 'cashOnDeliveryHint',
   },
 ];
 
@@ -43,23 +59,59 @@ export interface CheckoutModalProps {
 
 export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
-  const [street, setStreet] = useState('');
-  const [city, setCity] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  const [instructions, setInstructions] = useState('');
+  const addresses = useAddressStore((s) => s.addresses);
+  const defaultAddress = useAddressStore(selectDefaultAddress);
+  // Saved addresses: the default is picked for you. Otherwise type one in.
+  const [selectedId, setSelectedId] = useState<string | null>(defaultAddress?._id ?? null);
+  const [addingNew, setAddingNew] = useState(!defaultAddress);
+  const [draft, setDraft] = useState<AddressDraft>(EMPTY_ADDRESS_DRAFT);
+  const [saveNew, setSaveNew] = useState(true);
+  const [instructions, setInstructions] = useState(defaultAddress?.instructions ?? '');
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('Safepay');
   const [placing, setPlacing] = useState(false);
 
+  // Addresses can finish loading after the sheet opens: pick the default then,
+  // unless the customer has started typing a new one.
+  useEffect(() => {
+    if (selectedId || !defaultAddress) return;
+    setSelectedId(defaultAddress._id);
+    if (!draft.streetAddress && !draft.city && !draft.zipCode) {
+      setAddingNew(false);
+      setInstructions((prev) => prev || defaultAddress.instructions || '');
+    }
+  }, [defaultAddress]);
+
+  const selected = addresses.find((a) => a._id === selectedId) ?? null;
+
+  const selectSaved = (id: string) => {
+    const address = addresses.find((a) => a._id === id);
+    setSelectedId(id);
+    setAddingNew(false);
+    setInstructions(address?.instructions ?? '');
+  };
+
   const handlePlace = async () => {
-    if (!street.trim() || !city.trim() || !zipCode.trim()) {
-      Alert.alert('Validation', 'Please fill in delivery address');
+    const address = addingNew ? null : selected;
+    if (!address && !isDraftComplete(draft)) {
+      Alert.alert(t('validation'), t('fillDeliveryAddress'));
       return;
     }
     setPlacing(true);
     try {
+      if (!address && saveNew) {
+        // Best effort: a failed save must not stop the order.
+        await useAddressStore.getState().add(draft).catch(() => {});
+      }
+      const source = address ?? draft;
       await onPlaceOrder({
-        deliveryAddress: { street, city, zipCode, instructions },
+        deliveryAddress: {
+          street: source.streetAddress.trim(),
+          city: source.city.trim(),
+          zipCode: source.zipCode.trim(),
+          instructions,
+        },
         paymentMethod,
       });
     } finally {
@@ -76,12 +128,12 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
         <TouchableOpacity
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Close checkout"
+          accessibilityLabel={t('closeCheckout')}
           hitSlop={8}
         >
           <Ionicons name="close" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Checkout</Text>
+        <Text style={styles.headerTitle}>{t('checkout')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -90,37 +142,55 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="location" size={18} color={c.primary} />
-            <Text style={styles.sectionTitle}>Delivery Address</Text>
+            <Text style={styles.sectionTitle}>{t('deliveryAddress')}</Text>
           </View>
-          <TextInput
-            style={styles.input}
-            placeholder="Street address"
-            value={street}
-            onChangeText={setStreet}
-            placeholderTextColor={c.muted}
-          />
-          <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, styles.inputFlex]}
-              placeholder="City"
-              value={city}
-              onChangeText={setCity}
-              placeholderTextColor={c.muted}
+          {addresses.map((a) => (
+            <AddressOption
+              key={a._id}
+              address={a}
+              selected={!addingNew && a._id === selectedId}
+              onPress={() => selectSaved(a._id)}
             />
-            <TextInput
-              style={[styles.input, styles.inputFlex]}
-              placeholder="Zip Code"
-              value={zipCode}
-              onChangeText={setZipCode}
-              placeholderTextColor={c.muted}
-            />
-          </View>
+          ))}
+
+          {addingNew ? (
+            <View style={addresses.length > 0 ? styles.newAddressBox : undefined}>
+              <AddressFields value={draft} onChange={setDraft} showInstructions={false} />
+              <Pressable
+                style={styles.checkRow}
+                onPress={() => setSaveNew((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: saveNew }}
+              >
+                <Ionicons
+                  name={saveNew ? 'checkbox' : 'square-outline'}
+                  size={22}
+                  color={saveNew ? c.primary : c.muted}
+                />
+                <Text style={styles.checkText}>{t('saveToMyAddresses')}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {addresses.length > 0 ? (
+            <Pressable
+              style={styles.addressToggle}
+              onPress={() =>
+                addingNew ? selectSaved(selectedId ?? addresses[0]._id) : setAddingNew(true)
+              }
+            >
+              <Ionicons name={addingNew ? 'list-outline' : 'add-circle-outline'} size={18} color={c.primary} />
+              <Text style={styles.addressToggleText}>
+                {addingNew ? t('useSavedAddress') : t('addNewAddress')}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="card" size={18} color={c.primary} />
-            <Text style={styles.sectionTitle}>Payment Method</Text>
+            <Text style={styles.sectionTitle}>{t('paymentMethod')}</Text>
           </View>
           {PAYMENTS.map((p) => {
             const active = paymentMethod === p.key;
@@ -141,9 +211,9 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
                 <Ionicons name={p.icon} size={20} color={active ? c.primary : c.muted} />
                 <View style={styles.paymentTextWrap}>
                   <Text style={[styles.paymentLabel, active && styles.paymentLabelActive]}>
-                    {p.label}
+                    {t(p.label)}
                   </Text>
-                  <Text style={styles.paymentSub}>{p.sub}</Text>
+                  <Text style={styles.paymentSub}>{t(p.sub)}</Text>
                 </View>
                 {active ? (
                   <Ionicons
@@ -161,11 +231,11 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="chatbox-outline" size={18} color={c.primary} />
-            <Text style={styles.sectionTitle}>Delivery Notes</Text>
+            <Text style={styles.sectionTitle}>{t('deliveryNotes')}</Text>
           </View>
           <TextInput
             style={[styles.input, styles.notesInput]}
-            placeholder="Add instructions for the rider (e.g., Gate code, floor number...)"
+            placeholder={t('deliveryNotesPlaceholder')}
             value={instructions}
             onChangeText={setInstructions}
             multiline
@@ -178,13 +248,13 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
           onPress={handlePlace}
           disabled={placing}
         >
-          <Text style={styles.placeBtnText}>{placing ? 'Placing Order...' : 'Place Order'}</Text>
+          <Text style={styles.placeBtnText}>{placing ? t('placingOrder') : t('placeOrder')}</Text>
         </TouchableOpacity>
 
         {paymentMethod === 'Safepay' ? (
           <View style={styles.secureRow}>
             <Ionicons name="lock-closed-outline" size={12} color={c.muted} />
-            <Text style={styles.secureText}>Card and wallet payments are processed securely by Safepay</Text>
+            <Text style={styles.secureText}>{t('safepaySecureNote')}</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -247,12 +317,35 @@ function createStyles(c: AppColors) {
       marginBottom: 10,
       backgroundColor: c.customerSurface,
     },
-    inputFlex: {
-      flex: 1,
+    newAddressBox: {
+      borderWidth: 1,
+      borderColor: c.primary,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 10,
+      backgroundColor: c.customerBodyBg,
     },
-    inputRow: {
+    checkRow: {
       flexDirection: 'row',
+      alignItems: 'center',
       gap: 10,
+      paddingVertical: 4,
+    },
+    checkText: {
+      fontFamily: Fonts.brand,
+      fontSize: 14,
+      color: c.text,
+    },
+    addressToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 6,
+    },
+    addressToggleText: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 14,
+      color: c.primary,
     },
     notesInput: {
       minHeight: 60,

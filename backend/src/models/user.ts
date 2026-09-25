@@ -6,6 +6,14 @@ import bcrypt from "bcryptjs";
  * Defines the structure for basic info, addresses, preferences, and loyalty data.
  */
 
+/** Languages the customer app is translated into; also used for push notification text. */
+export const CUSTOMER_LANGUAGES = ["en", "ur", "es", "fr"] as const;
+export type CustomerLanguage = (typeof CUSTOMER_LANGUAGES)[number];
+
+export function normalizeCustomerLanguage(value: unknown): CustomerLanguage {
+  return CUSTOMER_LANGUAGES.includes(value as CustomerLanguage) ? (value as CustomerLanguage) : "en";
+}
+
 export interface IUser extends Document {
   // Basic Information
   name: string;
@@ -17,6 +25,8 @@ export interface IUser extends Document {
   // Address Management
   savedAddresses: Array<{
     _id?: mongoose.Types.ObjectId;
+    /** Short name shown in pickers: "Home", "Work" or the customer's own. */
+    label: string;
     streetAddress: string;
     city: string;
     zipCode: string;
@@ -42,6 +52,8 @@ export interface IUser extends Document {
     currency: string;
   };
   
+  pushTokens: string[]; // Expo push tokens, one per signed-in device
+  
   // Loyalty Program
   loyaltyPoints: number;
   totalSpent: number;
@@ -58,8 +70,6 @@ export interface IUser extends Document {
   
   // Methods
   comparePassword(password: string): Promise<boolean>;
-  addSavedAddress(addressData: any, setAsDefault?: boolean): Promise<IUser>;
-  removeSavedAddress(addressId: string): Promise<IUser>;
   getDefaultAddress(): any;
   addLoyaltyPoints(points: number): Promise<IUser>;
   deductLoyaltyPoints(points: number): Promise<IUser>;
@@ -111,6 +121,12 @@ const userSchema = new mongoose.Schema<IUser>(
     // ========== Address Management ==========
     savedAddresses: [
       {
+        label: {
+          type: String,
+          trim: true,
+          default: "Home",
+          maxlength: [30, "Label cannot exceed 30 characters"],
+        },
         streetAddress: {
           type: String,
           required: [true, "Street address is required"],
@@ -197,6 +213,12 @@ const userSchema = new mongoose.Schema<IUser>(
       },
     },
     
+    pushTokens: {
+      type: [String],
+      default: [],
+      select: false,
+    },
+    
     // ========== Loyalty Program ==========
     loyaltyPoints: {
       type: Number,
@@ -261,19 +283,11 @@ userSchema.pre("save", async function () {
 // Ensure only one default address
 userSchema.pre("save", function () {
   if (this.isModified("savedAddresses")) {
-    const defaultAddresses = this.savedAddresses.filter(addr => addr.isDefault);
-    
-    // If multiple defaults, keep only the first one
-    if (defaultAddresses.length > 1) {
-      this.savedAddresses.forEach((addr, index) => {
-        if (index > 0) addr.isDefault = false;
-      });
-    }
-    
-    // If no default and addresses exist, set first as default
-    if (defaultAddresses.length === 0 && this.savedAddresses.length > 0) {
-      this.savedAddresses[0].isDefault = true;
-    }
+    // Keep the first flagged address as the default; with none flagged, use the first address
+    const keep = Math.max(0, this.savedAddresses.findIndex((addr) => addr.isDefault));
+    this.savedAddresses.forEach((addr, index) => {
+      addr.isDefault = index === keep;
+    });
   }
 });
 
@@ -291,69 +305,6 @@ userSchema.methods.comparePassword = async function (
   } catch (error) {
     throw new Error("Password comparison failed");
   }
-};
-
-/**
- * Add or update a saved address
- */
-userSchema.methods.addSavedAddress = async function (
-  addressData: any,
-  setAsDefault: boolean = false
-): Promise<IUser> {
-  // If setting as default, make all others non-default
-  if (setAsDefault) {
-    this.savedAddresses.forEach((addr: any) => {
-      addr.isDefault = false;
-    });
-  }
-  
-  // Check for duplicate address
-  const existingIndex = this.savedAddresses.findIndex(
-    (addr: any) =>
-      addr.streetAddress === addressData.streetAddress &&
-      addr.city === addressData.city &&
-      addr.zipCode === addressData.zipCode
-  );
-  
-  if (existingIndex !== -1) {
-    // Update existing address
-    this.savedAddresses[existingIndex] = {
-      ...this.savedAddresses[existingIndex],
-      ...addressData,
-      isDefault: setAsDefault,
-    };
-  } else {
-    // Add new address
-    this.savedAddresses.push({
-      ...addressData,
-      isDefault: setAsDefault,
-      createdAt: new Date(),
-    });
-  }
-  
-  return await (this as any).save();
-};
-
-/**
- * Remove a saved address
- */
-userSchema.methods.removeSavedAddress = async function (
-  addressId: string
-): Promise<IUser> {
-  const addressToRemove = this.savedAddresses.find(
-    (addr: any) => addr._id.toString() === addressId
-  );
-  
-  this.savedAddresses = this.savedAddresses.filter(
-    (addr: any) => addr._id.toString() !== addressId
-  );
-  
-  // If removed address was default, set first address as default
-  if (addressToRemove?.isDefault && this.savedAddresses.length > 0) {
-    this.savedAddresses[0].isDefault = true;
-  }
-  
-  return await (this as any).save();
 };
 
 /**

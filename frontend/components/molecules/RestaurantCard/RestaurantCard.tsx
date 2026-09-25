@@ -14,6 +14,18 @@ import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32;
 
+export interface RestaurantCardLabels {
+  free: string;
+  closed: string;
+  premium: string;
+}
+
+export const DEFAULT_RESTAURANT_CARD_LABELS: RestaurantCardLabels = {
+  free: 'Free',
+  closed: 'Closed',
+  premium: 'PREMIUM',
+};
+
 interface RestaurantCardProps {
   id: string;
   name: string;
@@ -26,6 +38,8 @@ interface RestaurantCardProps {
   minimumOrder: number;
   isOpen?: boolean;
   onPress: (id: string) => void;
+  /** Translated badge text; English by default. */
+  labels?: RestaurantCardLabels;
 }
 
 export default function RestaurantCard({
@@ -40,6 +54,7 @@ export default function RestaurantCard({
   minimumOrder,
   isOpen = true,
   onPress,
+  labels = DEFAULT_RESTAURANT_CARD_LABELS,
 }: RestaurantCardProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -67,7 +82,7 @@ export default function RestaurantCard({
     image?.[0] ??
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format';
 
-  const feeLabel = deliveryFee === 0 ? 'Free' : `Rs. ${deliveryFee}`;
+  const feeLabel = deliveryFee === 0 ? labels.free : `Rs. ${deliveryFee}`;
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleRef }] }}>
@@ -91,7 +106,7 @@ export default function RestaurantCard({
 
           {!isOpen && (
             <View style={styles.closedOverlay}>
-              <Text style={styles.closedText}>Closed</Text>
+              <Text style={styles.closedText}>{labels.closed}</Text>
             </View>
           )}
         </View>
@@ -132,7 +147,7 @@ export default function RestaurantCard({
             {isPremium && (
               <View style={[styles.tag, styles.premiumTag]}>
                 <Text style={[styles.tagText, styles.premiumTagText]}>
-                  PREMIUM
+                  {labels.premium}
                 </Text>
               </View>
             )}

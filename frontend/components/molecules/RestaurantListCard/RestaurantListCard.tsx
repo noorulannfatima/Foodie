@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { DEFAULT_RESTAURANT_CARD_LABELS as DEFAULT_LABELS, type RestaurantCardLabels } from '../RestaurantCard/RestaurantCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 
 interface RestaurantListCardProps {
     id: string;
@@ -24,6 +26,8 @@ interface RestaurantListCardProps {
     isPremium: boolean;
     isOpen?: boolean;
     onPress: (id: string) => void;
+  /** Translated badge text; English by default. */
+  labels?: RestaurantCardLabels;
 }
 
 export default function RestaurantListCard({
@@ -37,6 +41,7 @@ export default function RestaurantListCard({
     isPremium,
     isOpen = true,
     onPress,
+  labels = DEFAULT_LABELS,
 }: RestaurantListCardProps) {
     const c = useAppThemeColors();
     const styles = useMemo(() => createStyles(c), [c]);
@@ -80,7 +85,7 @@ export default function RestaurantListCard({
                     />
                     {!isOpen && (
                         <View style={styles.closedBadge}>
-                            <Text style={styles.closedBadgeText}>Closed</Text>
+                            <Text style={styles.closedBadgeText}>{labels.closed}</Text>
                         </View>
                     )}
                 </View>
@@ -92,7 +97,7 @@ export default function RestaurantListCard({
                         </Text>
                         {isPremium && (
                             <View style={styles.premiumBadge}>
-                                <Text style={styles.premiumText}>PREMIUM</Text>
+                                <Text style={styles.premiumText}>{labels.premium}</Text>
                             </View>
                         )}
                     </View>
@@ -119,7 +124,7 @@ export default function RestaurantListCard({
                                 deliveryFee === 0 && styles.freeText,
                             ]}
                         >
-                            {deliveryFee === 0 ? 'Free' : `Rs. ${deliveryFee}`}
+                            {deliveryFee === 0 ? labels.free : `Rs. ${deliveryFee}`}
                         </Text>
                     </View>
                 </View>

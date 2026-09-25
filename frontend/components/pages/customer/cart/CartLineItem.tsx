@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 import { CartItem } from '@/stores/cartStore';
 
 export interface CartLineItemProps {
@@ -20,6 +21,7 @@ export default function CartLineItem({
   onIncrement,
 }: CartLineItemProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
 
   return (
@@ -39,7 +41,7 @@ export default function CartLineItem({
           onPress={onRemove}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${item.name}`}
+          accessibilityLabel={t('removeNamed', { name: item.name })}
           style={({ pressed }) => [styles.removeBtn, pressed && styles.pressed]}
         >
           <Ionicons name="close" size={18} color={c.muted} />
@@ -49,25 +51,25 @@ export default function CartLineItem({
       <View style={styles.bottomRow}>
         <View>
           <Text style={styles.lineTotal}>{formatPrice(item.price * item.quantity)}</Text>
-          {item.quantity > 1 ? <Text style={styles.each}>{formatPrice(item.price)} each</Text> : null}
+          {item.quantity > 1 ? <Text style={styles.each}>{t('priceEach', { price: formatPrice(item.price) })}</Text> : null}
         </View>
 
         <View style={styles.stepper}>
           <Pressable
             onPress={onDecrement}
             accessibilityRole="button"
-            accessibilityLabel={`Decrease ${item.name} quantity`}
+            accessibilityLabel={t('decreaseQty', { name: item.name })}
             style={({ pressed }) => [styles.stepBtn, pressed && styles.pressed]}
           >
             <Ionicons name={item.quantity === 1 ? 'trash-outline' : 'remove'} size={16} color={c.text} />
           </Pressable>
-          <Text style={styles.qty} accessibilityLabel={`Quantity ${item.quantity}`}>
+          <Text style={styles.qty} accessibilityLabel={t('quantityA11y', { count: item.quantity })}>
             {item.quantity}
           </Text>
           <Pressable
             onPress={onIncrement}
             accessibilityRole="button"
-            accessibilityLabel={`Increase ${item.name} quantity`}
+            accessibilityLabel={t('increaseQty', { name: item.name })}
             style={({ pressed }) => [styles.stepBtn, pressed && styles.pressed]}
           >
             <Ionicons name="add" size={16} color={c.text} />

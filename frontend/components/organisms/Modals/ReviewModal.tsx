@@ -18,6 +18,7 @@ import StarRating from '@/components/atoms/Rating/StarRating';
 import { customerAPI } from '@/services/api/customer.api';
 import type { SubmitReviewBody } from '@/services/api/review.types';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 const COMMENT_MAX_LENGTH = 500;
 
@@ -52,6 +53,7 @@ function distinctDishes(items: ReviewableOrder['items']) {
 
 export default function ReviewModal({ visible, order, onClose, onSubmitted }: ReviewModalProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   const insets = useSafeAreaInsets();
 
@@ -105,13 +107,13 @@ export default function ReviewModal({ visible, order, onClose, onSubmitted }: Re
     } catch (err) {
       if ((err as { status?: number }).status === 409) {
         // Reviewed already (e.g. from another device) or no longer reviewable
-        Alert.alert('Review not saved', err instanceof Error ? err.message : 'Please refresh.');
+        Alert.alert(t('reviewNotSaved'), err instanceof Error ? err.message : t('pleaseRefresh'));
         onSubmitted();
         return;
       }
       Alert.alert(
-        'Could not submit review',
-        err instanceof Error ? err.message : 'Please try again.',
+        t('reviewSubmitFailed'),
+        err instanceof Error ? err.message : t('pleaseTryAgain'),
       );
     } finally {
       setSubmitting(false);
@@ -136,12 +138,12 @@ export default function ReviewModal({ visible, order, onClose, onSubmitted }: Re
             style={styles.input}
             value={entry.comment}
             onChangeText={(comment) => update(key, { comment })}
-            placeholder="What did you think? (optional)"
+            placeholder={t('reviewCommentPlaceholder')}
             placeholderTextColor={c.customerTextMuted}
             multiline
             maxLength={COMMENT_MAX_LENGTH}
             autoFocus
-            accessibilityLabel={`Comment for ${title}`}
+            accessibilityLabel={t('commentFor', { name: title })}
           />
         ) : (
           <Pressable
@@ -151,7 +153,7 @@ export default function ReviewModal({ visible, order, onClose, onSubmitted }: Re
             accessibilityRole="button"
           >
             <Ionicons name="chatbubble-outline" size={14} color={c.primary} />
-            <Text style={styles.addCommentText}>Add a comment</Text>
+            <Text style={styles.addCommentText}>{t('addComment')}</Text>
           </Pressable>
         )}
       </View>
@@ -164,18 +166,18 @@ export default function ReviewModal({ visible, order, onClose, onSubmitted }: Re
         style={styles.backdrop}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Close" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={t('close')} />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>Rate your order</Text>
+              <Text style={styles.title}>{t('rateYourOrder')}</Text>
               {order ? <Text style={styles.subtitle}>#{order.orderNumber}</Text> : null}
             </View>
             <Pressable
               onPress={close}
               hitSlop={12}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t('close')}
             >
               <Ionicons name="close" size={24} color={c.text} />
             </Pressable>
@@ -188,11 +190,15 @@ export default function ReviewModal({ visible, order, onClose, onSubmitted }: Re
           >
             {dishes.map((dish) => renderRow(dish.menuItem, dish.name))}
             {hasRider
-              ? renderRow(DELIVERY_KEY, riderName ? `Your rider, ${riderName}` : 'Your rider', 'DELIVERY')
+              ? renderRow(
+                DELIVERY_KEY,
+                riderName ? t('yourRiderNamed', { name: riderName }) : t('yourRider'),
+                t('reviewDeliveryLabel'),
+              )
               : null}
           </ScrollView>
 
-          <Text style={styles.note}>Reviews can&apos;t be edited after submitting.</Text>
+          <Text style={styles.note}>{t('reviewsFinal')}</Text>
           <Pressable
             style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
             onPress={submit}
@@ -204,7 +210,9 @@ export default function ReviewModal({ visible, order, onClose, onSubmitted }: Re
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.submitBtnText}>
-                {unrated > 0 ? `Rate ${unrated} more to submit` : 'Submit review'}
+                {unrated > 0
+                  ? t(unrated === 1 ? 'rateMoreOne' : 'rateMoreOther', { count: unrated })
+                  : t('submitReview')}
               </Text>
             )}
           </Pressable>

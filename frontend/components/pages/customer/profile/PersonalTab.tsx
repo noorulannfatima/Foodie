@@ -4,6 +4,7 @@ import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-ic
 import { router } from 'expo-router';
 import ListRow from './ListRow';
 import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 interface PersonalTabProps {
   user: { name: string; email: string } | null;
@@ -11,6 +12,7 @@ interface PersonalTabProps {
 
 export default function PersonalTab({ user }: PersonalTabProps) {
   const { Colors, sharedStyles, app } = useCustomerProfileStyles();
+  const t = useCustomerT();
 
   const styles = useMemo(
     () =>
@@ -118,10 +120,10 @@ export default function PersonalTab({ user }: PersonalTabProps) {
           </TouchableOpacity>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{user?.name ?? 'Guest User'}</Text>
+          <Text style={styles.profileName}>{user?.name ?? t('guestUser')}</Text>
           <Text style={styles.profileEmail}>{user?.email ?? 'user@example.com'}</Text>
           <View style={styles.premiumBadge}>
-            <Text style={styles.premiumText}>PREMIUM MEMBER</Text>
+            <Text style={styles.premiumText}>{t('premiumMember')}</Text>
           </View>
         </View>
       </View>
@@ -136,7 +138,7 @@ export default function PersonalTab({ user }: PersonalTabProps) {
               style={sharedStyles.rowIcon}
             />
           }
-          label="Personal Information"
+          label={t('personalInformation')}
           onPress={() => router.push('/(customer)/personal-information')}
         />
         <View style={sharedStyles.divider} />
@@ -149,15 +151,28 @@ export default function PersonalTab({ user }: PersonalTabProps) {
               style={sharedStyles.rowIcon}
             />
           }
-          label="Order History"
+          label={t('orderHistory')}
           onPress={() => router.push('/(customer)/orders')}
+        />
+        <View style={sharedStyles.divider} />
+        <ListRow
+          icon={
+            <Ionicons
+              name="location-outline"
+              size={22}
+              color={Colors.neutral}
+              style={sharedStyles.rowIcon}
+            />
+          }
+          label={t('savedAddresses')}
+          onPress={() => router.push('/(customer)/addresses')}
         />
         <View style={sharedStyles.divider} />
         <ListRow
           icon={
             <MaterialIcons name="payment" size={22} color={Colors.neutral} style={sharedStyles.rowIcon} />
           }
-          label="Payment Methods"
+          label={t('paymentMethods')}
           onPress={() => router.push('/(customer)/payment-methods')}
         />
       </View>
@@ -165,10 +180,10 @@ export default function PersonalTab({ user }: PersonalTabProps) {
       <View style={styles.loyaltyCard}>
         <View style={styles.loyaltyHeader}>
           <MaterialCommunityIcons name="crown-outline" size={20} color={Colors.tertiary} />
-          <Text style={styles.loyaltyTitle}>Loyalty Points</Text>
+          <Text style={styles.loyaltyTitle}>{t('loyaltyPoints')}</Text>
         </View>
-        <Text style={styles.loyaltyPoints}>0 pts</Text>
-        <Text style={styles.loyaltySub}>Earn points on every order</Text>
+        <Text style={styles.loyaltyPoints}>{t('pointsCount', { count: 0 })}</Text>
+        <Text style={styles.loyaltySub}>{t('loyaltyHint')}</Text>
       </View>
     </ScrollView>
   );

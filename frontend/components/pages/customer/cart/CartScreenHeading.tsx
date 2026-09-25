@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface CartScreenHeadingProps {
   restaurantName?: string;
@@ -10,18 +11,19 @@ export interface CartScreenHeadingProps {
 
 export default function CartScreenHeading({ restaurantName, itemCount }: CartScreenHeadingProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
-  const count = itemCount ? `${itemCount} ${itemCount === 1 ? 'item' : 'items'}` : null;
+  const count = itemCount ? t(itemCount === 1 ? 'itemsOne' : 'itemsOther', { count: itemCount }) : null;
   return (
     <View style={styles.wrap}>
       <Text style={styles.title} accessibilityRole="header">
-        Your Cart
+        {t('yourCart')}
       </Text>
       {restaurantName || count ? (
         <View style={styles.metaRow}>
           <Ionicons name="storefront-outline" size={16} color={c.muted} />
           <Text style={styles.meta} numberOfLines={1}>
-            {[count, restaurantName && `from ${restaurantName}`].filter(Boolean).join(' ')}
+            {[count, restaurantName && t('cartFrom', { restaurant: restaurantName })].filter(Boolean).join(' ')}
           </Text>
         </View>
       ) : null}

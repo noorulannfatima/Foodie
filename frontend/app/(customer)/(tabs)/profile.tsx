@@ -12,9 +12,18 @@ import {
 import type { TabKey } from '@/components/pages/customer/profile';
 import CustomerHeader from '@/components/pages/customer/CustomerHeader';
 import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
+import type { CustomerStringKey } from '@/constants/customerStrings';
+
+const TAB_LABELS: Record<TabKey, CustomerStringKey> = {
+  Personal: 'profileTabPersonal',
+  Business: 'profileTabBusiness',
+  Settings: 'profileTabSettings',
+};
 
 export default function CustomerProfile() {
   const { screenStyles } = useCustomerProfileStyles();
+  const t = useCustomerT();
   const [activeTab, setActiveTab] = useState<TabKey>('Personal');
   const indicatorAnim = useRef(new Animated.Value(0)).current;
   const { user, logout } = useAuthStore();
@@ -35,10 +44,10 @@ export default function CustomerProfile() {
   const translateX = Animated.multiply(indicatorAnim, segmentWidth);
 
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('logOut'), t('logOutConfirm'), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Log Out',
+        text: t('logOut'),
         style: 'destructive',
         onPress: async () => {
           await logout();
@@ -74,7 +83,7 @@ export default function CustomerProfile() {
               activeOpacity={0.8}
             >
               <Text style={[screenStyles.tabLabel, activeTab === tab && screenStyles.tabLabelActive]}>
-                {tab}
+                {t(TAB_LABELS[tab])}
               </Text>
             </TouchableOpacity>
           ))}

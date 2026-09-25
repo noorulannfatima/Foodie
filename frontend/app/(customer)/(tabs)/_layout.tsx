@@ -2,10 +2,12 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export default function CustomerTabsLayout() {
   const insets = useSafeAreaInsets();
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const bottomPad = Math.max(insets.bottom, 8);
 
   return (
@@ -27,28 +29,28 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Explore',
+          title: t('tabExplore'),
           tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Search',
+          title: t('tabSearch'),
           tabBarIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
-          title: 'Cart',
+          title: t('tabCart'),
           tabBarIcon: ({ color, size }) => <Ionicons name="bag-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabProfile'),
           tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
         }}
       />

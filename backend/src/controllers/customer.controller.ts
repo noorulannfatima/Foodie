@@ -212,6 +212,90 @@ export async function getCart(req: AuthRequest, res: Response): Promise<void> {
   }
 }
 
+/** How far back "popular right now" looks. */
+const POPULAR_WINDOW_DAYS = 30;
+const POPULAR_ITEMS_LIMIT = 8;
+
+/**
+ * GET /api/customer/cart/suggestions
+ * Ideas for an empty cart: the customer's last delivered order (to order
+ * again) and the dishes that appeared in the most delivered orders across all
+ * customers recently. Popular dishes that are unavailable or whose restaurant
+ * is closed are left out.
+ */
+export async function getCartSuggestions(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const since = new Date(Date.now() - POPULAR_WINDOW_DAYS * 86400000);
+
+    const [last, ranked] = await Promise.all([
+      Order.findOne({ customer: req.user!.id, status: 'Delivered' })
+        .sort({ createdAt: -1 })
+        .populate('restaurant', 'name logo image'),
+      Order.aggregate<{ _id: { restaurant: mongoose.Types.ObjectId; menuItem: mongoose.Types.ObjectId }; orderCount: number }>([
+        { $match: { status: 'Delivered', createdAt: { $gte: since } } },
+        { $unwind: '$items' },
+        // Count each order once per dish, however many portions it had.
+        { $group: { _id: { order: '$_id', restaurant: '$restaurant', menuItem: '$items.menuItem' } } },
+        {
+          $group: {
+            _id: { restaurant: '$_id.restaurant', menuItem: '$_id.menuItem' },
+            orderCount: { $sum: 1 },
+          },
+        },
+        { $sort: { orderCount: -1, '_id.menuItem': 1 } },
+        // Headroom for dishes dropped below as unavailable.
+        { $limit: POPULAR_ITEMS_LIMIT * 4 },
+      ]),
+    ]);
+
+    const restaurantIds = [...new Set(ranked.map((r) => r._id.restaurant.toString()))];
+    const [restaurants, menus] = await Promise.all([
+      Restaurant.find({ _id: { $in: restaurantIds }, isActive: true }).select('name'),
+      Menu.find({ restaurant: { $in: restaurantIds } }),
+    ]);
+    const restaurantById = new Map(restaurants.map((r) => [r._id.toString(), r]));
+    const menuByRestaurant = new Map(menus.map((m) => [m.restaurant.toString(), m]));
+
+    const popularItems = [];
+    for (const { _id, orderCount } of ranked) {
+      const restaurant = restaurantById.get(_id.restaurant.toString());
+      const item = menuByRestaurant
+        .get(_id.restaurant.toString())
+        ?.items.find((it: any) => it._id.toString() === _id.menuItem.toString());
+      if (!restaurant || !item || !item.isAvailable) continue;
+
+      popularItems.push({
+        menuItem: item._id!.toString(),
+        name: item.name,
+        price:
+          typeof item.discountedPrice === 'number' && item.discountedPrice >= 0
+            ? item.discountedPrice
+            : item.price,
+        image: item.image?.[0] ?? null,
+        orderCount,
+        restaurant: { _id: restaurant._id.toString(), name: restaurant.name },
+      });
+      if (popularItems.length === POPULAR_ITEMS_LIMIT) break;
+    }
+
+    const lastOrder = last
+      ? {
+          _id: last._id.toString(),
+          orderNumber: last.orderNumber,
+          createdAt: last.createdAt,
+          total: last.pricing.total,
+          restaurant: last.restaurant,
+          items: last.items.map((i) => ({ name: i.name, quantity: i.quantity })),
+        }
+      : null;
+
+    res.json({ lastOrder, popularItems });
+  } catch (error) {
+    console.error('Cart suggestions error:', error);
+    res.status(500).json({ message: 'Server error fetching suggestions' });
+  }
+}
+
 /**
  * POST /api/customer/cart/add
  * Add a menu item to the cart
@@ -576,6 +660,44 @@ export async function getOrders(req: AuthRequest, res: Response): Promise<void> 
   } catch (error) {
     console.error('Get orders error:', error);
     res.status(500).json({ message: 'Server error fetching orders' });
+  }
+}
+
+const IN_PROGRESS_STATUSES = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'PickedUp', 'OutForDelivery'];
+/** How long a delivered/cancelled order keeps showing on the home status card */
+const RECENTLY_FINISHED_MS = 30 * 60 * 1000;
+
+/**
+ * GET /api/customer/orders/active
+ * Orders for the home status card: everything in progress, plus orders
+ * delivered or cancelled in the last 30 minutes. Newest first, max 5.
+ */
+export async function getActiveOrders(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const orders = await Order.find({
+      customer: req.user!.id,
+      $or: [
+        { status: { $in: IN_PROGRESS_STATUSES } },
+        {
+          status: { $in: ['Delivered', 'Cancelled'] },
+          updatedAt: { $gte: new Date(Date.now() - RECENTLY_FINISHED_MS) },
+        },
+      ],
+    })
+      .select('orderNumber status estimatedDeliveryTime cancellationReason restaurant deliveryPerson createdAt updatedAt')
+      .populate('restaurant', 'name logo')
+      .populate('deliveryPerson', 'name')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const reviewed = await findReviewedOrderIds(orders.map((o) => o._id as mongoose.Types.ObjectId));
+
+    res.json({
+      orders: orders.map((o) => ({ ...o.toJSON(), isReviewed: reviewed.has(o._id.toString()) })),
+    });
+  } catch (error) {
+    console.error('Get active orders error:', error);
+    res.status(500).json({ message: 'Server error fetching active orders' });
   }
 }
 

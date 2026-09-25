@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 import { POPULAR_SEARCHES } from './constants';
 
 export interface SearchPopularChipsProps {
@@ -9,10 +10,11 @@ export interface SearchPopularChipsProps {
 
 export default function SearchPopularChips({ onSelectTerm }: SearchPopularChipsProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <>
-      <Text style={styles.sectionTitle}>Popular searches in restaurants</Text>
+      <Text style={styles.sectionTitle}>{t('popularSearches')}</Text>
       <View style={styles.popularGrid}>
         {POPULAR_SEARCHES.map((s) => (
           <TouchableOpacity key={s} style={styles.popularChip} onPress={() => onSelectTerm(s)}>

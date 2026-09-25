@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 import type { SearchRestaurantResult } from './types';
 
 export interface SearchResultRowProps {
@@ -12,6 +13,7 @@ export interface SearchResultRowProps {
 
 export default function SearchResultRow({ restaurant: r, formatCurrency, onPress }: SearchResultRowProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <TouchableOpacity style={styles.resultCard} onPress={onPress}>
@@ -30,10 +32,10 @@ export default function SearchResultRow({ restaurant: r, formatCurrency, onPress
           <Text style={styles.resultRating}>{r.averageRating.toFixed(1)}</Text>
           <Text style={styles.resultDot}>•</Text>
           <Text style={styles.resultDelivery}>
-            {r.deliveryFee === 0 ? 'Free Delivery' : formatCurrency(r.deliveryFee)}
+            {r.deliveryFee === 0 ? t('freeDelivery') : formatCurrency(r.deliveryFee)}
           </Text>
           <Text style={styles.resultDot}>•</Text>
-          <Text style={styles.resultTime}>{r.estimatedDeliveryTime} min</Text>
+          <Text style={styles.resultTime}>{t('minutesShort', { count: r.estimatedDeliveryTime })}</Text>
         </View>
       </View>
     </TouchableOpacity>

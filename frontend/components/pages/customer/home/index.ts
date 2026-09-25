@@ -7,3 +7,4 @@ export { default as CustomerHomeSearchTrigger } from './CustomerHomeSearchTrigge
 export { default as HomeSectionHeader } from './HomeSectionHeader';
 export { default as HomeFeaturedSkeleton } from './HomeFeaturedSkeleton';
 export { default as HomePopularEmpty } from './HomePopularEmpty';
+export { default as HomeOrderStatusCard } from './HomeOrderStatusCard';

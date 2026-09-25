@@ -2,7 +2,9 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '@/services/api/auth.api';
 import { useDeliveryPreferencesStore } from '@/stores/deliveryPreferencesStore';
-import { unregisterRestaurantPushNotifications } from '@/services/pushNotifications';
+import { useCustomerPreferencesStore } from '@/stores/customerPreferencesStore';
+import { useAddressStore } from '@/stores/addressStore';
+import { unregisterPushNotifications } from '@/services/pushNotifications';
 
 type UserRole = 'customer' | 'restaurant' | 'delivery' | 'admin';
 
@@ -87,11 +89,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     // Runs before the token is removed, since the request needs it
-    await unregisterRestaurantPushNotifications();
+    await unregisterPushNotifications();
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('userRole');
     await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
     useDeliveryPreferencesStore.getState().reset();
+    useCustomerPreferencesStore.getState().reset();
+    useAddressStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false });
   },
 
@@ -109,11 +113,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       const lastActivityRaw = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
       const lastActivity = lastActivityRaw ? parseInt(lastActivityRaw, 10) : 0;
       if (lastActivity && Date.now() - lastActivity >= INACTIVITY_LIMIT_MS) {
-        await unregisterRestaurantPushNotifications();
+        await unregisterPushNotifications();
         await AsyncStorage.removeItem('token');
         await AsyncStorage.removeItem('userRole');
         await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
         useDeliveryPreferencesStore.getState().reset();
+        useCustomerPreferencesStore.getState().reset();
+        useAddressStore.getState().reset();
         set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         return;
       }
@@ -127,6 +133,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       await AsyncStorage.removeItem('userRole');
       await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
       useDeliveryPreferencesStore.getState().reset();
+      useCustomerPreferencesStore.getState().reset();
+      useAddressStore.getState().reset();
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   },

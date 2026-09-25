@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface HomeSectionHeaderProps {
   title: string;
@@ -17,6 +18,7 @@ export default function HomeSectionHeader({
   showViewAll,
   onViewAllPress,
 }: HomeSectionHeaderProps) {
+  const t = useCustomerT();
   const c = useAppThemeColors(); // section titles stay readable on dark home body
   const styles = useMemo(() => createSectionHeaderStyles(c), [c]);
 
@@ -25,7 +27,7 @@ export default function HomeSectionHeader({
       <Text style={styles.sectionTitle}>{title}</Text>
       {showViewAll ? (
         <Pressable onPress={onViewAllPress}>
-          <Text style={styles.viewAll}>View All</Text>
+          <Text style={styles.viewAll}>{t('viewAll')}</Text>
         </Pressable>
       ) : rightLabel ? (
         <Text style={styles.restaurantCount}>{rightLabel}</Text>

@@ -7,3 +7,5 @@ export { default as CartLineItem } from './CartLineItem';
 export { default as CartTotalsBreakdown } from './CartTotalsBreakdown';
 export { default as CartCheckoutBar } from './CartCheckoutBar';
 export { default as CheckoutModal } from './CheckoutModal';
+export { default as CartLastOrderCard } from './CartLastOrderCard';
+export { default as CartPopularItems } from './CartPopularItems';

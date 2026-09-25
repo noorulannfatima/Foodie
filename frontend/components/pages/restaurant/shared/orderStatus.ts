@@ -5,6 +5,7 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   Preparing: '#8B5CF6',
   Ready: '#10B981',
   PickedUp: '#06B6D4',
+  OutForDelivery: '#0EA5E9',
   Delivered: '#22C55E',
   Cancelled: '#EF4444',
 };

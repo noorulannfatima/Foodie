@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export interface CartTotalsBreakdownProps {
   subtotal: number;
@@ -18,16 +19,17 @@ export default function CartTotalsBreakdown({
   formatCurrency,
 }: CartTotalsBreakdownProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.card}>
-      <Text style={styles.heading}>ORDER SUMMARY</Text>
-      <Row styles={styles} label="Subtotal" value={formatCurrency(subtotal)} />
-      <Row styles={styles} label="Delivery fee" value={formatCurrency(deliveryFee)} />
-      <Row styles={styles} label="Taxes & fees" value={formatCurrency(tax)} />
+      <Text style={styles.heading}>{t('orderSummary')}</Text>
+      <Row styles={styles} label={t('subtotal')} value={formatCurrency(subtotal)} />
+      <Row styles={styles} label={t('deliveryFee')} value={formatCurrency(deliveryFee)} />
+      <Row styles={styles} label={t('taxesFees')} value={formatCurrency(tax)} />
       <View style={styles.divider} />
       <View style={styles.row}>
-        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalLabel}>{t('total')}</Text>
         <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
       </View>
     </View>

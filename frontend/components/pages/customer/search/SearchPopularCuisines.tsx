@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 import { POPULAR_CUISINES } from './constants';
 
 export interface SearchPopularCuisinesProps {
@@ -9,10 +10,11 @@ export interface SearchPopularCuisinesProps {
 
 export default function SearchPopularCuisines({ onSelectCuisine }: SearchPopularCuisinesProps) {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <>
-      <Text style={styles.sectionTitle}>Popular cuisines</Text>
+      <Text style={styles.sectionTitle}>{t('popularCuisines')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cuisineRow}>
         {POPULAR_CUISINES.map((item) => (
           <TouchableOpacity key={item.label} style={styles.cuisineItem} onPress={() => onSelectCuisine(item.label)}>

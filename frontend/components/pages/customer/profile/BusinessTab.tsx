@@ -3,9 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCustomerProfileStyles } from '@/hooks/useCustomerProfileStyles';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export default function BusinessTab() {
   const { Colors, sharedStyles, app } = useCustomerProfileStyles();
+  const t = useCustomerT();
 
   const styles = useMemo(
     () =>
@@ -82,9 +84,9 @@ export default function BusinessTab() {
       contentContainerStyle={sharedStyles.tabContentInner}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.businessTitle}>Your Path</Text>
+      <Text style={styles.businessTitle}>{t('yourPath')}</Text>
       <Text style={styles.businessSubtitle}>
-        Choose how you want to partner with the culinary world.
+        {t('yourPathHint')}
       </Text>
 
       <View style={styles.businessCard}>
@@ -94,23 +96,22 @@ export default function BusinessTab() {
         <View style={styles.businessCardBody}>
           <View style={styles.tierRow}>
             <MaterialIcons name="restaurant-menu" size={13} color={Colors.primary} />
-            <Text style={styles.tierLabel}>PARTNER TIER</Text>
+            <Text style={styles.tierLabel}>{t('partnerTier')}</Text>
           </View>
-          <Text style={styles.businessCardTitle}>Restaurant Owner</Text>
+          <Text style={styles.businessCardTitle}>{t('restaurantOwner')}</Text>
           <Text style={styles.businessCardDesc}>
-            Reach thousands of hungry customers and scale your kitchen operations with our professional
-            logistics network.
+            {t('restaurantOwnerHint')}
           </Text>
           <TouchableOpacity
             style={styles.businessBtn}
             activeOpacity={0.85}
             onPress={() => router.push('/(auth)/restaurant/signup')}
           >
-            <Text style={styles.businessBtnText}>Register Store</Text>
+            <Text style={styles.businessBtnText}>{t('registerStore')}</Text>
             <Ionicons name="arrow-forward" size={16} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(auth)/restaurant/login')} style={styles.alreadyLink}>
-            <Text style={styles.alreadyLinkText}>Already registered? Sign in →</Text>
+            <Text style={styles.alreadyLinkText}>{t('alreadyRegistered')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -122,24 +123,23 @@ export default function BusinessTab() {
         <View style={styles.businessCardBody}>
           <View style={styles.tierRow}>
             <MaterialCommunityIcons name="motorbike" size={13} color={Colors.secondary} />
-            <Text style={[styles.tierLabel, { color: Colors.secondary }]}>FLEXIBLE WORK</Text>
+            <Text style={[styles.tierLabel, { color: Colors.secondary }]}>{t('flexibleWork')}</Text>
           </View>
-          <Text style={[styles.businessCardTitle, { color: '#fff' }]}>Delivery Driver</Text>
+          <Text style={[styles.businessCardTitle, { color: '#fff' }]}>{t('deliveryDriver')}</Text>
           <Text style={[styles.businessCardDesc, { color: 'rgba(255,255,255,0.65)' }]}>
-            Be your own boss. Earn competitive rates while delivering the best culinary experiences in your
-            city.
+            {t('deliveryDriverHint')}
           </Text>
           <TouchableOpacity
             style={styles.businessBtn}
             activeOpacity={0.85}
             onPress={() => router.push('/(auth)/delivery/signup')}
           >
-            <Text style={styles.businessBtnText}>Become a Rider</Text>
+            <Text style={styles.businessBtnText}>{t('becomeRider')}</Text>
             <MaterialCommunityIcons name="bike-fast" size={16} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(auth)/delivery/login')} style={styles.alreadyLink}>
             <Text style={[styles.alreadyLinkText, { color: 'rgba(255,255,255,0.5)' }]}>
-              Already a rider? Sign in →
+              {t('alreadyRider')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -150,15 +150,15 @@ export default function BusinessTab() {
           <View style={styles.perkIcon}>
             <MaterialIcons name="payment" size={22} color={Colors.neutral} />
           </View>
-          <Text style={styles.perkTitle}>Weekly Payouts</Text>
-          <Text style={styles.perkDesc}>Direct deposit every Monday morning.</Text>
+          <Text style={styles.perkTitle}>{t('weeklyPayouts')}</Text>
+          <Text style={styles.perkDesc}>{t('weeklyPayoutsHint')}</Text>
         </View>
         <View style={styles.perkItem}>
           <View style={styles.perkIcon}>
             <MaterialIcons name="support-agent" size={22} color={Colors.neutral} />
           </View>
-          <Text style={styles.perkTitle}>24/7 Support</Text>
-          <Text style={styles.perkDesc}>Priority help for business partners.</Text>
+          <Text style={styles.perkTitle}>{t('support247')}</Text>
+          <Text style={styles.perkDesc}>{t('support247Hint')}</Text>
         </View>
       </View>
     </ScrollView>

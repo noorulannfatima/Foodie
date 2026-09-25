@@ -2,14 +2,16 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Spinner } from '@/components/atoms';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
 
 export default function SearchLoadingRow() {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.loadingRow}>
       <Spinner size="small" />
-      <Text style={styles.loadingText}>Searching...</Text>
+      <Text style={styles.loadingText}>{t('searching')}</Text>
     </View>
   );
 }

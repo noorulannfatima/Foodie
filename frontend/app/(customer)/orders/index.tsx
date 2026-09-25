@@ -16,6 +16,8 @@ import { customerAPI } from '@/services/api/customer.api';
 import ReviewModal from '@/components/organisms/Modals/ReviewModal';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import CustomerScreenHeader from '@/components/pages/customer/CustomerScreenHeader';
+import { useCustomerT } from '@/stores/customerPreferencesStore';
+import { orderStatusKey } from '@/constants/customerStrings';
 
 interface OrderListItem {
   _id: string;
@@ -60,6 +62,7 @@ function formatPKR(value: number) {
 
 export default function OrderHistoryScreen() {
   const c = useAppThemeColors();
+  const t = useCustomerT();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const [orders, setOrders] = useState<OrderListItem[]>([]);
@@ -80,12 +83,12 @@ export default function OrderHistoryScreen() {
         useNativeDriver: true,
       }).start();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load orders');
+      setError(err instanceof Error ? err.message : t('loadOrdersFailed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [fade]);
+  }, [fade, t]);
 
   useEffect(() => {
     load();
@@ -109,7 +112,8 @@ export default function OrderHistoryScreen() {
       .slice(0, 3)
       .map((i) => `${i.quantity}× ${i.name}`)
       .join(', ');
-    const more = item.items.length > 3 ? ` +${item.items.length - 3} more` : '';
+    const extra = item.items.length - 3;
+    const more = extra > 0 ? ` ${t(extra === 1 ? 'moreItemsOne' : 'moreItemsOther', { count: extra })}` : '';
 
     return (
       <TouchableOpacity
@@ -120,12 +124,12 @@ export default function OrderHistoryScreen() {
         <View style={styles.cardHeader}>
           <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
           <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-            <Text style={[styles.badgeText, { color: tone.fg }]}>{item.status}</Text>
+            <Text style={[styles.badgeText, { color: tone.fg }]}>{orderStatusKey(item.status) ? t(orderStatusKey(item.status)!) : item.status}</Text>
           </View>
         </View>
 
         <Text style={styles.restaurant} numberOfLines={1}>
-          {item.restaurant?.name ?? 'Restaurant'}
+          {item.restaurant?.name ?? t('restaurantFallback')}
         </Text>
         <Text style={styles.itemsLine} numberOfLines={2}>
           {itemSummary}
@@ -142,7 +146,7 @@ export default function OrderHistoryScreen() {
             {item.isReviewed ? (
               <View style={styles.reviewedChip}>
                 <Ionicons name="star" size={12} color="#15803D" />
-                <Text style={styles.reviewedChipText}>Reviewed</Text>
+                <Text style={styles.reviewedChipText}>{t('reviewed')}</Text>
               </View>
             ) : (
               <TouchableOpacity
@@ -151,7 +155,7 @@ export default function OrderHistoryScreen() {
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Ionicons name="star-outline" size={14} color={c.primary} />
-                <Text style={styles.rateBtnText}>Rate</Text>
+                <Text style={styles.rateBtnText}>{t('rate')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -162,7 +166,7 @@ export default function OrderHistoryScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <CustomerScreenHeader title="Order History" />
+      <CustomerScreenHeader title={t('orderHistory')} />
 
       {loading ? (
         <View style={styles.center}>
@@ -173,14 +177,14 @@ export default function OrderHistoryScreen() {
           <Ionicons name="alert-circle-outline" size={32} color={c.muted} />
           <Text style={styles.emptyText}>{error}</Text>
           <TouchableOpacity onPress={load} style={styles.retryBtn}>
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text style={styles.retryBtnText}>{t('retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : orders.length === 0 ? (
         <View style={styles.center}>
           <Ionicons name="bag-outline" size={40} color={c.muted} />
-          <Text style={styles.emptyTitle}>No orders yet</Text>
-          <Text style={styles.emptyText}>Your past orders will appear here.</Text>
+          <Text style={styles.emptyTitle}>{t('noOrdersYet')}</Text>
+          <Text style={styles.emptyText}>{t('noOrdersHint')}</Text>
         </View>
       ) : (
         <Animated.View style={[styles.listWrap, { opacity: fade }]}>
