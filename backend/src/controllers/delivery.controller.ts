@@ -553,6 +553,74 @@ export async function acceptOrder(req: AuthRequest, res: Response): Promise<void
   }
 }
 
+export const RELEASE_REASONS = {
+  vehicle_issue: 'Vehicle issue',
+  too_far: 'Too far away',
+  restaurant_delay: 'Restaurant delay',
+  personal: 'Personal reason',
+  other: 'Other',
+} as const;
+type ReleaseReason = keyof typeof RELEASE_REASONS;
+
+function isReleaseReason(value: unknown): value is ReleaseReason {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(RELEASE_REASONS, value);
+}
+
+/**
+ * POST /api/delivery/orders/:id/release
+ * Body: { reason: ReleaseReason }
+ *
+ * Gives an accepted order back to the request pool. Only before pickup: once
+ * the rider has the food, handing it off needs support. The claim is dropped
+ * with a single conditional update, so it can't race a pickup.
+ */
+export async function releaseOrder(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { reason } = req.body as { reason?: unknown };
+    if (!isReleaseReason(reason)) {
+      res.status(400).json({ message: 'Choose a reason for releasing this order' });
+      return;
+    }
+
+    const uid = new mongoose.Types.ObjectId(req.user!.id);
+    const released = await Order.findOneAndUpdate(
+      { _id: req.params.id, deliveryPerson: uid, status: { $in: [...REQUESTABLE_STATUSES] } },
+      {
+        $set: { deliveryPerson: null },
+        $push: {
+          timeline: {
+            status: 'Unassigned',
+            timestamp: new Date(),
+            note: `Released by rider: ${RELEASE_REASONS[reason]}`,
+          },
+        },
+      },
+    );
+    if (released) {
+      res.json({ ok: true });
+      return;
+    }
+
+    const order = await Order.findOne({ _id: req.params.id, deliveryPerson: uid }).select('status').lean();
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+    const message =
+      order.status === 'PickedUp' || order.status === 'OutForDelivery'
+        ? 'This order is already picked up. Contact support to hand it off.'
+        : `An order that is ${order.status} can't be released`;
+    res.status(409).json({ message });
+  } catch (e) {
+    if (e instanceof mongoose.Error.CastError) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+    console.error('releaseOrder:', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
 const NEXT_STATUS_FROM: Record<string, string[]> = {
   PickedUp: ['Ready'],
   OutForDelivery: ['PickedUp'],

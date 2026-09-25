@@ -383,3 +383,74 @@ describe('GET /api/delivery/orders/active', () => {
     expect((await getActive(token)).body.cancelledOrder).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Release
+// ---------------------------------------------------------------------------
+
+function release(token: string, orderId: unknown, reason: unknown = 'vehicle_issue') {
+  return request(app)
+    .post(`/api/delivery/orders/${String(orderId)}/release`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason });
+}
+
+describe('POST /api/delivery/orders/:id/release', () => {
+  it.each(['Confirmed', 'Preparing', 'Ready'])('hands a %s order back to the request pool', async (status) => {
+    const { rider, token } = await createRider();
+    const order = await createOrder(status, { deliveryPerson: rider._id });
+
+    const res = await release(token, order._id, 'too_far');
+
+    expect(res.status).toBe(200);
+    const saved = await Order.findById(order._id);
+    expect(saved!.deliveryPerson).toBeNull();
+    expect(saved!.status).toBe(status);
+    const last = saved!.timeline[saved!.timeline.length - 1];
+    expect(last.status).toBe('Unassigned');
+    expect(last.note).toContain('Too far');
+
+    const other = await createRider();
+    const requests = await request(app)
+      .get('/api/delivery/orders/requests')
+      .set('Authorization', `Bearer ${other.token}`);
+    expect(requests.body.orders.map((o: { id: string }) => o.id)).toContain(String(order._id));
+  });
+
+  it('frees the rider to accept another order', async () => {
+    const { rider, token } = await createRider();
+    const first = await createOrder('Ready', { deliveryPerson: rider._id });
+    const second = await createOrder('Ready');
+
+    await release(token, first._id);
+
+    expect((await accept(token, second._id)).status).toBe(200);
+  });
+
+  it.each(['PickedUp', 'OutForDelivery'])('refuses once the order is %s and points to support', async (status) => {
+    const { rider, token } = await createRider();
+    const order = await createOrder(status, { deliveryPerson: rider._id });
+
+    const res = await release(token, order._id);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/support/i);
+    expect(String((await Order.findById(order._id))!.deliveryPerson)).toBe(String(rider._id));
+  });
+
+  it("returns 404 for another rider's order", async () => {
+    const owner = await createRider();
+    const other = await createRider();
+    const order = await createOrder('Ready', { deliveryPerson: owner.rider._id });
+
+    expect((await release(other.token, order._id)).status).toBe(404);
+    expect(String((await Order.findById(order._id))!.deliveryPerson)).toBe(String(owner.rider._id));
+  });
+
+  it.each([null, 'bored', 'toString'])('rejects the reason %p', async (reason) => {
+    const { rider, token } = await createRider();
+    const order = await createOrder('Ready', { deliveryPerson: rider._id });
+
+    expect((await release(token, order._id, reason)).status).toBe(400);
+  });
+});

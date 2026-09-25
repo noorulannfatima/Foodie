@@ -13,6 +13,7 @@ import {
   acceptOrder,
   patchOrderStatus,
   acknowledgeCancellation,
+  releaseOrder,
 } from '../controllers/delivery.controller';
 import { getDeliveryReviews } from '../controllers/review.controller';
 
@@ -31,6 +32,7 @@ router.get('/orders/requests', getOrderRequests);
 router.get('/orders/history', getOrderHistory);
 router.post('/orders/:id/accept', acceptOrder);
 router.patch('/orders/:id/status', patchOrderStatus);
+router.post('/orders/:id/release', releaseOrder);
 router.post('/orders/:id/acknowledge-cancellation', acknowledgeCancellation);
 router.get('/reviews', getDeliveryReviews);
 
