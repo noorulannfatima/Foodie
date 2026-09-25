@@ -57,6 +57,7 @@ export interface IOrder extends Document {
     // Safepay-specific fields. Only populated for online card payments.
     safepayTracker?: string;       // Tracker token returned by Safepay init
     safepayState?: string;         // Last known state from Safepay (TRACKER_ENDED, etc.)
+    collectedBy?: mongoose.Types.ObjectId; // Rider holding the cash of a COD order
   };
   
   // Order Status & Timeline
@@ -83,6 +84,8 @@ export interface IOrder extends Document {
   // Additional Information
   specialInstructions?: string;
   cancellationReason?: string;
+  // Set when the assigned rider dismisses the "customer cancelled" notice
+  riderCancellationAckAt?: Date;
 
   // Cart this order was checked out from — lets an unpaid order be rolled
   // back and its cart restored if payment fails.
@@ -247,6 +250,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
       // Safepay tracker token & latest provider-side state
       safepayTracker: { type: String, index: true },
       safepayState: String,
+      collectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "DeliveryPerson" },
     },
     
     // ========== Order Status & Timeline ==========
@@ -331,6 +335,8 @@ const orderSchema = new mongoose.Schema<IOrder>(
       trim: true,
     },
 
+    riderCancellationAckAt: Date,
+
     cart: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Cart",
@@ -396,10 +402,10 @@ orderSchema.methods.updateStatus = async function (
     note: note || `Order ${newStatus.toLowerCase()}`,
   });
   
-  // Update actual delivery time if delivered
+  // Payment is settled by the flow that takes the money (Safepay webhook, or
+  // the rider confirming cash), never implied by delivery.
   if (newStatus === "Delivered") {
     this.actualDeliveryTime = new Date();
-    this.payment.status = "Completed";
   }
   
   return await (this as any).save();

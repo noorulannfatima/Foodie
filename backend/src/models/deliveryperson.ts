@@ -72,6 +72,7 @@ export interface IDeliveryPerson extends Document {
     deliveryTime?: Date;
     status: "assigned" | "picked_up" | "out_for_delivery" | "delivered" | "cancelled";
     earnings: number;
+    cashCollected?: number; // COD cash the rider took for this order (default 0)
     distance: number; // in kilometers
     duration: number; // in minutes
     issues?: string;
@@ -351,6 +352,11 @@ const deliveryPersonSchema = new mongoose.Schema<IDeliveryPerson>(
         earnings: {
           type: Number,
           required: true,
+          min: 0,
+        },
+        cashCollected: {
+          type: Number,
+          default: 0,
           min: 0,
         },
         distance: {

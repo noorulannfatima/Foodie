@@ -4,12 +4,8 @@ import { AuthRequest } from '../middleware/auth';
 import DeliveryPerson from '../models/deliveryperson';
 import Order from '../models/order';
 import { notifyOrderStatus, NotifiedOrderStatus } from '../services/orderStatusPush';
-import { roundPKR } from '../utils/currency';
-
-function estDriverPayout(pricing: { deliveryFee: number; tip: number }): number {
-  const raw = pricing.deliveryFee * 0.6 + pricing.tip * 0.85;
-  return roundPKR(raw);
-}
+import { cashToCollect, estDriverPayout, toDeliveryOrderView } from '../services/deliveryOrderView';
+import { formatPKR } from '../utils/currency';
 
 const DELIVERY_LANGS = ['en', 'es', 'fr', 'ur'] as const;
 type DeliveryLang = (typeof DELIVERY_LANGS)[number];
@@ -61,35 +57,6 @@ function enrichProfileResponse(dp: any) {
     preferences: normalizePreferences(dp.preferences),
     completionRate,
     tierLabel: (stats.totalDeliveries ?? 0) >= 500 ? 'MESSENGER TIER' : 'COURIER',
-  };
-}
-
-function serializeOrder(o: any) {
-  const restaurant = o.restaurant;
-  const street = restaurant?.address?.street ?? '';
-  const city = restaurant?.address?.city ?? '';
-  const addressLine = [street, city].filter(Boolean).join(', ') || 'Address on file';
-  const itemsSummary = o.items
-    .map((it: { name: string; quantity: number }) => `${it.quantity}x ${it.name}`)
-    .join(', ');
-  return {
-    id: String(o._id),
-    orderNumber: o.orderNumber,
-    status: o.status,
-    itemsSummary,
-    items: o.items,
-    estimatedPreparationTime: o.estimatedPreparationTime,
-    pricing: o.pricing,
-    estPayout: estDriverPayout(o.pricing),
-    restaurant: restaurant
-      ? {
-          id: String(restaurant._id),
-          name: restaurant.name,
-          image: Array.isArray(restaurant.image) ? restaurant.image[0] : restaurant.logo,
-          addressLine,
-        }
-      : null,
-    deliveryAddress: o.deliveryAddress,
   };
 }
 
@@ -401,7 +368,7 @@ export async function getActiveOrder(req: AuthRequest, res: Response): Promise<v
       res.json({ order: null });
       return;
     }
-    res.json({ order: serializeOrder(order) });
+    res.json({ order: toDeliveryOrderView(order, 'active') });
   } catch (e) {
     console.error('getActiveOrder:', e);
     res.status(500).json({ message: 'Server error' });
@@ -418,13 +385,13 @@ export async function getOrderRequests(req: AuthRequest, res: Response): Promise
       deliveryPerson: null,
       status: { $in: [...REQUESTABLE_STATUSES] },
     })
-      .populate('restaurant', 'name image logo address estimatedDeliveryTime')
+      .populate('restaurant', 'name image logo address coordinates estimatedDeliveryTime')
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
 
     const list = orders.map((o: any) => {
-      const base = serializeOrder(o);
+      const base = toDeliveryOrderView(o, 'request');
       const miles = 0.5 + Math.random() * 3; // placeholder until distance service
       return {
         ...base,
@@ -451,12 +418,13 @@ export async function getOrderHistory(req: AuthRequest, res: Response): Promise<
       status: 'Delivered',
     })
       .populate('restaurant', 'name image logo')
+      .populate('customer', 'name')
       .sort({ updatedAt: -1 })
       .limit(50)
       .lean();
 
     const list = orders.map((o: any) => ({
-      ...serializeOrder(o),
+      ...toDeliveryOrderView(o, 'history'),
       completedAt: o.actualDeliveryTime ?? o.updatedAt,
       driverEarnings: estDriverPayout(o.pricing),
     }));
