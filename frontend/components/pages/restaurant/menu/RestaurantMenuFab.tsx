@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export interface RestaurantMenuFabProps {
   onPress: () => void;
@@ -11,8 +12,14 @@ export interface RestaurantMenuFabProps {
 export default function RestaurantMenuFab({ onPress, bottomInset = 20 }: RestaurantMenuFabProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const t = useRestaurantT();
   return (
-    <TouchableOpacity style={[styles.fab, { bottom: bottomInset }]} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.fab, { bottom: bottomInset }]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={t('menuAddItemA11y')}
+    >
       <Ionicons name="add" size={28} color="#fff" />
     </TouchableOpacity>
   );

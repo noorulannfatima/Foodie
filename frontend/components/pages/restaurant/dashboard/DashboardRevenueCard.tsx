@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export interface DashboardRevenueCardProps {
   totalRevenue: number;
@@ -15,14 +16,17 @@ export default function DashboardRevenueCard({
   formatCurrency,
 }: DashboardRevenueCardProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.revenueCard}>
-      <Text style={styles.revenueLabel}>TODAY'S REVENUE</Text>
+      <Text style={styles.revenueLabel}>{t('dashTodaysRevenue')}</Text>
       <Text style={styles.revenueAmount}>{formatCurrency(totalRevenue)}</Text>
       <View style={styles.revenueSubRow}>
         <Ionicons name="trending-up" size={18} color="#fff" />
-        <Text style={styles.revenueSubText}>{totalOrders} orders today</Text>
+        <Text style={styles.revenueSubText}>
+          {t(totalOrders === 1 ? 'dashOrdersTodayOne' : 'dashOrdersTodayOther', { count: totalOrders })}
+        </Text>
       </View>
     </View>
   );
@@ -41,6 +45,7 @@ function createStyles(c: AppColors) {
       fontSize: 12,
       color: 'rgba(255,255,255,0.7)',
       letterSpacing: 1,
+      textTransform: 'uppercase',
       marginBottom: 8,
     },
     revenueAmount: {

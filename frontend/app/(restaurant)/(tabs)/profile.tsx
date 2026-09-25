@@ -17,10 +17,12 @@ import {
   type RestaurantProfileTabKey,
 } from '@/components/pages/restaurant/profile';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export default function RestaurantProfile() {
   const insets = useSafeAreaInsets();
   const { screenStyles } = useRestaurantProfileStyles();
+  const t = useRestaurantT();
   const { logout } = useAuthStore();
   const { profile, profileLoading, fetchProfile, updateProfile } = useRestaurantStore();
   const [hoursModalVisible, setHoursModalVisible] = useState(false);
@@ -52,10 +54,10 @@ export default function RestaurantProfile() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('profileSignOutTitle'), t('profileSignOutConfirm'), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Sign Out',
+        text: t('profileSignOutTitle'),
         style: 'destructive',
         onPress: async () => {
           await logout();
@@ -76,9 +78,9 @@ export default function RestaurantProfile() {
   if (!profile) {
     return (
       <View style={[screenStyles.loadingContainer, { paddingTop: insets.top }]}>
-        <Text style={screenStyles.errorText}>Failed to load profile</Text>
+        <Text style={screenStyles.errorText}>{t('profileLoadFailed')}</Text>
         <TouchableOpacity style={screenStyles.retryBtn} onPress={() => fetchProfile()}>
-          <Text style={screenStyles.retryBtnText}>Retry</Text>
+          <Text style={screenStyles.retryBtnText}>{t('retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -127,8 +129,8 @@ export default function RestaurantProfile() {
               await updateProfile({ operatingHours: hours });
               setHoursModalVisible(false);
             } catch (err: unknown) {
-              const message = err instanceof Error ? err.message : 'Failed to update hours';
-              Alert.alert('Error', message);
+              const message = err instanceof Error ? err.message : t('profileHoursUpdateFailed');
+              Alert.alert(t('error'), message);
             }
           }}
         />

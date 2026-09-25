@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, Fonts, tintBg } from '@/constants/theme';
 import type { RestaurantProfile } from '@/stores/restaurantStore';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export interface RestaurantProfileTitleProps {
   profile: RestaurantProfile;
@@ -10,6 +11,7 @@ export interface RestaurantProfileTitleProps {
 
 export default function RestaurantProfileTitle({ profile }: RestaurantProfileTitleProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
 
   const styles = useMemo(
     () =>
@@ -71,7 +73,7 @@ export default function RestaurantProfileTitle({ profile }: RestaurantProfileTit
       {profile.isVerified ? (
         <View style={styles.verifiedBadge}>
           <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-          <Text style={styles.verifiedText}>Verified</Text>
+          <Text style={styles.verifiedText}>{t('profileVerified')}</Text>
         </View>
       ) : null}
     </View>

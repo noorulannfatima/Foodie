@@ -13,3 +13,4 @@ export { formatProfileCurrency } from './formatProfileCurrency';
 export { getDisplayOperatingHours } from './getDisplayOperatingHours';
 export { default as NotificationPreferencesModal } from './NotificationPreferencesModal';
 export type { NotificationPreferences, NotificationPreferenceKey } from './notificationPreferences';
+export { default as LanguageModal } from './LanguageModal';

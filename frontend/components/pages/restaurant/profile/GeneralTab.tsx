@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
 import type { RestaurantProfile } from '@/stores/restaurantStore';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import { getDisplayOperatingHours } from './getDisplayOperatingHours';
 
 export interface GeneralTabProps {
@@ -21,6 +22,7 @@ export default function GeneralTab({
 }: GeneralTabProps) {
   const { screenStyles } = useRestaurantProfileStyles();
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const groups = getDisplayOperatingHours(profile);
 
   const styles = useMemo(
@@ -146,48 +148,48 @@ export default function GeneralTab({
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="time-outline" size={18} color={c.primary} />
-          <Text style={styles.cardTitle}>OPERATING HOURS</Text>
+          <Text style={styles.cardTitle}>{t('profileOperatingHoursCaps')}</Text>
         </View>
         {groups.map((group, idx) => (
           <View key={idx} style={styles.hoursRow}>
-            <Text style={styles.hoursDay}>{group.label}</Text>
+            <Text style={styles.hoursDay}>{t(group.labelKey)}</Text>
             <Text style={[styles.hoursTime, group.isClosed && { color: c.primary }]}>
-              {group.isClosed ? 'Closed' : `${group.open} - ${group.close}`}
+              {group.isClosed ? t('profileClosed') : `${group.open} - ${group.close}`}
             </Text>
           </View>
         ))}
         <TouchableOpacity style={styles.updateHoursBtn} onPress={onOpenHoursModal}>
-          <Text style={styles.updateHoursBtnText}>Update Hours</Text>
+          <Text style={styles.updateHoursBtnText}>{t('profileUpdateHours')}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.performanceCard}>
         <View style={styles.perfHeader}>
-          <Text style={styles.perfTitle}>Account Performance</Text>
+          <Text style={styles.perfTitle}>{t('profileAccountPerformance')}</Text>
           <Ionicons name="star" size={24} color="#F59E0B" />
         </View>
         <View style={styles.perfStats}>
           <View style={styles.perfStat}>
-            <Text style={styles.perfStatLabel}>RATING</Text>
+            <Text style={styles.perfStatLabel}>{t('profileRatingCaps')}</Text>
             <Text style={styles.perfStatValue}>
               {profile.averageRating.toFixed(1)}
               <Text style={styles.perfStatMax}>/5.0</Text>
             </Text>
           </View>
           <View style={styles.perfStat}>
-            <Text style={styles.perfStatLabel}>TOTAL ORDERS</Text>
+            <Text style={styles.perfStatLabel}>{t('profileTotalOrdersCaps')}</Text>
             <Text style={styles.perfStatValue}>{profile.totalOrders}</Text>
           </View>
         </View>
         <View style={styles.perfBadges}>
           {profile.isPremium ? (
             <View style={styles.perfBadge}>
-              <Text style={styles.perfBadgeText}>Premier Partner</Text>
+              <Text style={styles.perfBadgeText}>{t('profilePremierPartner')}</Text>
             </View>
           ) : null}
           {profile.averageRating >= 4.5 ? (
             <View style={styles.perfBadge}>
-              <Text style={styles.perfBadgeText}>Top 5% Locally</Text>
+              <Text style={styles.perfBadgeText}>{t('profileTopLocal')}</Text>
             </View>
           ) : null}
         </View>

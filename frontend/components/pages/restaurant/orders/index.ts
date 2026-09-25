@@ -1,4 +1,4 @@
-export { STATUS_FILTERS, NEXT_STATUS } from './constants';
+export { STATUS_FILTERS, NEXT_STATUS, statusFilterLabel } from './constants';
 export { default as RestaurantOrdersStatsBar } from './RestaurantOrdersStatsBar';
 export { default as OrderStatusFilterRow } from './OrderStatusFilterRow';
 export { default as OrderPipelineTitle } from './OrderPipelineTitle';

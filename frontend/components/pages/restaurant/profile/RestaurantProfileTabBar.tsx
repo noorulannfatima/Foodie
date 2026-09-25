@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { RESTAURANT_PROFILE_TABS, type RestaurantProfileTabKey } from './profile.styles';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
+import { useRestaurantT, type RestaurantStringKey } from '@/constants/restaurantStrings';
+
+const TAB_LABEL_KEYS: Record<RestaurantProfileTabKey, RestaurantStringKey> = {
+  General: 'profileTabGeneral',
+  Account: 'profileTabAccount',
+  Settings: 'profileTabSettings',
+};
 
 export interface RestaurantProfileTabBarProps {
   activeTab: RestaurantProfileTabKey;
@@ -15,6 +22,7 @@ export default function RestaurantProfileTabBar({
   onTabPress,
 }: RestaurantProfileTabBarProps) {
   const { screenStyles } = useRestaurantProfileStyles();
+  const t = useRestaurantT();
 
   // Percentage translateX isn't reliable in React Native, so measure the bar and
   // move the pill by whole segments in points. The -2 accounts for the 1pt border.
@@ -46,7 +54,7 @@ export default function RestaurantProfileTabBar({
             activeOpacity={0.8}
           >
             <Text style={[screenStyles.tabLabel, activeTab === tab && screenStyles.tabLabelActive]}>
-              {tab}
+              {t(TAB_LABEL_KEYS[tab])}
             </Text>
           </TouchableOpacity>
         ))}

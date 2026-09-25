@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export interface AddMenuItemCtaProps {
   onPress: () => void;
@@ -10,10 +11,11 @@ export interface AddMenuItemCtaProps {
 export default function AddMenuItemCta({ onPress }: AddMenuItemCtaProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const t = useRestaurantT();
   return (
     <TouchableOpacity style={styles.addItemBtn} onPress={onPress}>
       <Ionicons name="add" size={20} color="#fff" />
-      <Text style={styles.addItemBtnText}>ADD NEW ITEM</Text>
+      <Text style={styles.addItemBtnText}>{t('menuAddNewItem')}</Text>
     </TouchableOpacity>
   );
 }

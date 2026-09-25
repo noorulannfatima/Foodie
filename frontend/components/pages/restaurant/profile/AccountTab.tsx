@@ -6,9 +6,17 @@ import { useAppThemeColors, Fonts } from '@/constants/theme';
 import type { RestaurantProfile } from '@/stores/restaurantStore';
 import { Switch } from '@/components/atoms';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
+import { useRestaurantT, type RestaurantStringKey } from '@/constants/restaurantStrings';
 import { formatProfileCurrency } from './formatProfileCurrency';
 
 const PAYMENT_OPTIONS = ['Cash', 'Card', 'Wallet', 'Online'] as const;
+
+const PAYMENT_LABEL_KEYS: Record<(typeof PAYMENT_OPTIONS)[number], RestaurantStringKey> = {
+  Cash: 'profilePaymentCash',
+  Card: 'profilePaymentCard',
+  Wallet: 'profilePaymentWallet',
+  Online: 'profilePaymentOnline',
+};
 
 function paymentIcon(method: (typeof PAYMENT_OPTIONS)[number]): ComponentProps<typeof Ionicons>['name'] {
   if (method === 'Cash') return 'cash-outline';
@@ -34,6 +42,7 @@ export default function AccountTab({
 }: AccountTabProps) {
   const { screenStyles } = useRestaurantProfileStyles();
   const c = useAppThemeColors();
+  const t = useRestaurantT();
 
   const styles = useMemo(
     () =>
@@ -124,49 +133,49 @@ export default function AccountTab({
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="bicycle-outline" size={18} color={c.primary} />
-          <Text style={styles.cardTitle}>DELIVERY SETTINGS</Text>
+          <Text style={styles.cardTitle}>{t('profileDeliverySettingsCaps')}</Text>
           <TouchableOpacity
             style={styles.editBtn}
             onPress={onEditDeliverySettings}
             accessibilityRole="button"
-            accessibilityLabel="Edit delivery settings"
+            accessibilityLabel={t('profileEditDeliverySettings')}
             hitSlop={8}
           >
             <Ionicons name="create-outline" size={14} color={c.text} />
-            <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={styles.editBtnText}>{t('profileEdit')}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Delivery Radius</Text>
-          <Text style={styles.settingValue}>{profile.deliveryRadius} km</Text>
+          <Text style={styles.settingLabel}>{t('profileDeliveryRadius')}</Text>
+          <Text style={styles.settingValue}>{profile.deliveryRadius} {t('profileUnitKm')}</Text>
         </View>
         <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Minimum Order</Text>
+          <Text style={styles.settingLabel}>{t('profileMinimumOrder')}</Text>
           <Text style={styles.settingValue}>{formatProfileCurrency(profile.minimumOrder)}</Text>
         </View>
         <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Delivery Fee</Text>
+          <Text style={styles.settingLabel}>{t('profileDeliveryFee')}</Text>
           <Text style={styles.settingValue}>
-            {profile.deliveryFee === 0 ? 'Free' : formatProfileCurrency(profile.deliveryFee)}
+            {profile.deliveryFee === 0 ? t('profileFree') : formatProfileCurrency(profile.deliveryFee)}
           </Text>
         </View>
         <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Estimated Time</Text>
-          <Text style={styles.settingValue}>{profile.estimatedDeliveryTime} min</Text>
+          <Text style={styles.settingLabel}>{t('profileEstimatedTime')}</Text>
+          <Text style={styles.settingValue}>{profile.estimatedDeliveryTime} {t('profileUnitMin')}</Text>
         </View>
       </View>
 
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="card-outline" size={18} color={c.primary} />
-          <Text style={styles.cardTitle}>PAYMENT METHODS</Text>
+          <Text style={styles.cardTitle}>{t('profilePaymentMethodsCaps')}</Text>
         </View>
         <View style={styles.paymentMethods}>
           {PAYMENT_OPTIONS.map((method) => (
             <View key={method} style={styles.paymentRow}>
               <View style={styles.paymentInfo}>
                 <Ionicons name={paymentIcon(method)} size={18} color={c.text} />
-                <Text style={styles.paymentLabel}>{method}</Text>
+                <Text style={styles.paymentLabel}>{t(PAYMENT_LABEL_KEYS[method])}</Text>
               </View>
               <Switch
                 value={profile.paymentMethods.includes(method)}
@@ -175,7 +184,7 @@ export default function AccountTab({
                     ? [...profile.paymentMethods, method]
                     : profile.paymentMethods.filter((m) => m !== method);
                   if (methods.length === 0) {
-                    Alert.alert('Error', 'At least one payment method is required');
+                    Alert.alert(t('error'), t('profilePaymentRequired'));
                     return;
                   }
                   onUpdatePaymentMethods(methods);

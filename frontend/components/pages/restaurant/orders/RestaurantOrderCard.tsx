@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { orderStatusLabel, useRestaurantT } from '@/constants/restaurantStrings';
 import { OrderItem } from '@/stores/restaurantStore';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
@@ -28,6 +29,7 @@ export default function RestaurantOrderCard({
   onAdvance,
 }: RestaurantOrderCardProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   const statusColor = ORDER_STATUS_COLORS[order.status] || c.muted;
   const next = NEXT_STATUS[order.status];
@@ -42,14 +44,18 @@ export default function RestaurantOrderCard({
           </View>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
             <Text style={[styles.statusBadgeText, { color: statusColor }]}>
-              {order.status === 'Delivered' ? 'Completed' : order.status}
+              {order.status === 'Delivered' ? t('ordersCompleted') : orderStatusLabel(order.status, t)}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.customerName} numberOfLines={1}>{order.customer?.name ?? 'Customer'}</Text>
+        <Text style={styles.customerName} numberOfLines={1}>{order.customer?.name ?? t('ordersCustomerFallback')}</Text>
         <View style={styles.orderMeta}>
-          <Text style={styles.metaText}>{order.items.length} Items</Text>
+          <Text style={styles.metaText}>
+            {t(order.items.length === 1 ? 'ordersCardItemsOne' : 'ordersCardItemsOther', {
+              count: order.items.length,
+            })}
+          </Text>
           <Text style={styles.metaDot}>•</Text>
           <Text style={styles.metaPrice}>{formatRestaurantCurrency(order.pricing.total)}</Text>
           <Text style={styles.metaDot}>•</Text>
@@ -59,7 +65,7 @@ export default function RestaurantOrderCard({
               { color: order.status === 'Pending' ? c.primary : c.muted },
             ]}
           >
-            {getOrderTimeAgo(order.createdAt)}
+            {getOrderTimeAgo(order.createdAt, t)}
           </Text>
         </View>
 
@@ -67,14 +73,14 @@ export default function RestaurantOrderCard({
           <View style={styles.actionRow}>
             {order.status === 'Pending' ? (
               <TouchableOpacity style={styles.declineBtn} onPress={() => onDecline(order._id)}>
-                <Text style={styles.declineBtnText}>Decline</Text>
+                <Text style={styles.declineBtnText}>{t('ordersDecline')}</Text>
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity
               style={[styles.acceptBtn, order.status !== 'Pending' && styles.acceptBtnFull]}
               onPress={() => onAdvance(order._id, next.status)}
             >
-              <Text style={styles.acceptBtnText}>{next.label}</Text>
+              <Text style={styles.acceptBtnText}>{t(next.labelKey)}</Text>
             </TouchableOpacity>
           </View>
         ) : null}

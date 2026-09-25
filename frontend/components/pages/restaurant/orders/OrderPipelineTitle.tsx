@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export default function OrderPipelineTitle() {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
-  return <Text style={styles.pipelineTitle}>Order Pipeline</Text>;
+  return <Text style={styles.pipelineTitle}>{t('ordersPipelineTitle')}</Text>;
 }
 
 function createStyles(c: AppColors) {

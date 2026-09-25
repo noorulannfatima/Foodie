@@ -1,3 +1,5 @@
+import type { RestaurantStringKey, RestaurantT } from '@/constants/restaurantStrings';
+
 // Mirrors the validators on backend/src/models/restaurant.ts — keep both in sync.
 export const DELIVERY_SETTINGS_LIMITS = {
   deliveryRadius: { min: 1, max: 50 },
@@ -16,39 +18,39 @@ export type DeliverySettingsErrors = Partial<Record<DeliverySettingsKey, string>
 
 export const DELIVERY_SETTINGS_FIELDS: ReadonlyArray<{
   key: DeliverySettingsKey;
-  label: string;
+  labelKey: RestaurantStringKey;
   prefix?: string;
-  suffix?: string;
+  suffixKey?: RestaurantStringKey;
   allowDecimal: boolean;
-  hint: string;
+  hintKey: RestaurantStringKey;
 }> = [
   {
     key: 'deliveryRadius',
-    label: 'Delivery Radius',
-    suffix: 'km',
+    labelKey: 'profileDeliveryRadius',
+    suffixKey: 'profileUnitKm',
     allowDecimal: true,
-    hint: 'How far from your restaurant you deliver',
+    hintKey: 'profileDeliveryRadiusHint',
   },
   {
     key: 'minimumOrder',
-    label: 'Minimum Order',
+    labelKey: 'profileMinimumOrder',
     prefix: 'Rs.',
     allowDecimal: false,
-    hint: 'Smallest subtotal a customer can check out with',
+    hintKey: 'profileMinimumOrderHint',
   },
   {
     key: 'deliveryFee',
-    label: 'Delivery Fee',
+    labelKey: 'profileDeliveryFee',
     prefix: 'Rs.',
     allowDecimal: false,
-    hint: 'Set to 0 to offer free delivery',
+    hintKey: 'profileDeliveryFeeHint',
   },
   {
     key: 'estimatedDeliveryTime',
-    label: 'Estimated Time',
-    suffix: 'min',
+    labelKey: 'profileEstimatedTime',
+    suffixKey: 'profileUnitMin',
     allowDecimal: false,
-    hint: 'Average time from order to doorstep',
+    hintKey: 'profileEstimatedTimeHint',
   },
 ];
 
@@ -69,7 +71,10 @@ export function sanitizeNumericInput(value: string, allowDecimal: boolean): stri
   return rest.length ? `${whole}.${rest.join('').slice(0, 1)}` : whole;
 }
 
-export function validateDeliverySettings(form: DeliverySettingsForm): {
+export function validateDeliverySettings(
+  form: DeliverySettingsForm,
+  t: RestaurantT,
+): {
   values: DeliverySettings | null;
   errors: DeliverySettingsErrors;
 } {
@@ -82,11 +87,11 @@ export function validateDeliverySettings(form: DeliverySettingsForm): {
     const num = Number(raw);
 
     if (raw === '' || raw === '.') {
-      errors[field.key] = `${field.label} is required`;
+      errors[field.key] = t('profileFieldRequired', { field: t(field.labelKey) });
     } else if (!Number.isFinite(num)) {
-      errors[field.key] = 'Enter a valid number';
+      errors[field.key] = t('profileInvalidNumber');
     } else if (num < min || num > max) {
-      errors[field.key] = `Must be between ${min} and ${max.toLocaleString()}`;
+      errors[field.key] = t('profileOutOfRange', { min, max: max.toLocaleString() });
     } else {
       values[field.key] = num;
     }

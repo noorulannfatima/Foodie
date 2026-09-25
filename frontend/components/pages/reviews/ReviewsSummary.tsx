@@ -9,11 +9,19 @@ interface ReviewsSummaryProps {
   total: number;
   /** e.g. "reviews" or "ratings" */
   noun: string;
+  /** Singular form; defaults to `noun` without its trailing "s". */
+  singularNoun?: string;
   palette: ReviewPalette;
 }
 
 /** Big average + stars + count, shown above a reviews list. */
-export default function ReviewsSummary({ averageRating, total, noun, palette }: ReviewsSummaryProps) {
+export default function ReviewsSummary({
+  averageRating,
+  total,
+  noun,
+  singularNoun = noun.replace(/s$/, ''),
+  palette,
+}: ReviewsSummaryProps) {
   const styles = useMemo(() => createStyles(palette), [palette]);
   return (
     <View style={styles.card}>
@@ -21,7 +29,7 @@ export default function ReviewsSummary({ averageRating, total, noun, palette }: 
       <View style={styles.side}>
         <StarRating rating={averageRating} size={18} />
         <Text style={styles.count}>
-          {total} {total === 1 ? noun.replace(/s$/, '') : noun}
+          {total} {total === 1 ? singularNoun : noun}
         </Text>
       </View>
     </View>

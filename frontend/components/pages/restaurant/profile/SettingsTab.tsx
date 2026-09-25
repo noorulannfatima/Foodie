@@ -14,8 +14,12 @@ import { useAppThemeColors, Fonts, tintBg } from '@/constants/theme';
 import { useRestaurantProfileStyles } from '@/hooks/useRestaurantProfileStyles';
 import { useAppThemeStore } from '@/stores/appThemeStore';
 import { useRestaurantStore } from '@/stores/restaurantStore';
+import { useAppLanguageStore } from '@/stores/appLanguageStore';
+import { DELIVERY_LANGUAGE_LABELS } from '@/constants/deliveryProfileStrings';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import StoreInformationModal from '@/components/organisms/StoreInformationModal';
 import NotificationPreferencesModal from './NotificationPreferencesModal';
+import LanguageModal from './LanguageModal';
 import PayoutsBillingModal from '../payouts/PayoutsBillingModal';
 
 export interface SettingsTabProps {
@@ -30,8 +34,11 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
   const isDark = useAppThemeStore((s) => s.isDark);
   const setIsDark = useAppThemeStore((s) => s.setIsDark);
   const profile = useRestaurantStore((s) => s.profile);
+  const language = useAppLanguageStore((s) => s.language);
+  const t = useRestaurantT();
 
   const [storeInfoModalVisible, setStoreInfoModalVisible] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [payoutsModalVisible, setPayoutsModalVisible] = useState(false);
 
@@ -120,14 +127,12 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <Text style={styles.settingsTitle}>Restaurant Settings</Text>
+        <Text style={styles.settingsTitle}>{t('profileSettingsTitle')}</Text>
 
         <View style={styles.darkRow}>
           <View style={styles.darkLabel}>
-            <Text style={styles.darkTitle}>Dark mode</Text>
-            <Text style={styles.darkSub}>
-              Restaurant app uses the same appearance as the rest of Foodie
-            </Text>
+            <Text style={styles.darkTitle}>{t('profileDarkMode')}</Text>
+            <Text style={styles.darkSub}>{t('profileDarkModeHint')}</Text>
           </View>
           <Switch
             value={isDark}
@@ -136,6 +141,23 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
             thumbColor="#FFFFFF"
           />
         </View>
+
+        <TouchableOpacity
+          style={styles.settingsItem}
+          activeOpacity={0.85}
+          onPress={() => setLanguageModalVisible(true)}
+        >
+          <View
+            style={[styles.settingsIcon, { backgroundColor: tintBg('#8B5CF6', '#EDE9FE', isDark) }]}
+          >
+            <Ionicons name="language-outline" size={18} color="#8B5CF6" />
+          </View>
+          <View style={styles.settingsInfo}>
+            <Text style={styles.settingsItemTitle}>{t('language')}</Text>
+            <Text style={styles.settingsItemSub}>{DELIVERY_LANGUAGE_LABELS[language]}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.settingsItem}
@@ -151,8 +173,8 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
             <Ionicons name="storefront-outline" size={18} color={Colors.primary} />
           </View>
           <View style={styles.settingsInfo}>
-            <Text style={styles.settingsItemTitle}>Store Information</Text>
-            <Text style={styles.settingsItemSub}>Update description and restaurant cover</Text>
+            <Text style={styles.settingsItemTitle}>{t('profileStoreInfo')}</Text>
+            <Text style={styles.settingsItemSub}>{t('profileStoreInfoHint')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
         </TouchableOpacity>
@@ -168,8 +190,8 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
             <Ionicons name="notifications-outline" size={18} color="#3B82F6" />
           </View>
           <View style={styles.settingsInfo}>
-            <Text style={styles.settingsItemTitle}>Notification Preferences</Text>
-            <Text style={styles.settingsItemSub}>Order alerts, marketing, and reviews</Text>
+            <Text style={styles.settingsItemTitle}>{t('profileNotificationPrefs')}</Text>
+            <Text style={styles.settingsItemSub}>{t('profileNotificationPrefsHint')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
         </TouchableOpacity>
@@ -185,15 +207,15 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
             <Ionicons name="wallet-outline" size={18} color="#F59E0B" />
           </View>
           <View style={styles.settingsInfo}>
-            <Text style={styles.settingsItemTitle}>Payouts & Billing</Text>
-            <Text style={styles.settingsItemSub}>Earnings, payout account & history</Text>
+            <Text style={styles.settingsItemTitle}>{t('profilePayoutsBilling')}</Text>
+            <Text style={styles.settingsItemSub}>{t('profilePayoutsBillingHint')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.signOutBtn} onPress={onLogout} activeOpacity={0.85}>
           <Ionicons name="log-out-outline" size={18} color={Colors.primary} />
-          <Text style={styles.signOutText}>SIGN OUT</Text>
+          <Text style={styles.signOutText}>{t('profileSignOutCaps')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -204,6 +226,15 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         currentDescription={profile?.description}
         currentImages={profile?.image}
       />
+
+      <Modal
+        visible={languageModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <LanguageModal onClose={() => setLanguageModalVisible(false)} />
+      </Modal>
 
       <Modal
         visible={notificationsModalVisible}

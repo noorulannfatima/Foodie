@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import {
   DELIVERY_SETTINGS_FIELDS,
   DELIVERY_SETTINGS_LIMITS,
@@ -30,6 +31,7 @@ export interface DeliverySettingsModalProps {
 
 export default function DeliverySettingsModal({ settings, onClose, onSave }: DeliverySettingsModalProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   const initialForm = useMemo(() => toDeliverySettingsForm(settings), [settings]);
   const [form, setForm] = useState<DeliverySettingsForm>(initialForm);
@@ -38,7 +40,7 @@ export default function DeliverySettingsModal({ settings, onClose, onSave }: Del
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const { values, errors } = useMemo(() => validateDeliverySettings(form), [form]);
+  const { values, errors } = useMemo(() => validateDeliverySettings(form, t), [form, t]);
   const isDirty = DELIVERY_SETTINGS_FIELDS.some(
     ({ key }) => Number(form[key]) !== settings[key] || form[key].trim() === '',
   );
@@ -57,7 +59,7 @@ export default function DeliverySettingsModal({ settings, onClose, onSave }: Del
     try {
       await onSave(values);
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to update delivery settings');
+      setSaveError(err instanceof Error ? err.message : t('profileDeliveryUpdateFailed'));
     } finally {
       setSaving(false);
     }
@@ -73,12 +75,12 @@ export default function DeliverySettingsModal({ settings, onClose, onSave }: Del
           onPress={onClose}
           disabled={saving}
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('close')}
           hitSlop={8}
         >
           <Ionicons name="close" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Delivery Settings</Text>
+        <Text style={styles.title}>{t('profileDeliverySettingsTitle')}</Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={!canSave}
@@ -87,7 +89,7 @@ export default function DeliverySettingsModal({ settings, onClose, onSave }: Del
           hitSlop={8}
         >
           <Text style={[styles.saveText, !canSave && styles.saveTextDisabled]}>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('saving') : t('save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -105,7 +107,7 @@ export default function DeliverySettingsModal({ settings, onClose, onSave }: Del
           const error = (touched[field.key] || submitted) ? errors[field.key] : undefined;
           return (
             <View key={field.key} style={styles.field}>
-              <Text style={styles.label}>{field.label}</Text>
+              <Text style={styles.label}>{t(field.labelKey)}</Text>
               <View style={[styles.inputWrap, error && styles.inputWrapError]}>
                 {field.prefix ? <Text style={styles.affix}>{field.prefix}</Text> : null}
                 <TextInput
@@ -118,19 +120,19 @@ export default function DeliverySettingsModal({ settings, onClose, onSave }: Del
                   placeholderTextColor={c.muted}
                   editable={!saving}
                   maxLength={7}
-                  accessibilityLabel={field.label}
+                  accessibilityLabel={t(field.labelKey)}
                 />
-                {field.suffix ? <Text style={styles.affix}>{field.suffix}</Text> : null}
+                {field.suffixKey ? <Text style={styles.affix}>{t(field.suffixKey)}</Text> : null}
               </View>
               <Text style={[styles.hint, error && styles.hintError]}>
-                {error ?? `${field.hint} (${min}–${max.toLocaleString()})`}
+                {error ?? `${t(field.hintKey)} (${min}–${max.toLocaleString()})`}
               </Text>
             </View>
           );
         })}
 
         <Text style={styles.footnote}>
-          Changes apply to new orders only. Orders already placed keep their original fee.
+          {t('profileDeliveryFootnote')}
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

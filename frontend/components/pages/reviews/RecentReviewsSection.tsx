@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, type TextStyle } from 'react-native';
 import ReviewCard, { type ReviewPalette } from '@/components/molecules/ReviewCard/ReviewCard';
+import { useReviewLabels } from '@/components/molecules/ReviewCard/ReviewLabels';
 import { Fonts } from '@/constants/theme';
 
 export interface RecentReview {
@@ -28,21 +29,22 @@ export default function RecentReviewsSection({
   titleStyle,
 }: RecentReviewsSectionProps) {
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const labels = useReviewLabels();
 
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={[titleStyle, styles.title]}>Recent Reviews</Text>
+        <Text style={[titleStyle, styles.title]}>{labels.recentReviews}</Text>
         {reviews && reviews.length > 0 ? (
           <Pressable onPress={onSeeAll} hitSlop={12} accessibilityRole="link">
-            <Text style={styles.seeAll}>See all</Text>
+            <Text style={styles.seeAll}>{labels.seeAll}</Text>
           </Pressable>
         ) : null}
       </View>
 
       {reviews === null ? null : reviews.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No reviews yet</Text>
+          <Text style={styles.emptyText}>{labels.noReviews}</Text>
         </View>
       ) : (
         reviews.map((review) => (

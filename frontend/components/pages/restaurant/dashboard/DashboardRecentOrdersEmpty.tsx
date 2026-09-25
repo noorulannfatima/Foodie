@@ -2,14 +2,16 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export default function DashboardRecentOrdersEmpty() {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <View style={styles.emptyState}>
       <Ionicons name="receipt-outline" size={48} color={c.light} />
-      <Text style={styles.emptyText}>No recent orders</Text>
+      <Text style={styles.emptyText}>{t('dashNoRecentOrders')}</Text>
     </View>
   );
 }

@@ -1,4 +1,5 @@
 import { View, StyleSheet } from 'react-native';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import OrdersStatItem from './OrdersStatItem';
 
 export interface RestaurantOrdersStatsBarProps {
@@ -12,11 +13,12 @@ export default function RestaurantOrdersStatsBar({
   preparingCount,
   readyCount,
 }: RestaurantOrdersStatsBarProps) {
+  const t = useRestaurantT();
   return (
     <View style={styles.statsBar}>
-      <OrdersStatItem label="ACTIVE ORDERS" value={activeCount} icon="receipt-outline" />
-      <OrdersStatItem label="IN PREPARATION" value={preparingCount} icon="flame-outline" />
-      <OrdersStatItem label="READY FOR PICKUP" value={readyCount} icon="bag-check-outline" />
+      <OrdersStatItem label={t('ordersStatActive')} value={activeCount} icon="receipt-outline" />
+      <OrdersStatItem label={t('ordersStatPreparing')} value={preparingCount} icon="flame-outline" />
+      <OrdersStatItem label={t('ordersStatReady')} value={readyCount} icon="bag-check-outline" />
     </View>
   );
 }

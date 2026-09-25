@@ -9,11 +9,13 @@ import { ReviewsSummary } from '@/components/pages/reviews';
 import { restaurantAPI } from '@/services/api/restaurant.api';
 import type { RestaurantReview, RestaurantReviewsResponse } from '@/services/api/review.types';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export default function RestaurantReviewsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const c = useAppThemeColors();
+  const t = useRestaurantT();
 
   const palette = useMemo<ReviewPalette>(
     () => ({ card: c.card, text: c.text, muted: c.muted, border: c.border, accent: c.primary }),
@@ -65,11 +67,11 @@ export default function RestaurantReviewsScreen() {
           onPress={() => router.back()}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('back')}
         >
           <Ionicons name="arrow-back" size={24} color={c.text} />
         </Pressable>
-        <Text style={styles.title}>Reviews</Text>
+        <Text style={styles.title}>{t('reviewsTitle')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -78,12 +80,14 @@ export default function RestaurantReviewsScreen() {
         renderReview={renderReview}
         palette={palette}
         contentContainerStyle={styles.listContent}
+        emptyMessage={t('reviewsEmpty')}
         ListHeaderComponent={
           summary ? (
             <ReviewsSummary
               averageRating={summary.averageRating}
               total={summary.totalReviews}
-              noun="dish ratings"
+              noun={t('dishRatingsNoun')}
+              singularNoun={t('dishRatingNoun')}
               palette={palette}
             />
           ) : null

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { orderStatusLabel, useRestaurantT } from '@/constants/restaurantStrings';
 import { OrderItem } from '@/stores/restaurantStore';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 import { formatRestaurantCurrency } from '@/components/pages/restaurant/shared/orderUtils';
@@ -15,6 +16,7 @@ export interface OrderDetailModalProps {
 
 export default function OrderDetailModal({ order, onClose, onStatusUpdate }: OrderDetailModalProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
 
   if (!order) return null;
@@ -25,26 +27,32 @@ export default function OrderDetailModal({ order, onClose, onStatusUpdate }: Ord
   return (
     <View style={styles.modalContainer}>
       <View style={styles.modalHeader}>
-        <TouchableOpacity onPress={onClose}>
+        <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t('back')}>
           <Ionicons name="arrow-back" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.modalTitle}>Order #{order.orderNumber}</Text>
+        <Text style={styles.modalTitle}>{t('ordersDetailTitle', { number: order.orderNumber })}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.modalContent}>
         <View style={styles.modalSection}>
-          <Text style={styles.modalSectionLabel}>STATUS</Text>
+          <Text style={styles.modalSectionLabel}>{t('ordersDetailStatus')}</Text>
           <View style={[styles.statusBadgeLg, { backgroundColor: `${statusColor}20` }]}>
-            <Text style={[styles.statusBadgeLgText, { color: statusColor }]}>{order.status}</Text>
+            <Text style={[styles.statusBadgeLgText, { color: statusColor }]}>
+              {orderStatusLabel(order.status, t)}
+            </Text>
           </View>
         </View>
 
         <View style={styles.modalSection}>
           <View style={styles.modalSectionHeader}>
-            <Text style={styles.modalSectionLabel}>ORDER ITEMS</Text>
+            <Text style={styles.modalSectionLabel}>{t('ordersDetailItems')}</Text>
             <View style={styles.itemCountBadge}>
-              <Text style={styles.itemCountText}>{order.items.length} ITEMS</Text>
+              <Text style={styles.itemCountText}>
+                {t(order.items.length === 1 ? 'ordersDetailItemCountOne' : 'ordersDetailItemCountOther', {
+                  count: order.items.length,
+                })}
+              </Text>
             </View>
           </View>
           {order.items.map((item, idx) => (
@@ -54,7 +62,7 @@ export default function OrderDetailModal({ order, onClose, onStatusUpdate }: Ord
                 {item.specialInstructions ? (
                   <Text style={styles.modalItemNote}>{item.specialInstructions}</Text>
                 ) : null}
-                <Text style={styles.modalItemQty}>QTY: {item.quantity}</Text>
+                <Text style={styles.modalItemQty}>{t('ordersDetailQty', { count: item.quantity })}</Text>
               </View>
               <Text style={styles.modalItemPrice}>{formatRestaurantCurrency(item.price)}</Text>
             </View>
@@ -63,49 +71,49 @@ export default function OrderDetailModal({ order, onClose, onStatusUpdate }: Ord
 
         <View style={styles.modalSection}>
           <View style={styles.pricingRow}>
-            <Text style={styles.pricingLabel}>Subtotal</Text>
+            <Text style={styles.pricingLabel}>{t('ordersDetailSubtotal')}</Text>
             <Text style={styles.pricingValue}>{formatRestaurantCurrency(order.pricing.subtotal)}</Text>
           </View>
           <View style={styles.pricingRow}>
-            <Text style={styles.pricingLabel}>Delivery Fee</Text>
+            <Text style={styles.pricingLabel}>{t('ordersDetailDeliveryFee')}</Text>
             <Text style={styles.pricingValue}>{formatRestaurantCurrency(order.pricing.deliveryFee)}</Text>
           </View>
           {order.pricing.tax > 0 ? (
             <View style={styles.pricingRow}>
-              <Text style={styles.pricingLabel}>Tax</Text>
+              <Text style={styles.pricingLabel}>{t('ordersDetailTax')}</Text>
               <Text style={styles.pricingValue}>{formatRestaurantCurrency(order.pricing.tax)}</Text>
             </View>
           ) : null}
           <View style={styles.pricingDivider} />
           <View style={styles.pricingRow}>
-            <Text style={styles.pricingTotal}>TOTAL</Text>
+            <Text style={styles.pricingTotal}>{t('ordersDetailTotal')}</Text>
             <Text style={styles.pricingTotalValue}>{formatRestaurantCurrency(order.pricing.total)}</Text>
           </View>
         </View>
 
         <View style={styles.modalSection}>
-          <Text style={styles.modalSectionLabel}>CUSTOMER</Text>
+          <Text style={styles.modalSectionLabel}>{t('ordersDetailCustomer')}</Text>
           <View style={styles.customerCard}>
             <View style={styles.customerAvatar}>
               <Text style={styles.customerInitial}>
-                {order.customer?.name?.[0]?.toUpperCase() ?? 'C'}
+                {(order.customer?.name || t('ordersCustomerFallback'))[0].toUpperCase()}
               </Text>
             </View>
             <View>
-              <Text style={styles.customerName2}>{order.customer?.name ?? 'Customer'}</Text>
+              <Text style={styles.customerName2}>{order.customer?.name ?? t('ordersCustomerFallback')}</Text>
               <Text style={styles.customerEmail}>{order.customer?.email ?? ''}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.modalSection}>
-          <Text style={styles.modalSectionLabel}>DELIVERY ADDRESS</Text>
+          <Text style={styles.modalSectionLabel}>{t('ordersDetailAddress')}</Text>
           <Text style={styles.addressText}>
             {order.deliveryAddress.street}, {order.deliveryAddress.city} {order.deliveryAddress.zipCode}
           </Text>
           {order.deliveryAddress.instructions ? (
             <View style={styles.driverNote}>
-              <Text style={styles.driverNoteLabel}>DRIVER NOTE</Text>
+              <Text style={styles.driverNoteLabel}>{t('ordersDetailDriverNote')}</Text>
               <Text style={styles.driverNoteText}>{order.deliveryAddress.instructions}</Text>
             </View>
           ) : null}
@@ -120,7 +128,7 @@ export default function OrderDetailModal({ order, onClose, onStatusUpdate }: Ord
                 onClose();
               }}
             >
-              <Text style={styles.modalActionBtnText}>{nextAction.label}</Text>
+              <Text style={styles.modalActionBtnText}>{t(nextAction.labelKey)}</Text>
             </TouchableOpacity>
           </View>
         ) : null}

@@ -1,8 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useAppThemeColors } from '@/constants/theme';
+import { useRestaurantLocale, useRestaurantT } from '@/constants/restaurantStrings';
+import {
+  ReviewLabelsProvider,
+  type ReviewLabels,
+} from '@/components/molecules/ReviewCard/ReviewLabels';
 import {
   getRestaurantPushRoute,
   registerRestaurantPushNotifications,
@@ -15,6 +20,24 @@ function openFromNotification(response: Notifications.NotificationResponse) {
 
 export default function RestaurantLayout() {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
+  const locale = useRestaurantLocale();
+
+  const reviewLabels = useMemo<ReviewLabels>(
+    () => ({
+      justNow: t('justNow'),
+      minutesAgo: (count) => t('minutesAgo', { count }),
+      hoursAgo: (count) => t('hoursAgo', { count }),
+      daysAgo: (count) => t('daysAgo', { count }),
+      locale,
+      recentReviews: t('recentReviews'),
+      seeAll: t('seeAll'),
+      noReviews: t('noReviews'),
+      loadFailed: t('reviewsLoadFailed'),
+      retry: t('retry'),
+    }),
+    [t, locale],
+  );
 
   useEffect(() => {
     registerRestaurantPushNotifications();
@@ -35,14 +58,16 @@ export default function RestaurantLayout() {
   }, []);
 
   return (
-    <View style={[styles.flex, { backgroundColor: c.screenBackground }]}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: c.screenBackground },
-        }}
-      />
-    </View>
+    <ReviewLabelsProvider value={reviewLabels}>
+      <View style={[styles.flex, { backgroundColor: c.screenBackground }]}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: c.screenBackground },
+          }}
+        />
+      </View>
+    </ReviewLabelsProvider>
   );
 }
 

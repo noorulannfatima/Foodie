@@ -22,7 +22,9 @@ import {
 } from '@/components/pages/payouts';
 import PayoutAccountForm from './PayoutAccountForm';
 import PayoutDetail from './PayoutDetail';
+import { useRestaurantLocale, useRestaurantT } from '@/constants/restaurantStrings';
 import { usePayoutsStyles } from './usePayoutsStyles';
+import { orderCountLabel, payoutStatusLabel, settlementLabels } from './payoutLabels';
 
 export interface PayoutsBillingModalProps {
   onClose: () => void;
@@ -33,6 +35,8 @@ type View_ = { name: 'home' } | { name: 'account' } | { name: 'payout'; id: stri
 
 export default function PayoutsBillingModal({ onClose }: PayoutsBillingModalProps) {
   const { styles, colors } = usePayoutsStyles();
+  const t = useRestaurantT();
+  const locale = useRestaurantLocale();
   const [view, setView] = useState<View_>({ name: 'home' });
   const [summary, setSummary] = useState<RestaurantPayoutSummary | null>(null);
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -104,10 +108,10 @@ export default function PayoutsBillingModal({ onClose }: PayoutsBillingModalProp
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={8}>
+        <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t('close')} hitSlop={8}>
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Payouts & Billing</Text>
+        <Text style={styles.title}>{t('payoutsTitle')}</Text>
         <View style={styles.headerSide} />
       </View>
 
@@ -136,7 +140,7 @@ export default function PayoutsBillingModal({ onClose }: PayoutsBillingModalProp
               />
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Payout account</Text>
+                <Text style={styles.sectionTitle}>{t('payoutsAccountSection')}</Text>
                 <AccountCard
                   account={summary.payoutAccount}
                   onEdit={() => setView({ name: 'account' })}
@@ -144,25 +148,22 @@ export default function PayoutsBillingModal({ onClose }: PayoutsBillingModalProp
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>How payouts work</Text>
+                <Text style={styles.sectionTitle}>{t('payoutsHowItWorks')}</Text>
                 <View style={[styles.card, { gap: 10 }]}>
-                  <InfoLine icon="pricetag-outline" text={`Foodie's commission is ${formatPercent(summary.commissionRate)} of each order's food subtotal.`} />
-                  <InfoLine icon="card-outline" text={`Online orders have a ${formatPercent(summary.paymentFeeRate)} payment processing fee.`} />
-                  <InfoLine icon="cash-outline" text="For cash orders you keep the cash, so their commission is taken from your online earnings." />
-                  <InfoLine icon="bicycle-outline" text="Delivery fees and rider tips aren't part of your payout." />
+                  <InfoLine icon="pricetag-outline" text={t('payoutsInfoCommission', { rate: formatPercent(summary.commissionRate) })} />
+                  <InfoLine icon="card-outline" text={t('payoutsInfoFee', { rate: formatPercent(summary.paymentFeeRate) })} />
+                  <InfoLine icon="cash-outline" text={t('payoutsInfoCash')} />
+                  <InfoLine icon="bicycle-outline" text={t('payoutsInfoDelivery')} />
                 </View>
               </View>
             </>
           ) : null}
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Payout history</Text>
+            <Text style={styles.sectionTitle}>{t('payoutsHistory')}</Text>
             {payouts.length === 0 ? (
               <View style={styles.card}>
-                <Text style={styles.body}>
-                  No payouts yet. Delivered orders are settled into a payout periodically, and each one
-                  will appear here.
-                </Text>
+                <Text style={styles.body}>{t('payoutsHistoryEmpty')}</Text>
               </View>
             ) : (
               <View style={[styles.card, { paddingVertical: 4 }]}>
@@ -178,14 +179,14 @@ export default function PayoutsBillingModal({ onClose }: PayoutsBillingModalProp
                     ]}
                   >
                     <View style={{ flexShrink: 1, gap: 4 }}>
-                      <Text style={styles.rowTitle}>{formatPeriod(p.periodStart, p.periodEnd)}</Text>
-                      <Text style={styles.rowSub}>{p.orderCount} orders</Text>
+                      <Text style={styles.rowTitle}>{formatPeriod(p.periodStart, p.periodEnd, locale)}</Text>
+                      <Text style={styles.rowSub}>{orderCountLabel(p.orderCount, t)}</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
                       <Text style={[styles.amount, p.netAmount < 0 && styles.negative]}>
                         {formatPKR(p.netAmount)}
                       </Text>
-                      <StatusBadge status={p.status} />
+                      <StatusBadge status={p.status} label={payoutStatusLabel(p.status, t)} />
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -200,7 +201,7 @@ export default function PayoutsBillingModal({ onClose }: PayoutsBillingModalProp
                 {loadingMore ? (
                   <ActivityIndicator color={colors.primary} size="small" />
                 ) : (
-                  <Text style={styles.linkBtnText}>Show older payouts</Text>
+                  <Text style={styles.linkBtnText}>{t('payoutsShowOlder')}</Text>
                 )}
               </TouchableOpacity>
             ) : null}
@@ -221,19 +222,23 @@ function BalanceCard({
   onToggleBreakdown: () => void;
 }) {
   const { styles, colors } = usePayoutsStyles();
+  const t = useRestaurantT();
+  const locale = useRestaurantLocale();
   const { unsettled, processing, lastPaid } = summary;
   const owes = unsettled.netAmount < 0;
 
   return (
     <View style={styles.card}>
-      <Text style={styles.rowSub}>{owes ? 'You owe Foodie' : 'Upcoming earnings'}</Text>
+      <Text style={styles.rowSub}>{owes ? t('payoutsYouOwe') : t('payoutsUpcoming')}</Text>
       <Text style={[styles.amount, { fontSize: 30, marginTop: 4 }, owes && styles.negative]}>
         {formatPKR(Math.abs(unsettled.netAmount))}
       </Text>
       <Text style={styles.rowSub}>
         {unsettled.orderCount === 0
-          ? 'No delivered orders waiting to be settled'
-          : `From ${unsettled.orderCount} delivered order${unsettled.orderCount === 1 ? '' : 's'} not yet in a payout`}
+          ? t('payoutsNoUnsettled')
+          : unsettled.orderCount === 1
+            ? t('payoutsUnsettledFromOne')
+            : t('payoutsUnsettledFrom', { count: unsettled.orderCount })}
       </Text>
 
       {unsettled.orderCount > 0 ? (
@@ -243,7 +248,7 @@ function BalanceCard({
             onPress={onToggleBreakdown}
             accessibilityState={{ expanded: showBreakdown }}
           >
-            <Text style={styles.linkBtnText}>{showBreakdown ? 'Hide breakdown' : 'See breakdown'}</Text>
+            <Text style={styles.linkBtnText}>{showBreakdown ? t('payoutsHideBreakdown') : t('payoutsSeeBreakdown')}</Text>
             <Ionicons name={showBreakdown ? 'chevron-up' : 'chevron-down'} size={16} color={colors.primary} />
           </TouchableOpacity>
           {showBreakdown ? (
@@ -252,6 +257,7 @@ function BalanceCard({
                 settlement={unsettled}
                 commissionRate={summary.commissionRate}
                 perspective="restaurant"
+                labels={settlementLabels(t)}
               />
             </View>
           ) : null}
@@ -262,7 +268,9 @@ function BalanceCard({
       {processing.count > 0 ? (
         <View style={[styles.row, { paddingVertical: 4 }]}>
           <Text style={styles.body}>
-            Processing ({processing.count} payout{processing.count === 1 ? '' : 's'})
+            {processing.count === 1
+              ? t('payoutsProcessingCountOne')
+              : t('payoutsProcessingCount', { count: processing.count })}
           </Text>
           <Text style={[styles.rowTitle, processing.amount < 0 && styles.negative]}>
             {formatPKR(processing.amount)}
@@ -272,7 +280,8 @@ function BalanceCard({
       {lastPaid ? (
         <View style={[styles.row, { paddingVertical: 4 }]}>
           <Text style={styles.body}>
-            Last payout{lastPaid.paidAt ? ` · ${formatShortDate(lastPaid.paidAt)}` : ''}
+            {t('payoutsLastPayout')}
+            {lastPaid.paidAt ? ` · ${formatShortDate(lastPaid.paidAt, locale)}` : ''}
           </Text>
           <Text style={styles.rowTitle}>{formatPKR(lastPaid.netAmount)}</Text>
         </View>
@@ -283,20 +292,18 @@ function BalanceCard({
 
 function AccountCard({ account, onEdit }: { account: PayoutAccount | null; onEdit: () => void }) {
   const { styles, colors } = usePayoutsStyles();
+  const t = useRestaurantT();
 
   if (!account) {
     return (
       <View style={[styles.card, { gap: 12 }]}>
         <View style={[styles.row, { justifyContent: 'flex-start', alignItems: 'flex-start' }]}>
           <Ionicons name="wallet-outline" size={22} color="#F59E0B" />
-          <Text style={[styles.body, { flex: 1 }]}>
-            Add a bank account or mobile wallet so Foodie can send your earnings. Payouts can't be sent
-            until one is added and verified.
-          </Text>
+          <Text style={[styles.body, { flex: 1 }]}>{t('payoutsAddAccountPrompt')}</Text>
         </View>
         <TouchableOpacity style={styles.primaryBtn} onPress={onEdit}>
           <Ionicons name="add" size={18} color="#FFFFFF" />
-          <Text style={styles.primaryBtnText}>Add payout account</Text>
+          <Text style={styles.primaryBtnText}>{t('payoutsAddAccount')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -305,9 +312,11 @@ function AccountCard({ account, onEdit }: { account: PayoutAccount | null; onEdi
   const isBank = account.method === 'Bank';
   const note =
     account.status === 'Pending'
-      ? 'Foodie is verifying these details. Payouts are sent once they are verified.'
+      ? t('payoutsVerifying')
       : account.status === 'Rejected'
-        ? `Foodie couldn't verify this account${account.rejectionReason ? `: ${account.rejectionReason}` : '.'} Update the details to try again.`
+        ? account.rejectionReason
+          ? t('payoutsRejectedReason', { reason: account.rejectionReason })
+          : t('payoutsRejected')
         : null;
 
   return (
@@ -333,7 +342,7 @@ function AccountCard({ account, onEdit }: { account: PayoutAccount | null; onEdi
             {account.accountTitle} · {maskAccountNumber(isBank ? account.iban : account.mobileNumber)}
           </Text>
         </View>
-        <StatusBadge status={account.status} />
+        <StatusBadge status={account.status} label={payoutStatusLabel(account.status, t)} />
       </View>
       {note ? (
         <Text
@@ -349,7 +358,7 @@ function AccountCard({ account, onEdit }: { account: PayoutAccount | null; onEdi
       <View style={styles.divider} />
       <TouchableOpacity style={styles.linkBtn} onPress={onEdit}>
         <Ionicons name="create-outline" size={16} color={colors.primary} />
-        <Text style={styles.linkBtnText}>Change payout account</Text>
+        <Text style={styles.linkBtnText}>{t('payoutsChangeAccount')}</Text>
       </TouchableOpacity>
     </View>
   );

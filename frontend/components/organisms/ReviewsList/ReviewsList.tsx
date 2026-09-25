@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { ReviewPalette } from '@/components/molecules/ReviewCard/ReviewCard';
 import { createReviewsListStyles } from '@/components/organisms/ReviewsList/ReviewsList.styles';
+import { useReviewLabels } from '@/components/molecules/ReviewCard/ReviewLabels';
 import type { Pagination } from '@/services/api/review.types';
 
 interface ReviewsListProps<T extends { id: string }> {
@@ -31,9 +32,10 @@ export default function ReviewsList<T extends { id: string }>({
   palette,
   ListHeaderComponent,
   contentContainerStyle,
-  emptyMessage = 'No reviews yet',
+  emptyMessage,
 }: ReviewsListProps<T>) {
   const styles = useMemo(() => createReviewsListStyles(palette), [palette]);
+  const labels = useReviewLabels();
 
   const [reviews, setReviews] = useState<T[]>([]);
   const [page, setPage] = useState(1);
@@ -57,7 +59,7 @@ export default function ReviewsList<T extends { id: string }>({
       setError(null);
     } catch (err) {
       if (id !== requestId.current) return;
-      setError(err instanceof Error ? err.message : 'Could not load reviews');
+      setError(err instanceof Error ? err.message : '');
     } finally {
       if (id === requestId.current) {
         setInitialLoading(false);
@@ -110,13 +112,13 @@ export default function ReviewsList<T extends { id: string }>({
         </View>
       );
     }
-    if (error) {
+    if (error !== null) {
       return (
         <View style={styles.state}>
           <Ionicons name="alert-circle-outline" size={32} color={palette.muted} />
-          <Text style={styles.stateText}>{error}</Text>
+          <Text style={styles.stateText}>{error || labels.loadFailed}</Text>
           <Pressable style={styles.retryBtn} onPress={onRetry} accessibilityRole="button">
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text style={styles.retryBtnText}>{labels.retry}</Text>
           </Pressable>
         </View>
       );
@@ -124,7 +126,7 @@ export default function ReviewsList<T extends { id: string }>({
     return (
       <View style={styles.state}>
         <Ionicons name="star-outline" size={32} color={palette.muted} />
-        <Text style={styles.stateText}>{emptyMessage}</Text>
+        <Text style={styles.stateText}>{emptyMessage ?? labels.noReviews}</Text>
       </View>
     );
   };

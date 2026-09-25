@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react';
 import type { Ionicons } from '@expo/vector-icons';
+import type { RestaurantStringKey } from '@/constants/restaurantStrings';
 
 // Mirrors RESTAURANT_NOTIFICATION_KEYS on backend/src/models/restaurant.ts — keep both in sync.
 export type NotificationPreferenceKey =
@@ -29,84 +30,84 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
 
 export interface NotificationPreferenceRow {
   key: NotificationPreferenceKey;
-  label: string;
-  hint: string;
+  labelKey: RestaurantStringKey;
+  hintKey: RestaurantStringKey;
   icon: ComponentProps<typeof Ionicons>['name'];
 }
 
 export const NOTIFICATION_PREFERENCE_SECTIONS: ReadonlyArray<{
-  title: string;
-  description: string;
+  titleKey: RestaurantStringKey;
+  descriptionKey: RestaurantStringKey;
   rows: ReadonlyArray<NotificationPreferenceRow>;
 }> = [
   {
-    title: 'Order alerts',
-    description: 'Stay on top of the kitchen pipeline',
+    titleKey: 'profileNotifOrderAlerts',
+    descriptionKey: 'profileNotifOrderAlertsDesc',
     rows: [
       {
         key: 'newOrders',
-        label: 'New orders',
-        hint: 'Alert me the moment a customer places an order',
+        labelKey: 'profileNotifNewOrders',
+        hintKey: 'profileNotifNewOrdersHint',
         icon: 'receipt-outline',
       },
       {
         key: 'orderCancellations',
-        label: 'Cancellations',
-        hint: 'When a customer or rider cancels an order',
+        labelKey: 'profileNotifCancellations',
+        hintKey: 'profileNotifCancellationsHint',
         icon: 'close-circle-outline',
       },
     ],
   },
   {
-    title: 'Business',
-    description: 'Feedback and money matters',
+    titleKey: 'profileNotifBusiness',
+    descriptionKey: 'profileNotifBusinessDesc',
     rows: [
       {
         key: 'reviews',
-        label: 'Reviews & ratings',
-        hint: 'When customers leave a new review',
+        labelKey: 'profileNotifReviews',
+        hintKey: 'profileNotifReviewsHint',
         icon: 'star-outline',
       },
       {
         key: 'payouts',
-        label: 'Payouts',
-        hint: 'Payout confirmations and billing notices',
+        labelKey: 'profileNotifPayouts',
+        hintKey: 'profileNotifPayoutsHint',
         icon: 'wallet-outline',
       },
       {
         key: 'weeklySummary',
-        label: 'Weekly summary',
-        hint: 'Orders, revenue and ratings recap every Monday',
+        labelKey: 'profileNotifWeeklySummary',
+        hintKey: 'profileNotifWeeklySummaryHint',
         icon: 'stats-chart-outline',
       },
       {
         key: 'marketing',
-        label: 'Tips & promotions',
-        hint: 'Growth tips and Foodie promotional campaigns',
+        labelKey: 'profileNotifMarketing',
+        hintKey: 'profileNotifMarketingHint',
         icon: 'megaphone-outline',
       },
     ],
   },
   {
-    title: 'Delivery channels',
-    description: 'Where we reach you',
+    titleKey: 'profileNotifChannels',
+    descriptionKey: 'profileNotifChannelsDesc',
     rows: [
       {
         key: 'push',
-        label: 'Push notifications',
-        hint: 'On this device',
+        labelKey: 'profileNotifPush',
+        hintKey: 'profileNotifPushHint',
         icon: 'phone-portrait-outline',
       },
       {
         key: 'email',
-        label: 'Email',
-        hint: 'Coming soon — sent to your restaurant account email',
+        labelKey: 'profileNotifEmail',
+        hintKey: 'profileNotifEmailHint',
         icon: 'mail-outline',
       },
       {
         key: 'sms',
-        label: 'SMS',
-        hint: 'Coming soon — text messages to your restaurant phone',
+        labelKey: 'profileNotifSms',
+        hintKey: 'profileNotifSmsHint',
         icon: 'chatbubble-outline',
       },
     ],

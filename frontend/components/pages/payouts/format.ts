@@ -5,12 +5,12 @@ export function formatPKR(amount: number): string {
   return formatCurrency(amount);
 }
 
-export function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+export function formatShortDate(iso: string, locale = 'en-GB'): string {
+  return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
-export function formatPeriod(start: string, end: string): string {
-  return `${formatShortDate(start)} – ${formatShortDate(end)}`;
+export function formatPeriod(start: string, end: string, locale?: string): string {
+  return `${formatShortDate(start, locale)} – ${formatShortDate(end, locale)}`;
 }
 
 /** Shows the last 4 characters only, e.g. `•••• 7890`. */

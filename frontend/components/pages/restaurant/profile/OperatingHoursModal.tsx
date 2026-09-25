@@ -12,8 +12,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { Switch } from '@/components/atoms';
+import { useRestaurantT, type RestaurantStringKey } from '@/constants/restaurantStrings';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+
+const DAY_LABEL_KEYS: Record<(typeof DAYS)[number], RestaurantStringKey> = {
+  monday: 'profileDayMonday',
+  tuesday: 'profileDayTuesday',
+  wednesday: 'profileDayWednesday',
+  thursday: 'profileDayThursday',
+  friday: 'profileDayFriday',
+  saturday: 'profileDaySaturday',
+  sunday: 'profileDaySunday',
+};
 
 export type OperatingHoursState = Record<string, { open: string; close: string; isClosed: boolean }>;
 
@@ -25,6 +36,7 @@ export interface OperatingHoursModalProps {
 
 export default function OperatingHoursModal({ hours, onClose, onSave }: OperatingHoursModalProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   const [editHours, setEditHours] = useState({ ...hours });
   const [saving, setSaving] = useState(false);
@@ -51,12 +63,12 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose}>
+        <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t('close')}>
           <Ionicons name="close" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Operating Hours</Text>
+        <Text style={styles.title}>{t('profileOperatingHoursTitle')}</Text>
         <TouchableOpacity onPress={handleSave} disabled={saving}>
-          <Text style={[styles.saveText, saving && { opacity: 0.5 }]}>{saving ? 'Saving...' : 'Save'}</Text>
+          <Text style={[styles.saveText, saving && { opacity: 0.5 }]}>{saving ? t('saving') : t('save')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -64,9 +76,9 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
         {DAYS.map((day) => (
           <View key={day} style={styles.dayRow}>
             <View style={styles.dayInfo}>
-              <Text style={styles.dayName}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
+              <Text style={styles.dayName}>{t(DAY_LABEL_KEYS[day])}</Text>
               <View style={styles.closedRow}>
-                <Text style={styles.closedLabel}>Closed</Text>
+                <Text style={styles.closedLabel}>{t('profileClosed')}</Text>
                 <Switch
                   value={editHours[day]?.isClosed ?? false}
                   onValueChange={(val) => updateDay(day, 'isClosed', val)}
@@ -82,7 +94,7 @@ export default function OperatingHoursModal({ hours, onClose, onSave }: Operatin
                   placeholder="09:00"
                   placeholderTextColor={c.muted}
                 />
-                <Text style={styles.timeSep}>to</Text>
+                <Text style={styles.timeSep}>{t('profileTimeTo')}</Text>
                 <TextInput
                   style={styles.timeInput}
                   value={editHours[day]?.close ?? '22:00'}

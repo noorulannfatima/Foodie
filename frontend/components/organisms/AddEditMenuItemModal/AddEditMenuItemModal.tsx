@@ -16,7 +16,8 @@ import { pickAndUploadImage } from '@/services/api/upload.api';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { MenuItem } from '@/stores/restaurantStore';
-import { SPICE_LEVELS } from './constants';
+import { useRestaurantT } from '@/constants/restaurantStrings';
+import { SPICE_LEVELS, spiceLevelLabel } from './constants';
 
 export interface AddEditMenuItemModalProps {
   item: MenuItem | null;
@@ -33,6 +34,7 @@ export default function AddEditMenuItemModal({
 }: AddEditMenuItemModalProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const t = useRestaurantT();
   const [name, setName] = useState(item?.name ?? '');
   const [description, setDescription] = useState(item?.description ?? '');
   const [price, setPrice] = useState(item?.price?.toString() ?? '');
@@ -48,7 +50,7 @@ export default function AddEditMenuItemModal({
 
   const pickImage = async () => {
     if (images.length >= 3) {
-      Alert.alert('Limit Reached', 'You can only add up to 3 images per item');
+      Alert.alert(t('menuLimitReachedTitle'), t('menuLimitReachedMessage'));
       return;
     }
 
@@ -60,7 +62,7 @@ export default function AddEditMenuItemModal({
       if (url) setImages((prev) => [...prev, url]);
     } catch (error: any) {
       console.error('❌ Image upload error:', error);
-      Alert.alert('Upload Failed', error.message || 'Failed to upload image');
+      Alert.alert(t('menuUploadFailedTitle'), error.message || t('menuUploadFailed'));
     } finally {
       setPickingImage(false);
     }
@@ -72,12 +74,12 @@ export default function AddEditMenuItemModal({
 
   const handleSave = async () => {
     if (!name.trim() || !description.trim() || !price || !category) {
-      Alert.alert('Validation', 'Please fill in name, description, price, and category.');
+      Alert.alert(t('menuValidationTitle'), t('menuValidationFields'));
       return;
     }
 
     if (images.length === 0) {
-      Alert.alert('Validation', 'Please add at least one image for the menu item.');
+      Alert.alert(t('menuValidationTitle'), t('menuValidationImage'));
       return;
     }
 
@@ -107,7 +109,7 @@ export default function AddEditMenuItemModal({
       console.log('✅ Menu item saved successfully');
     } catch (error: any) {
       console.error('❌ Save error:', error);
-      Alert.alert('Error', error.message || 'Failed to save menu item');
+      Alert.alert(t('error'), error.message || t('menuSaveMenuItemFailed'));
     } finally {
       setSaving(false);
     }
@@ -122,7 +124,7 @@ export default function AddEditMenuItemModal({
         <TouchableOpacity onPress={onClose} disabled={saving || pickingImage}>
           <Ionicons name="arrow-back" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{item ? 'Edit Item' : 'Add Item'}</Text>
+        <Text style={styles.headerTitle}>{item ? t('menuEditItem') : t('menuAddItem')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -130,7 +132,7 @@ export default function AddEditMenuItemModal({
         {/* Images Section */}
         <View style={styles.imagesSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>DISH IMAGES</Text>
+            <Text style={styles.sectionTitle}>{t('menuDishImages')}</Text>
             <Text style={styles.imageCount}>
               {images.length}/3
             </Text>
@@ -147,6 +149,8 @@ export default function AddEditMenuItemModal({
                   <TouchableOpacity
                     style={styles.removeImageButton}
                     onPress={() => removeImage(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('menuRemoveImageA11y')}
                     disabled={saving || pickingImage}
                   >
                     <Ionicons name="trash" size={16} color="#FFFFFF" />
@@ -165,7 +169,7 @@ export default function AddEditMenuItemModal({
                   ) : (
                     <View style={styles.addImageContent}>
                       <Ionicons name="add" size={32} color={c.primary} />
-                      <Text style={styles.addImageText}>Add Image</Text>
+                      <Text style={styles.addImageText}>{t('menuAddImage')}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -182,8 +186,8 @@ export default function AddEditMenuItemModal({
               ) : (
                 <>
                   <Ionicons name="camera-outline" size={40} color={c.primary} />
-                  <Text style={styles.imageLabel}>Tap to Upload Dish Image</Text>
-                  <Text style={styles.imageHint}>High-resolution JPG or PNG. Max 5MB.</Text>
+                  <Text style={styles.imageLabel}>{t('menuTapToUpload')}</Text>
+                  <Text style={styles.imageHint}>{t('menuImageHint')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -192,23 +196,24 @@ export default function AddEditMenuItemModal({
           <View style={styles.proTip}>
             <View style={styles.proTipHeader}>
               <Ionicons name="bulb" size={16} color={c.primary} />
-              <Text style={styles.proTipTitle}>Pro Tip</Text>
+              <Text style={styles.proTipTitle}>{t('menuProTip')}</Text>
             </View>
             <Text style={styles.proTipText}>
-              Items with high-quality, bright photography see a{' '}
-              <Text style={styles.proTipHighlight}>24% increase</Text> in orders.
+              {t('menuProTipBefore')}
+              <Text style={styles.proTipHighlight}>{t('menuProTipHighlight')}</Text>
+              {t('menuProTipAfter')}
             </Text>
           </View>
         </View>
 
         {/* Item Details Section */}
         <View style={styles.detailsSection}>
-          <Text style={styles.sectionTitle}>ITEM DETAILS</Text>
+          <Text style={styles.sectionTitle}>{t('menuItemDetails')}</Text>
 
-          <Text style={styles.fieldLabel}>ITEM NAME</Text>
+          <Text style={styles.fieldLabel}>{t('menuItemName')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. Truffle Infused Tagliatelle"
+            placeholder={t('menuItemNamePlaceholder')}
             value={name}
             onChangeText={setName}
             placeholderTextColor={c.muted}
@@ -217,7 +222,7 @@ export default function AddEditMenuItemModal({
 
           <View style={styles.row}>
             <View style={styles.halfField}>
-              <Text style={styles.fieldLabel}>PRICE (RS.)</Text>
+              <Text style={styles.fieldLabel}>{t('menuPriceLabel')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="0.00"
@@ -229,7 +234,7 @@ export default function AddEditMenuItemModal({
               />
             </View>
             <View style={styles.halfField}>
-              <Text style={styles.fieldLabel}>PREP TIME (min)</Text>
+              <Text style={styles.fieldLabel}>{t('menuPrepTimeLabel')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="15"
@@ -242,7 +247,7 @@ export default function AddEditMenuItemModal({
             </View>
           </View>
 
-          <Text style={styles.fieldLabel}>CATEGORY</Text>
+          <Text style={styles.fieldLabel}>{t('menuCategoryLabel')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -267,10 +272,10 @@ export default function AddEditMenuItemModal({
             ))}
           </ScrollView>
 
-          <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+          <Text style={styles.fieldLabel}>{t('menuDescriptionLabel')}</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            placeholder="Describe the flavors, ingredients, and preparation method..."
+            placeholder={t('menuDescriptionPlaceholder')}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -279,7 +284,7 @@ export default function AddEditMenuItemModal({
             editable={!saving}
           />
 
-          <Text style={styles.fieldLabel}>SPICE LEVEL</Text>
+          <Text style={styles.fieldLabel}>{t('menuSpiceLevelLabel')}</Text>
           <View style={styles.optionRow}>
             {SPICE_LEVELS.map((level) => (
               <TouchableOpacity
@@ -294,13 +299,13 @@ export default function AddEditMenuItemModal({
                     spiceLevel === level && styles.optionChipTextActive,
                   ]}
                 >
-                  {level}
+                  {spiceLevelLabel(level, t)}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={styles.fieldLabel}>DIETARY TAGS</Text>
+          <Text style={styles.fieldLabel}>{t('menuDietaryTags')}</Text>
           <View style={styles.optionRow}>
             <TouchableOpacity
               style={[styles.dietChip, isVegetarian && styles.dietChipActive]}
@@ -308,7 +313,7 @@ export default function AddEditMenuItemModal({
               disabled={saving}
             >
               <Text style={[styles.dietChipText, isVegetarian && styles.dietChipTextActive]}>
-                Vegetarian
+                {t('menuVegetarian')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -317,7 +322,7 @@ export default function AddEditMenuItemModal({
               disabled={saving}
             >
               <Text style={[styles.dietChipText, isGlutenFree && styles.dietChipTextActive]}>
-                Gluten-Free
+                {t('menuGlutenFree')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -326,7 +331,7 @@ export default function AddEditMenuItemModal({
               disabled={saving}
             >
               <Text style={[styles.dietChipText, isVegan && styles.dietChipTextActive]}>
-                Vegan
+                {t('menuVegan')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -343,7 +348,7 @@ export default function AddEditMenuItemModal({
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={20} color="#fff" />
-              <Text style={styles.saveBtnText}>Save Item</Text>
+              <Text style={styles.saveBtnText}>{t('menuSaveItem')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -353,7 +358,7 @@ export default function AddEditMenuItemModal({
           onPress={onClose}
           disabled={saving || pickingImage}
         >
-          <Text style={styles.cancelLinkText}>Cancel & Discard Changes</Text>
+          <Text style={styles.cancelLinkText}>{t('menuCancelDiscard')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

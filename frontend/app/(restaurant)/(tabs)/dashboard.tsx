@@ -15,12 +15,14 @@ import {
 } from '@/components/pages/restaurant/dashboard';
 import { RecentReviewsSection, type RecentReview } from '@/components/pages/reviews';
 import type { ReviewPalette } from '@/components/molecules/ReviewCard/ReviewCard';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import { restaurantAPI } from '@/services/api/restaurant.api';
 
 export default function RestaurantDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const Colors = useAppThemeColors();
+  const t = useRestaurantT();
   const { dashboard, dashboardLoading, fetchDashboard, toggleActive } = useRestaurantStore();
   const [recentReviews, setRecentReviews] = useState<RecentReview[] | null>(null);
 
@@ -122,14 +124,14 @@ export default function RestaurantDashboard() {
           formatCurrency={formatRestaurantCurrency}
         />
 
-        <Text style={styles.sectionTitle}>Recent Orders</Text>
+        <Text style={styles.sectionTitle}>{t('dashRecentOrders')}</Text>
         {dashboard?.recentOrders && dashboard.recentOrders.length > 0 ? (
           dashboard.recentOrders.map((order: OrderItem) => (
             <DashboardRecentOrderCard
               key={order._id}
               order={order}
               formatCurrency={formatRestaurantCurrency}
-              timeAgo={getOrderTimeAgo(order.createdAt)}
+              timeAgo={getOrderTimeAgo(order.createdAt, t)}
               onPress={() => router.push('/(restaurant)/(tabs)/orders')}
             />
           ))

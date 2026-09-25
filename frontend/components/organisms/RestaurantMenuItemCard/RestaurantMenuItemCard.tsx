@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { MenuItem } from '@/stores/restaurantStore';
 import { MenuItemTag, Switch } from '@/components/atoms';
+import { useRestaurantT } from '@/constants/restaurantStrings';
+import { spiceLevelLabel } from '../AddEditMenuItemModal/constants';
 
 export interface RestaurantMenuItemCardProps {
   item: MenuItem;
@@ -22,6 +24,7 @@ export default function RestaurantMenuItemCard({
 }: RestaurantMenuItemCardProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const t = useRestaurantT();
   return (
     <View style={styles.menuCard}>
       {item.image && item.image.length > 0 && (
@@ -30,10 +33,10 @@ export default function RestaurantMenuItemCard({
 
       <View style={styles.menuCardBody}>
         <View style={styles.menuCardTags}>
-          {item.isVegetarian && <MenuItemTag label="VEG" />}
-          {item.isVegan && <MenuItemTag label="VEGAN" />}
-          {item.isGlutenFree && <MenuItemTag label="GF" />}
-          {!item.isAvailable && <MenuItemTag label="UNAVAILABLE" variant="danger" />}
+          {item.isVegetarian && <MenuItemTag label={t('menuTagVeg')} />}
+          {item.isVegan && <MenuItemTag label={t('menuTagVegan')} />}
+          {item.isGlutenFree && <MenuItemTag label={t('menuTagGlutenFree')} />}
+          {!item.isAvailable && <MenuItemTag label={t('menuTagUnavailable')} variant="danger" />}
         </View>
 
         <View style={styles.menuCardRow}>
@@ -50,17 +53,17 @@ export default function RestaurantMenuItemCard({
         <View style={styles.menuCardMeta}>
           <View style={styles.metaItem}>
             <Ionicons name="time-outline" size={14} color={c.muted} />
-            <Text style={styles.metaItemText}>{item.preparationTime}m</Text>
+            <Text style={styles.metaItemText}>{t('menuPrepMinutes', { count: item.preparationTime })}</Text>
           </View>
           {item.calories ? (
             <View style={styles.metaItem}>
               <Ionicons name="flame-outline" size={14} color={c.muted} />
-              <Text style={styles.metaItemText}>{item.calories} cal</Text>
+              <Text style={styles.metaItemText}>{t('menuCalories', { count: item.calories })}</Text>
             </View>
           ) : null}
           {item.spiceLevel ? (
             <View style={styles.metaItem}>
-              <Text style={styles.metaItemText}>{item.spiceLevel}</Text>
+              <Text style={styles.metaItemText}>{spiceLevelLabel(item.spiceLevel, t)}</Text>
             </View>
           ) : null}
         </View>
@@ -68,9 +71,14 @@ export default function RestaurantMenuItemCard({
         <View style={styles.menuCardActions}>
           <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
             <Ionicons name="pencil" size={14} color={c.primary} />
-            <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={styles.editBtnText}>{t('menuEdit')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={onDelete}
+            accessibilityRole="button"
+            accessibilityLabel={t('menuDeleteA11y')}
+          >
             <Ionicons name="trash-outline" size={18} color={c.muted} />
           </TouchableOpacity>
           <View style={styles.availSwitch}>

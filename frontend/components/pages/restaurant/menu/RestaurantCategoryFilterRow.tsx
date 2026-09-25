@@ -3,6 +3,10 @@ import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, type AppColors } from '@/constants/theme';
 import { RestaurantFilterPill } from '@/components/molecules';
+import { useRestaurantT } from '@/constants/restaurantStrings';
+
+/** Filter value meaning "no category filter"; shown as the translated "All Items". */
+export const ALL_CATEGORIES = '__all__';
 
 export interface RestaurantCategoryFilterRowProps {
   categoryLabels: string[];
@@ -19,6 +23,7 @@ export default function RestaurantCategoryFilterRow({
 }: RestaurantCategoryFilterRowProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const t = useRestaurantT();
   return (
     <ScrollView
       horizontal
@@ -29,12 +34,17 @@ export default function RestaurantCategoryFilterRow({
       {categoryLabels.map((cat) => (
         <RestaurantFilterPill
           key={cat}
-          label={cat}
+          label={cat === ALL_CATEGORIES ? t('menuAllItems') : cat}
           active={activeCategory === cat}
           onPress={() => onSelectCategory(cat)}
         />
       ))}
-      <TouchableOpacity style={styles.addCategoryPill} onPress={onPressAddCategory}>
+      <TouchableOpacity
+        style={styles.addCategoryPill}
+        onPress={onPressAddCategory}
+        accessibilityRole="button"
+        accessibilityLabel={t('menuAddCategoryA11y')}
+      >
         <Ionicons name="add" size={16} color={c.primary} />
       </TouchableOpacity>
     </ScrollView>

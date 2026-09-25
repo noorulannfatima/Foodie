@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { OrderItem } from '@/stores/restaurantStore';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT, orderStatusLabel } from '@/constants/restaurantStrings';
 import { ORDER_STATUS_COLORS } from '@/components/pages/restaurant/shared/orderStatus';
 
 export interface DashboardRecentOrderCardProps {
@@ -18,6 +19,7 @@ export default function DashboardRecentOrderCard({
   onPress,
 }: DashboardRecentOrderCardProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   const statusTint = ORDER_STATUS_COLORS[order.status] || c.muted;
 
@@ -26,12 +28,14 @@ export default function DashboardRecentOrderCard({
       <View style={styles.orderCardHeader}>
         <Text style={styles.orderNumber}>#{order.orderNumber}</Text>
         <View style={[styles.statusBadge, { backgroundColor: `${statusTint}20` }]}>
-          <Text style={[styles.statusBadgeText, { color: statusTint }]}>{order.status}</Text>
+          <Text style={[styles.statusBadgeText, { color: statusTint }]}>{orderStatusLabel(order.status, t)}</Text>
         </View>
       </View>
-      <Text style={styles.orderCustomer}>{order.customer?.name ?? 'Customer'}</Text>
+      <Text style={styles.orderCustomer}>{order.customer?.name ?? t('dashCustomer')}</Text>
       <View style={styles.orderCardFooter}>
-        <Text style={styles.orderItems}>{order.items.length} items</Text>
+        <Text style={styles.orderItems}>
+          {t(order.items.length === 1 ? 'dashItemsOne' : 'dashItemsOther', { count: order.items.length })}
+        </Text>
         <Text style={styles.orderDot}>•</Text>
         <Text style={styles.orderTotal}>{formatCurrency(order.pricing.total)}</Text>
         <Text style={styles.orderDot}>•</Text>

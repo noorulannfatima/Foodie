@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
-import { STATUS_FILTERS } from './constants';
+import { useRestaurantT } from '@/constants/restaurantStrings';
+import { STATUS_FILTERS, statusFilterLabel } from './constants';
 
 export interface OrderStatusFilterRowProps {
   activeFilter: string;
@@ -10,6 +11,7 @@ export interface OrderStatusFilterRowProps {
 
 export default function OrderStatusFilterRow({ activeFilter, onSelectFilter }: OrderStatusFilterRowProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
     <ScrollView
@@ -24,7 +26,9 @@ export default function OrderStatusFilterRow({ activeFilter, onSelectFilter }: O
           style={[styles.filterChip, activeFilter === filter && styles.filterChipActive]}
           onPress={() => onSelectFilter(filter)}
         >
-          <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>{filter}</Text>
+          <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>
+            {statusFilterLabel(filter, t)}
+          </Text>
         </TouchableOpacity>
       ))}
     </ScrollView>

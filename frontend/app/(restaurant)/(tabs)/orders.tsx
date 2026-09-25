@@ -5,6 +5,7 @@ import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import {
   RestaurantOrdersStatsBar,
   OrderStatusFilterRow,
@@ -17,6 +18,7 @@ import {
 export default function RestaurantOrders() {
   const insets = useSafeAreaInsets();
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
@@ -42,16 +44,16 @@ export default function RestaurantOrders() {
       await updateOrderStatus(orderId, newStatus);
       loadOrders();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update order status';
-      Alert.alert('Error', message);
+      const message = err instanceof Error ? err.message : t('ordersUpdateFailed');
+      Alert.alert(t('error'), message);
     }
   };
 
   const handleDecline = (orderId: string) => {
-    Alert.alert('Decline Order', 'Are you sure you want to decline this order?', [
-      { text: 'No', style: 'cancel' },
+    Alert.alert(t('ordersDeclineTitle'), t('ordersDeclineMessage'), [
+      { text: t('ordersDeclineNo'), style: 'cancel' },
       {
-        text: 'Yes, Decline',
+        text: t('ordersDeclineYes'),
         style: 'destructive',
         onPress: () => handleStatusUpdate(orderId, 'Cancelled'),
       },
@@ -77,7 +79,7 @@ export default function RestaurantOrders() {
       ]}
     >
       <Text style={[styles.pageTitle, { color: c.text }]} accessibilityRole="header">
-        View All Orders
+        {t('ordersPageTitle')}
       </Text>
       <RestaurantOrdersStatsBar
         activeCount={activeCount}

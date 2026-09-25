@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts, tintBg, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { useAppThemeStore } from '@/stores/appThemeStore';
 import { useRestaurantStore } from '@/stores/restaurantStore';
+import { useRestaurantT, type RestaurantStringKey } from '@/constants/restaurantStrings';
 import {
   NOTIFICATION_CHANNEL_KEYS,
   NOTIFICATION_PREFERENCE_SECTIONS,
@@ -25,6 +26,7 @@ export interface NotificationPreferencesModalProps {
 
 export default function NotificationPreferencesModal({ onClose }: NotificationPreferencesModalProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const isDark = useAppThemeStore((s) => s.isDark);
   const styles = useMemo(() => createStyles(c), [c]);
 
@@ -35,7 +37,8 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
   const updateNotificationPreferences = useRestaurantStore((s) => s.updateNotificationPreferences);
 
   const [pendingKeys, setPendingKeys] = useState<Partial<Record<NotificationPreferenceKey, boolean>>>({});
-  const [error, setError] = useState<string | null>(null);
+  // Server message when there is one, else a string key resolved at render so it follows the language
+  const [error, setError] = useState<{ message?: string; key: RestaurantStringKey } | null>(null);
 
   // Show the copy from the profile instantly, then refresh from the server
   const preferences = withNotificationDefaults(storedPreferences ?? profilePreferences);
@@ -44,7 +47,7 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
 
   useEffect(() => {
     fetchNotificationPreferences().catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : 'Failed to load notification preferences');
+      setError({ message: err instanceof Error ? err.message : undefined, key: 'profileNotifLoadFailed' });
     });
   }, [fetchNotificationPreferences]);
 
@@ -54,7 +57,7 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
     try {
       await updateNotificationPreferences({ [key]: value });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update notification preferences');
+      setError({ message: err instanceof Error ? err.message : undefined, key: 'profileNotifUpdateFailed' });
     } finally {
       setPendingKeys((prev) => ({ ...prev, [key]: false }));
     }
@@ -66,12 +69,12 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
         <TouchableOpacity
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('close')}
           hitSlop={8}
         >
           <Ionicons name="close" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Notifications</Text>
+        <Text style={styles.title}>{t('profileNotificationsTitle')}</Text>
         <View style={styles.headerSpacer}>
           {loading && hasLoaded ? <ActivityIndicator size="small" color={c.muted} /> : null}
         </View>
@@ -86,23 +89,21 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
           {error ? (
             <View style={styles.banner}>
               <Ionicons name="alert-circle-outline" size={18} color={c.primary} />
-              <Text style={styles.bannerText}>{error}</Text>
+              <Text style={styles.bannerText}>{error.message || t(error.key)}</Text>
             </View>
           ) : null}
 
           {allChannelsOff ? (
             <View style={[styles.banner, styles.warningBanner]}>
               <Ionicons name="notifications-off-outline" size={18} color="#F59E0B" />
-              <Text style={styles.bannerText}>
-                All channels are off, so you won't receive any alerts — including new orders.
-              </Text>
+              <Text style={styles.bannerText}>{t('profileNotifAllOff')}</Text>
             </View>
           ) : null}
 
           {NOTIFICATION_PREFERENCE_SECTIONS.map((section) => (
-            <View key={section.title} style={styles.section}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <Text style={styles.sectionDescription}>{section.description}</Text>
+            <View key={section.titleKey} style={styles.section}>
+              <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
+              <Text style={styles.sectionDescription}>{t(section.descriptionKey)}</Text>
 
               <View style={styles.card}>
                 {section.rows.map((row, index) => (
@@ -119,8 +120,8 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
                       <Ionicons name={row.icon} size={18} color="#3B82F6" />
                     </View>
                     <View style={styles.rowInfo}>
-                      <Text style={styles.rowLabel}>{row.label}</Text>
-                      <Text style={styles.rowHint}>{row.hint}</Text>
+                      <Text style={styles.rowLabel}>{t(row.labelKey)}</Text>
+                      <Text style={styles.rowHint}>{t(row.hintKey)}</Text>
                     </View>
                     <Switch
                       value={preferences[row.key]}
@@ -128,7 +129,7 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
                       disabled={pendingKeys[row.key]}
                       trackColor={{ false: c.border, true: c.brand }}
                       thumbColor="#FFFFFF"
-                      accessibilityLabel={row.label}
+                      accessibilityLabel={t(row.labelKey)}
                     />
                   </View>
                 ))}
@@ -136,7 +137,7 @@ export default function NotificationPreferencesModal({ onClose }: NotificationPr
             </View>
           ))}
 
-          <Text style={styles.footnote}>Changes are saved automatically.</Text>
+          <Text style={styles.footnote}>{t('profileNotifAutoSave')}</Text>
         </ScrollView>
       )}
     </View>

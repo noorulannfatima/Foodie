@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export interface AddCategoryModalProps {
   categoryName: string;
@@ -17,13 +18,14 @@ export default function AddCategoryModal({
 }: AddCategoryModalProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const t = useRestaurantT();
   return (
     <View style={styles.overlay}>
       <View style={styles.content}>
-        <Text style={styles.title}>Add Category</Text>
+        <Text style={styles.title}>{t('menuAddCategoryTitle')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Category name"
+          placeholder={t('menuCategoryNamePlaceholder')}
           placeholderTextColor={c.muted}
           value={categoryName}
           onChangeText={onChangeCategoryName}
@@ -31,10 +33,10 @@ export default function AddCategoryModal({
         />
         <View style={styles.actions}>
           <TouchableOpacity onPress={onCancel}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <Text style={styles.cancel}>{t('cancel')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.saveBtn} onPress={onAdd}>
-            <Text style={styles.saveText}>Add</Text>
+            <Text style={styles.saveText}>{t('menuAdd')}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -3,10 +3,12 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export default function RestaurantTabsLayout() {
   const insets = useSafeAreaInsets();
   const c = useAppThemeColors();
+  const t = useRestaurantT();
   const bottomPad = Math.max(insets.bottom, 8);
 
   return (
@@ -33,7 +35,7 @@ export default function RestaurantTabsLayout() {
         <Tabs.Screen
           name="dashboard"
           options={{
-            title: 'Dashboard',
+            title: t('tabDashboard'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="grid-outline" size={size} color={color} />
             ),
@@ -42,7 +44,7 @@ export default function RestaurantTabsLayout() {
         <Tabs.Screen
           name="orders"
           options={{
-            title: 'Orders',
+            title: t('tabOrders'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="receipt-outline" size={size} color={color} />
             ),
@@ -51,7 +53,7 @@ export default function RestaurantTabsLayout() {
         <Tabs.Screen
           name="menu"
           options={{
-            title: 'Menu',
+            title: t('tabMenu'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="restaurant-outline" size={size} color={color} />
             ),
@@ -60,7 +62,7 @@ export default function RestaurantTabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
+            title: t('tabProfile'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),

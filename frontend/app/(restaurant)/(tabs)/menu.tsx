@@ -5,6 +5,7 @@ import { useRestaurantStore, MenuItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useAppThemeColors } from '@/constants/theme';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import {
   RestaurantMenuItemCard,
   AddEditMenuItemModal,
@@ -17,12 +18,14 @@ import {
   RestaurantMenuEmptyState,
   RestaurantMenuFab,
   formatMenuCurrency,
+  ALL_CATEGORIES,
 } from '@/components/pages/restaurant/menu';
 
 export default function RestaurantMenu() {
   const insets = useSafeAreaInsets();
   const c = useAppThemeColors();
-  const [activeCategory, setActiveCategory] = useState('All Items');
+  const t = useRestaurantT();
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES);
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [editItem, setEditItem] = useState<MenuItem | null>(null);
   const [addCategoryVisible, setAddCategoryVisible] = useState(false);
@@ -46,10 +49,10 @@ export default function RestaurantMenu() {
   const { refreshing, onRefresh } = usePullToRefresh(fetchMenu);
 
   const categories = menu?.categories ?? [];
-  const allCategoryNames = ['All Items', ...categories.map((c) => c.name)];
+  const allCategoryNames = [ALL_CATEGORIES, ...categories.map((c) => c.name)];
 
   const filteredItems = (menu?.items ?? []).filter((item) => {
-    if (activeCategory === 'All Items') return true;
+    if (activeCategory === ALL_CATEGORIES) return true;
     return item.category === activeCategory;
   });
 
@@ -59,10 +62,10 @@ export default function RestaurantMenu() {
   };
 
   const handleDeleteItem = (itemId: string, itemName: string) => {
-    Alert.alert('Delete Item', `Are you sure you want to delete "${itemName}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('menuDeleteTitle'), t('menuDeleteConfirm', { name: itemName }), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('menuDelete'),
         style: 'destructive',
         onPress: () => deleteMenuItem(itemId),
       },
@@ -76,8 +79,8 @@ export default function RestaurantMenu() {
       setNewCategoryName('');
       setAddCategoryVisible(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to add category';
-      Alert.alert('Error', message);
+      const message = err instanceof Error ? err.message : t('menuAddCategoryFailed');
+      Alert.alert(t('error'), message);
     }
   };
 
@@ -148,8 +151,8 @@ export default function RestaurantMenu() {
               setAddItemVisible(false);
               setEditItem(null);
             } catch (err: unknown) {
-              const message = err instanceof Error ? err.message : 'Failed to save item';
-              Alert.alert('Error', message);
+              const message = err instanceof Error ? err.message : t('menuSaveItemFailed');
+              Alert.alert(t('error'), message);
             }
           }}
         />

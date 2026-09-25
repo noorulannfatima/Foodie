@@ -9,7 +9,40 @@ interface SettlementBreakdownProps {
   commissionRate: number;
   /** Wording of the total: admins pay restaurants, restaurants receive from Foodie. */
   perspective: 'admin' | 'restaurant';
+  /** Overrides the English wording, e.g. with translated text. */
+  labels?: Partial<SettlementBreakdownLabels>;
 }
+
+export interface SettlementBreakdownLabels {
+  onlineSales: string;
+  cashSales: string;
+  /** Receives the formatted rate and gross sales. */
+  commission: (rate: string, gross: string) => string;
+  paymentFees: string;
+  /** Total when the net amount is negative. */
+  owes: string;
+  /** Total when the net amount is positive. */
+  receives: string;
+}
+
+const ENGLISH: Record<SettlementBreakdownProps['perspective'], SettlementBreakdownLabels> = {
+  admin: {
+    onlineSales: 'Online sales',
+    cashSales: 'Cash sales (kept by restaurant)',
+    commission: (rate, gross) => `Commission (${rate} of ${gross})`,
+    paymentFees: 'Online payment fees',
+    owes: 'Restaurant owes Foodie',
+    receives: 'Pay to restaurant',
+  },
+  restaurant: {
+    onlineSales: 'Online sales',
+    cashSales: 'Cash sales (already with you)',
+    commission: (rate, gross) => `Commission (${rate} of ${gross})`,
+    paymentFees: 'Online payment fees',
+    owes: 'You owe Foodie',
+    receives: 'Foodie pays you',
+  },
+};
 
 const NEGATIVE = '#DC2626';
 
@@ -18,6 +51,7 @@ export default function SettlementBreakdown({
   settlement,
   commissionRate,
   perspective,
+  labels,
 }: SettlementBreakdownProps) {
   const c = useAppThemeColors();
   const styles = useMemo(
@@ -34,24 +68,17 @@ export default function SettlementBreakdown({
   );
 
   const owes = settlement.netAmount < 0;
-  const cashLabel = perspective === 'admin' ? 'Cash sales (kept by restaurant)' : 'Cash sales (already with you)';
-  const totalLabel =
-    perspective === 'admin'
-      ? owes
-        ? 'Restaurant owes Foodie'
-        : 'Pay to restaurant'
-      : owes
-        ? 'You owe Foodie'
-        : 'Foodie pays you';
+  const l = { ...ENGLISH[perspective], ...labels };
+  const totalLabel = owes ? l.owes : l.receives;
 
   const rows: [string, string][] = [
-    ['Online sales', formatPKR(settlement.onlineSales)],
-    [cashLabel, formatPKR(settlement.cashSales)],
+    [l.onlineSales, formatPKR(settlement.onlineSales)],
+    [l.cashSales, formatPKR(settlement.cashSales)],
     [
-      `Commission (${formatPercent(commissionRate)} of ${formatPKR(settlement.grossSales)})`,
+      l.commission(formatPercent(commissionRate), formatPKR(settlement.grossSales)),
       `−${formatPKR(settlement.commission)}`,
     ],
-    ['Online payment fees', `−${formatPKR(settlement.paymentFees)}`],
+    [l.paymentFees, `−${formatPKR(settlement.paymentFees)}`],
   ];
 
   return (

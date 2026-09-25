@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { restaurantAPI } from '@/services/api/restaurant.api';
 import type { PayoutAccount, PayoutMethod } from '@/services/api/payout.types';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 import { usePayoutsStyles } from './usePayoutsStyles';
 
 // Keep in sync with backend/src/models/restaurant.ts
@@ -35,6 +36,7 @@ type Errors = Partial<Record<'accountTitle' | 'bankName' | 'iban' | 'mobileNumbe
 
 export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutAccountFormProps) {
   const { styles, colors } = usePayoutsStyles();
+  const t = useRestaurantT();
   const [method, setMethod] = useState<PayoutMethod>(current?.method ?? 'Bank');
   const [accountTitle, setAccountTitle] = useState(current?.accountTitle ?? '');
   const [bankName, setBankName] = useState(current?.bankName ?? '');
@@ -51,14 +53,14 @@ export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutA
 
   const validate = (): Errors => {
     const next: Errors = {};
-    if (!accountTitle.trim()) next.accountTitle = 'Enter the name on the account';
+    if (!accountTitle.trim()) next.accountTitle = t('payoutsErrAccountTitle');
     if (isBank) {
-      if (!bankName.trim()) next.bankName = 'Enter your bank name';
-      if (!IBAN_REGEX.test(normalizedIban)) next.iban = 'IBAN must be PK followed by 22 letters or digits';
+      if (!bankName.trim()) next.bankName = t('payoutsErrBankName');
+      if (!IBAN_REGEX.test(normalizedIban)) next.iban = t('payoutsErrIban');
     } else if (!WALLET_MOBILE_REGEX.test(normalizedMobile)) {
-      next.mobileNumber = 'Enter an 11-digit number like 03001234567';
+      next.mobileNumber = t('payoutsErrMobile');
     }
-    if (!currentPassword) next.currentPassword = 'Enter your password to confirm this change';
+    if (!currentPassword) next.currentPassword = t('payoutsErrPassword');
     return next;
   };
 
@@ -111,20 +113,17 @@ export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutA
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={8}>
+        <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t('close')} hitSlop={8}>
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>{current ? 'Edit payout account' : 'Add payout account'}</Text>
+        <Text style={styles.title}>{current ? t('payoutsEditAccount') : t('payoutsAddAccount')}</Text>
         <View style={styles.headerSide} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.body, { marginBottom: 20 }]}>
-          Foodie sends your earnings here. After you save, Foodie verifies the details before the next
-          payout.
-        </Text>
+        <Text style={[styles.body, { marginBottom: 20 }]}>{t('payoutsFormIntro')}</Text>
 
-        <Text style={styles.label}>Receive payouts by</Text>
+        <Text style={styles.label}>{t('payoutsReceiveBy')}</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
           {METHODS.map((m) => {
             const active = m.id === method;
@@ -162,28 +161,28 @@ export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutA
 
         {field(
           'accountTitle',
-          'Account title',
+          t('payoutsAccountTitle'),
           <TextInput
             style={inputStyle('accountTitle')}
             value={accountTitle}
             onChangeText={setAccountTitle}
-            placeholder={isBank ? 'e.g. Beef House Pvt Ltd' : 'Name registered on the wallet'}
+            placeholder={isBank ? t('payoutsAccountTitlePlaceholderBank') : t('payoutsAccountTitlePlaceholderWallet')}
             placeholderTextColor={colors.muted}
             autoCapitalize="words"
           />,
-          'Must match the name the bank or wallet has on file.',
+          t('payoutsAccountTitleHint'),
         )}
 
         {isBank ? (
           <>
             {field(
               'bankName',
-              'Bank name',
+              t('payoutsBankName'),
               <TextInput
                 style={inputStyle('bankName')}
                 value={bankName}
                 onChangeText={setBankName}
-                placeholder="e.g. Meezan Bank"
+                placeholder={t('payoutsBankNamePlaceholder')}
                 placeholderTextColor={colors.muted}
                 autoCapitalize="words"
               />,
@@ -200,13 +199,13 @@ export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutA
                 autoCapitalize="characters"
                 autoCorrect={false}
               />,
-              '24 characters, starting with PK. Spaces are fine.',
+              t('payoutsIbanHint'),
             )}
           </>
         ) : (
           field(
             'mobileNumber',
-            `${method} mobile number`,
+            t('payoutsMobileNumber', { method }),
             <TextInput
               style={inputStyle('mobileNumber')}
               value={mobileNumber}
@@ -222,17 +221,17 @@ export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutA
 
         {field(
           'currentPassword',
-          'Your Foodie password',
+          t('payoutsPassword'),
           <TextInput
             style={inputStyle('currentPassword')}
             value={currentPassword}
             onChangeText={setCurrentPassword}
-            placeholder="Confirm it's you"
+            placeholder={t('payoutsPasswordPlaceholder')}
             placeholderTextColor={colors.muted}
             secureTextEntry
             autoComplete="password"
           />,
-          'Required whenever payout details change.',
+          t('payoutsPasswordHint'),
         )}
 
         {serverError ? (
@@ -246,7 +245,7 @@ export default function PayoutAccountForm({ current, onClose, onSaved }: PayoutA
           {saving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.primaryBtnText}>Save payout account</Text>
+            <Text style={styles.primaryBtnText}>{t('payoutsSaveAccount')}</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

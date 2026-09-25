@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { useRestaurantT, useRestaurantLocale } from '@/constants/restaurantStrings';
 import { Switch } from '@/components/atoms';
 
 export interface KitchenOverviewHeroProps {
@@ -16,8 +17,10 @@ export default function KitchenOverviewHero({
   onToggleActive,
 }: KitchenOverviewHeroProps) {
   const c = useAppThemeColors();
+  const t = useRestaurantT();
+  const locale = useRestaurantLocale();
   const styles = useMemo(() => createStyles(c), [c]);
-  const dateStr = new Date().toLocaleDateString('en-US', {
+  const dateStr = new Date().toLocaleDateString(locale, {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -26,15 +29,15 @@ export default function KitchenOverviewHero({
   return (
     <>
       <View style={styles.topRow}>
-        <Text style={styles.greeting}>Welcome back</Text>
+        <Text style={styles.greeting}>{t('dashWelcomeBack')}</Text>
         <View style={styles.status}>
           <View style={[styles.statusDot, { backgroundColor: isActive ? '#10B981' : '#EF4444' }]} />
-          <Text style={styles.statusText}>{isActive ? 'Open' : 'Closed'}</Text>
+          <Text style={styles.statusText}>{isActive ? t('dashOpen') : t('dashClosed')}</Text>
           <Switch value={isActive} onValueChange={onToggleActive} />
         </View>
       </View>
       <Text style={styles.title}>
-        {restaurantName ? `${restaurantName} Overview` : 'Overview'}
+        {restaurantName ? t('dashOverviewNamed', { name: restaurantName }) : t('dashOverview')}
       </Text>
       <View style={styles.dateRow}>
         <Ionicons name="calendar-outline" size={16} color={c.muted} />

@@ -1,6 +1,6 @@
 export { default as MenuBuilderTitle } from './MenuBuilderTitle';
 export { default as AddMenuItemCta } from './AddMenuItemCta';
-export { default as RestaurantCategoryFilterRow } from './RestaurantCategoryFilterRow';
+export { default as RestaurantCategoryFilterRow, ALL_CATEGORIES } from './RestaurantCategoryFilterRow';
 export { default as RestaurantMenuEmptyState } from './RestaurantMenuEmptyState';
 export { default as RestaurantMenuFab } from './RestaurantMenuFab';
 export { formatMenuCurrency } from './formatMenuCurrency';

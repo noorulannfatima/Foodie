@@ -6,6 +6,7 @@
     "migrate:images": "ts-node src/scripts/migrateImagesToCloudinary.ts",
     "recalculate:ratings": "ts-node src/scripts/recalculateRatings.ts",
     "seed:beefhouse": "ts-node src/scripts/seedBeefHouseOrders.ts",
+    "seed:pizzaperfetto": "ts-node src/scripts/seedPizzaPerfetto.ts",
     "create:admin": "ts-node src/scripts/createAdmin.ts",
     "test": "jest"
   },

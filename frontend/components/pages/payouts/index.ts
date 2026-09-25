@@ -1,3 +1,3 @@
-export { default as StatusBadge } from './StatusBadge';
-export { default as SettlementBreakdown } from './SettlementBreakdown';
+export { default as StatusBadge, type PayoutBadgeStatus } from './StatusBadge';
+export { default as SettlementBreakdown, type SettlementBreakdownLabels } from './SettlementBreakdown';
 export * from './format';

@@ -15,6 +15,7 @@ import { pickAndUploadImage } from '@/services/api/upload.api';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
 import { useRestaurantStore } from '@/stores/restaurantStore';
+import { useRestaurantT } from '@/constants/restaurantStrings';
 
 export interface StoreInformationModalProps {
     visible: boolean;
@@ -30,6 +31,7 @@ export default function StoreInformationModal({
     currentImages = [],
 }: StoreInformationModalProps) {
     const Colors = useAppThemeColors();
+    const t = useRestaurantT();
     const { updateProfile, profileLoading, error: storeError } = useRestaurantStore();
 
     const [description, setDescription] = useState(currentDescription);
@@ -233,7 +235,7 @@ export default function StoreInformationModal({
             if (url) setSelectedImages((prev) => [...prev, url]);
         } catch (err: any) {
             console.error('❌ Image upload error:', err);
-            setLocalError(err.message || 'Failed to upload image');
+            setLocalError(err.message || t('profileImageUploadFailed'));
         } finally {
             setUploading(false);
         }
@@ -249,17 +251,17 @@ export default function StoreInformationModal({
 
             // Validation
             if (description.trim().length < 10) {
-                setLocalError('Description must be at least 10 characters');
+                setLocalError(t('profileDescriptionTooShort'));
                 return;
             }
 
             if (description.trim().length > 500) {
-                setLocalError('Description cannot exceed 500 characters');
+                setLocalError(t('profileDescriptionTooLong'));
                 return;
             }
 
             if (selectedImages.length === 0) {
-                setLocalError('Please add at least one image');
+                setLocalError(t('profileImageRequired'));
                 return;
             }
 
@@ -275,11 +277,11 @@ export default function StoreInformationModal({
                 image: selectedImages,
             });
 
-            Alert.alert('Success', 'Store information updated successfully');
+            Alert.alert(t('profileSuccess'), t('profileStoreInfoUpdated'));
             onClose();
         } catch (err: any) {
             console.error('❌ Submit error:', err);
-            setLocalError(err.message || 'Failed to update store information');
+            setLocalError(err.message || t('profileStoreInfoUpdateFailed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -298,11 +300,13 @@ export default function StoreInformationModal({
                 <View style={styles.modalContent}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Store Information</Text>
+                        <Text style={styles.headerTitle}>{t('profileStoreInfo')}</Text>
                         <TouchableOpacity
                             style={styles.closeButton}
                             onPress={onClose}
                             disabled={isSubmitting || profileLoading || uploading}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('close')}
                         >
                             <Ionicons name="close" size={24} color={Colors.text} />
                         </TouchableOpacity>
@@ -322,7 +326,7 @@ export default function StoreInformationModal({
 
                         {/* Images Section */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Restaurant Images</Text>
+                            <Text style={styles.sectionTitle}>{t('profileRestaurantImages')}</Text>
                             <View style={styles.imageGrid}>
                                 {selectedImages.map((image, index) => (
                                     <View key={index} style={styles.imageCard}>
@@ -358,7 +362,7 @@ export default function StoreInformationModal({
                                                 />
                                             )}
                                             <Text style={styles.addImageText}>
-                                                {uploading ? 'Uploading…' : 'Add Image'}
+                                                {uploading ? t('profileUploading') : t('profileAddImage')}
                                             </Text>
                                             <Text
                                                 style={[
@@ -376,13 +380,13 @@ export default function StoreInformationModal({
 
                         {/* Description Section */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Description</Text>
+                            <Text style={styles.sectionTitle}>{t('profileDescription')}</Text>
                             <Text style={styles.descriptionLabel}>
-                                Tell customers about your restaurant
+                                {t('profileDescriptionHint')}
                             </Text>
                             <TextInput
                                 style={styles.descriptionInput}
-                                placeholder="e.g., Award-winning Italian restaurant with authentic recipes..."
+                                placeholder={t('profileDescriptionPlaceholder')}
                                 placeholderTextColor={Colors.muted}
                                 value={description}
                                 onChangeText={setDescription}
@@ -403,7 +407,7 @@ export default function StoreInformationModal({
                             onPress={onClose}
                             disabled={isSubmitting || profileLoading || uploading}
                         >
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
+                            <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -418,7 +422,7 @@ export default function StoreInformationModal({
                             ) : (
                                 <>
                                     <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                                    <Text style={styles.submitButtonText}>Save</Text>
+                                    <Text style={styles.submitButtonText}>{t('save')}</Text>
                                 </>
                             )}
                         </TouchableOpacity>

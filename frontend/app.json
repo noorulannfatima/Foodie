@@ -6,11 +6,6 @@
     "scheme": "foodie",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "splash": {
-      "image": "./assets/images/logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F5C518"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.foodie.app",
@@ -45,6 +40,15 @@
         "expo-notifications",
         {
           "color": "#7d0606"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/logo.png",
+          "imageWidth": 180,
+          "resizeMode": "contain"
         }
       ],
       "expo-font",
