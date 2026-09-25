@@ -1,39 +1,60 @@
 # Foodie
 
-A multi-role food delivery app built with **React Native (Expo)** and a **Node.js / Express / MongoDB** API. Customers browse restaurants and place orders; restaurants manage menus and incoming orders; delivery partners accept and fulfill deliveries.
+A multi-role food delivery app built with **React Native (Expo)** and a **Node.js / Express / MongoDB** API. Customers browse restaurants and place orders, restaurants manage menus, orders and payouts, riders pick up and deliver orders, and admins manage restaurants and settle payouts.
 
 ## Features
 
 | Role | Capabilities |
 |------|----------------|
-| **Customer** | Sign up / log in, browse home & search, view restaurant menus, cart, checkout (Safepay or cash on delivery), order history, live order tracking |
-| **Restaurant** | Sign up / log in, dashboard, menu CRUD, order list & status updates, store profile |
-| **Delivery** | Sign up / log in, go online/offline, view order requests, accept orders, update delivery status, earnings & profile |
+| **Customer** | Sign up / log in / reset password, home feed & search, restaurant menus and dish detail pages, dish reviews, cart with suggestions, checkout (Safepay or cash on delivery), saved addresses, order history, live order tracking, cancel / reorder / review orders, push notifications, notification preferences |
+| **Restaurant** | Sign up / log in, dashboard, open/closed status, menu CRUD with Cloudinary image upload and item availability, order list & status updates with the assigned rider, reviews, payout summary & history, payout account, push notifications, store profile |
+| **Delivery (rider)** | Sign up / log in, go online/offline, order requests, accept or release an order before pickup, per-stage customer details and contact, cash collection confirmation for COD, cancellation notices, delivery history, earnings, reviews, profile & preferences |
+| **Admin** | Overview dashboard, restaurant management, per-restaurant commission rate and payout account, generate payouts and mark them paid / failed |
+
+All money is shown in whole Pakistani rupees (PKR) through a shared `formatCurrency` helper on both backend and frontend. The UI supports English, Spanish, French and Urdu, plus light and dark themes.
 
 ## Tech stack
 
 | Layer | Technologies |
 |-------|----------------|
-| **Mobile app** | React Native 0.81, Expo 54, Expo Router, TypeScript, Zustand |
-| **API** | Node.js, Express 5, TypeScript, Mongoose, JWT |
+| **Mobile app** | React Native 0.81, Expo 54, Expo Router, TypeScript, Zustand, TanStack Query, Axios |
+| **API** | Node.js, Express 5, TypeScript, Mongoose 9, JWT, bcrypt |
 | **Payments** | [Safepay](https://getsafepay.com) (hosted checkout + webhooks), cash on delivery |
+| **Media** | [Cloudinary](https://cloudinary.com) image uploads |
+| **Notifications** | Expo push notifications (`expo-notifications`) |
 | **Database** | MongoDB |
+| **Testing** | Jest (backend integration tests) |
 
 ## Project structure
 
 ```
 Foodie/
-├── frontend/          # Expo app (Expo Router, Atomic Design components)
-├── backend/           # Express API + Mongoose models
-└── project_tree.md    # Full file tree reference
+├── frontend/                 # Expo app
+│   ├── app/                  # Expo Router routes: (auth), (customer), (restaurant), (delivery), (admin)
+│   ├── components/           # Atomic Design: atoms → molecules → organisms → pages
+│   ├── constants/            # Theme and per-role translated strings
+│   ├── hooks/                # Shared hooks (active order polling, pull-to-refresh, ...)
+│   ├── services/             # API clients, Safepay, push notifications
+│   ├── stores/               # Zustand stores (auth, cart, theme, language, preferences, ...)
+│   └── utils/                # Currency formatting, persisted storage
+└── backend/                  # Express API
+    ├── src/
+    │   ├── controllers/      # Route handlers per role / feature
+    │   ├── middleware/       # JWT auth and role guards
+    │   ├── models/           # Mongoose models
+    │   ├── routes/           # Route definitions
+    │   ├── services/         # Safepay, Cloudinary, push, payouts, ratings, order rollback
+    │   └── scripts/          # Admin creation, seeding and maintenance scripts
+    └── tests/                # Jest tests
 ```
 
 ## Prerequisites
 
 - **Node.js** ≥ 18 and npm
 - **MongoDB** connection string
-- **Expo Go** or iOS Simulator / Android Emulator
+- **Expo Go**, a development build, or an iOS Simulator / Android Emulator
 - **Safepay** sandbox keys (optional; required for online payments)
+- **Cloudinary** account (optional; required for image uploads)
 
 ## Getting started
 
@@ -42,8 +63,14 @@ Foodie/
 ```bash
 cd backend
 npm install
-cp .env.example .env   # then fill in MONGO_URI, JWT_SECRET, Safepay keys
+cp .env.example .env   # then fill in the values below
 npm run dev            # http://localhost:5000
+```
+
+Create an admin account to sign in to the admin app:
+
+```bash
+npm run create:admin -- <email> <password> <name>
 ```
 
 ### 2. Frontend
@@ -54,7 +81,7 @@ npm install
 npm start              # Metro — press i (iOS) or a (Android)
 ```
 
-The app resolves the API host from Metro’s LAN IP when possible, so physical devices on the same network can reach your machine. Android emulators use `10.0.2.2`; iOS simulator uses `localhost`. See `frontend/services/api/baseUrl.ts`.
+The app resolves the API host from Metro’s LAN IP when possible, so physical devices on the same network can reach your machine. Android emulators use `10.0.2.2`; the iOS simulator uses `localhost`. See `frontend/services/api/baseUrl.ts`.
 
 ### Environment variables
 
@@ -65,7 +92,11 @@ Copy `backend/.env.example` to `backend/.env` and configure:
 | `MONGO_URI` | MongoDB connection string |
 | `JWT_SECRET` | Auth token signing secret |
 | `PORT` | API port (default `5000`) |
-| `SAFEPAY_*` | Payment gateway (sandbox for development) |
+| `SAFEPAY_ENVIRONMENT`, `SAFEPAY_BASE_URL`, `SAFEPAY_API_KEY`, `SAFEPAY_SECRET_KEY`, `SAFEPAY_WEBHOOK_SECRET` | Payment gateway (sandbox for development) |
+| `SAFEPAY_REDIRECT_URL`, `SAFEPAY_CANCEL_URL` | Deep links the app opens after hosted checkout |
+| `SAFEPAY_FEE_RATE` | Safepay’s cut on online orders, charged to the restaurant in payouts |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_FOLDER` | Image uploads |
+| `EXPO_ACCESS_TOKEN` | Optional; Expo push service access token |
 
 Never commit `backend/.env`.
 
@@ -73,87 +104,56 @@ Never commit `backend/.env`.
 
 | Prefix | Auth | Description |
 |--------|------|-------------|
-| `/auth/:role/signup` · `/login` | Public | Customer, restaurant, delivery registration |
+| `/auth/:role/signup` · `/login` | Public | Customer, restaurant, delivery registration and login |
+| `/auth/:role/forgot-password` · `/reset-password` | Public | 6-digit reset code flow |
 | `/auth/verify` | JWT | Validate session |
-| `/api/customer/*` | JWT (customer) | Home, search, cart, orders, tracking |
-| `/restaurant/*` | JWT (restaurant) | Dashboard, profile, menu, orders |
-| `/api/delivery/*` | JWT (delivery) | Profile, online status, order flow |
+| `/api/customer/*` | JWT (customer) | Home, search, restaurants & dishes, dish reviews, cart & suggestions, addresses, preferences, push token, orders (create, active, detail, cancel, rollback, review, reorder, track) |
+| `/restaurant/*` | JWT (restaurant) | Dashboard, profile, open status, menu, orders, reviews, payouts, notification preferences, push token |
+| `/api/delivery/*` | JWT (delivery) | Profile, preferences, online status, order requests / active / history, accept, release, status updates, cancellation acknowledgement, reviews |
+| `/api/admin/*` | JWT (admin) | Overview, restaurants, commission, payout accounts, payout generation and settlement |
 | `/api/payments/*` | JWT (customer) | Safepay initiate/verify, COD confirm |
 | `/payments/safepay/webhook` | Signature | Safepay payment webhooks (raw body) |
+| `/upload/image` | JWT | Upload an image to Cloudinary |
+
+## Payouts
+
+Foodie collects online payments; for cash orders the restaurant keeps the cash. Commission (set per restaurant by an admin) is owed on every order, and the Safepay fee is deducted on online orders. A restaurant with mostly cash orders can therefore end up with a negative net balance. Admins generate payouts for a period and mark each one paid or failed; restaurants see their summary and history in the app.
 
 ## Project status
 
 ### Implemented
 
-**Backend**
+- Role-based auth for customers, restaurants, riders and admins, with a password reset code flow
+- Full order lifecycle: checkout, payment (Safepay or COD), restaurant status updates, rider assignment, pickup, delivery, cancellation and rollback of failed payments
+- Rider flow with per-stage customer visibility, release before pickup, and mandatory cash confirmation before completing a COD delivery
+- Reviews for dishes and riders, with ratings derived from the review collection
+- Saved customer addresses and preferences
+- Restaurant payouts with commission and payment fees, managed from the admin app
+- Cloudinary image uploads for menus and stores
+- Push notifications for order status changes
+- Multi-language UI (English, Spanish, French, Urdu) and dark mode
+- Backend Jest test suite covering orders, delivery, reviews, payouts, addresses and admin
 
-- Role-based auth (signup, login, JWT verify)
-- Customer: home feed, restaurant detail, search, cart, order lifecycle (create, list, detail, cancel, rate, reorder, track)
-- Restaurant: dashboard, profile, menu management, order status updates
-- Delivery: profile, preferences, online toggle, order requests/history, accept & status updates
-- Payments: Safepay flow + COD confirmation + webhook handling
+### Not started / placeholders
 
-**Frontend**
-
-- Auth flows for all three roles with persisted session (`authStore`)
-- Customer: home, search, restaurant detail, cart + checkout (Safepay deep link + COD), order history, order tracking (5s polling)
-- Restaurant & delivery tabs wired to their APIs via Zustand / direct API calls
-- Large UI component library (atoms → organisms)
-- Dark mode support (`appThemeStore`)
-
-### In progress / partial
-
-- **Order history & tracking screens** — wired to API; cancel / rate / reorder exist on the API but are not yet exposed in the UI
-- **Checkout** — Safepay + COD work end-to-end when backend and keys are configured
-- **Restaurant menu images** — image picker UI exists; images are not uploaded to cloud storage (no upload API)
-- **API clients** — `auth.api` uses shared Axios `apiClient`; customer, restaurant, and delivery modules use separate `fetch` helpers (should be consolidated onto `baseUrl.ts`)
-
-### Not started (UI stubs or placeholders)
-
-- `ForgotPasswordForm`, `DeliveryMap`, `ReviewsList`, `ReviewModal`, `SocialButton` — placeholder components only
-- Forgot password shows “coming soon” on login screens
-- Social login buttons (Google / Apple) are decorative
-- Delivery dashboard map is a gradient mock, not `expo-maps`
-- Loyalty points card shows hardcoded `0 pts` (model supports loyalty on the backend)
-- Premium member badge is cosmetic only
+- `DeliveryMap` and `SocialButton` are placeholder components
+- Order tracking and the rider dashboard poll the API instead of showing a live map
+- Forgot-password codes are logged on the server; no email or SMS is sent yet
+- `customer.api` and `restaurant.api` still use their own `fetch` helpers instead of the shared Axios `client`
 
 ---
 
 ## What’s left to do
 
-Use this as a backlog. Items are grouped by priority area.
-
-### Customer experience
-
-- [ ] **Customer profile API** — `personal-information` saves locally only; add `PATCH /api/customer/profile` (name, phone, avatar) and wire the screen
-- [ ] **Saved addresses** — User model has `savedAddresses`; add CRUD routes + UI (profile / checkout address picker)
-- [ ] **Order actions in UI** — Wire `cancelOrder`, `rateOrder`, and `reorder` on order history / detail screens (API already exists)
-- [ ] **Full order detail screen** — Beyond tracking: line items, pricing breakdown, payment status, reorder CTA
-- [ ] **Reviews** — Implement `ReviewModal` / `ReviewsList` and connect to `rateOrder` + restaurant reviews
-- [ ] **Loyalty program** — Earn/redeem points on checkout; reflect balance in profile card
-- [ ] **Payment methods page** — Persist defaults via backend or align with Safepay-only + COD (remove fake card storage)
-- [ ] **Forgot password** — Backend reset flow + `ForgotPasswordForm`
-
-### Restaurant & delivery
-
-- [ ] **Image upload service** — S3 / Cloudinary (or similar) for logos, menu photos, and store gallery
-- [ ] **Real-time map tracking** — Integrate `expo-maps` / live driver location on customer tracking and delivery dashboard
-- [ ] **Push notifications** — Order status changes for customer, restaurant, and delivery (model has notification prefs)
-- [ ] **Delivery session timer** — Replace placeholder “5h 20m” online label with real session tracking
-
-### Platform & quality
-
-- [ ] **Unify API client** — Single Axios instance + `baseUrl.ts` for all modules; remove duplicate `fetch` + host logic
-- [ ] **Database seed script** — Sample restaurants, menus, and test users for local development
-- [ ] **Tests** — API integration tests and critical frontend flows (auth, checkout)
-- [ ] **CI** — Lint, typecheck, and test pipeline
-- [ ] **Production config** — Environment docs, Safepay production keys, app store build profiles
-
-### Nice to have
-
+- [ ] **Live map tracking** — `expo-maps` with rider location on customer tracking and the rider dashboard
+- [ ] **Password reset delivery** — Send reset codes by email or SMS
+- [ ] **Unify API client** — Move all modules onto the shared Axios client and `baseUrl.ts`
+- [ ] **Loyalty program** — Earn/redeem points on checkout
+- [ ] **Real-time updates** — WebSockets or SSE instead of polling
+- [ ] **Frontend tests and CI** — Critical flows (auth, checkout) plus a lint, typecheck and test pipeline
+- [ ] **Multi-currency** — Currently PKR only
+- [ ] **Production config** — Safepay production keys, app store build profiles
 - [ ] OAuth (Google / Apple) sign-in
-- [ ] WebSockets or SSE for order updates (replace polling on track screen)
-- [ ] Admin / ops dashboard
 - [ ] Promo codes and discounts
 
 ---
@@ -167,6 +167,12 @@ Use this as a backlog. Items are grouped by priority area.
 | `npm run dev` | Dev server with nodemon |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm start` | Run compiled server |
+| `npm test` | Run the Jest test suite |
+| `npm run create:admin -- <email> <password> <name>` | Create an admin account |
+| `npm run seed:pizzaperfetto` | Seed the Pizza Perfetto menu (with Cloudinary images), orders and reviews |
+| `npm run seed:beefhouse` | Seed sample orders, a rider and reviews for the existing Beef House restaurant |
+| `npm run recalculate:ratings` | Rebuild restaurant and rider ratings from reviews |
+| `npm run migrate:images` | Move existing images to Cloudinary |
 
 ### Frontend (`frontend/`)
 
@@ -184,10 +190,6 @@ Use this as a backlog. Items are grouped by priority area.
 ```ts
 import { Button } from '@/components/atoms';
 ```
-
-## Further reading
-
-- **[project_tree.md](./project_tree.md)** — Complete repository file tree
 
 ## License
 
