@@ -3,6 +3,7 @@ import { View, ScrollView, RefreshControl, Modal, Alert, StyleSheet } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, MenuItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useAppThemeColors } from '@/constants/theme';
 import {
   RestaurantMenuItemCard,
@@ -42,9 +43,7 @@ export default function RestaurantMenu() {
     fetchMenu();
   }, []);
 
-  const onRefresh = useCallback(() => {
-    fetchMenu();
-  }, []);
+  const { refreshing, onRefresh } = usePullToRefresh(fetchMenu);
 
   const categories = menu?.categories ?? [];
   const allCategoryNames = ['All Items', ...categories.map((c) => c.name)];
@@ -91,7 +90,7 @@ export default function RestaurantMenu() {
     >
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={menuLoading} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.brand]} />}
         contentContainerStyle={styles.scrollContent}
       >
         <MenuBuilderTitle />

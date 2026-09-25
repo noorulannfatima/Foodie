@@ -127,6 +127,7 @@ const reviewSchema = new mongoose.Schema<IReview>(
 // ========== Indexes ==========
 // order index created by unique: true
 reviewSchema.index({ restaurant: 1, createdAt: -1 });
+reviewSchema.index({ restaurant: 1, "items.menuItem": 1, createdAt: -1 });
 reviewSchema.index({ deliveryPerson: 1, createdAt: -1 });
 
 const Review = mongoose.model<IReview>("Review", reviewSchema);

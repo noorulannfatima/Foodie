@@ -282,7 +282,19 @@ export default function RestaurantDetailScreen() {
                 </View>
 
                 {items.map((item) => (
-                  <View key={item._id} style={styles.menuItem}>
+                  <TouchableOpacity
+                    key={item._id}
+                    style={styles.menuItem}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(customer)/dish/[itemId]',
+                        params: { itemId: item._id, restaurantId: restaurant._id },
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={item.name}
+                  >
                     {item.image?.[0] && (
                       <Image source={{ uri: item.image[0] }} style={styles.menuItemImage} />
                     )}
@@ -331,7 +343,7 @@ export default function RestaurantDetailScreen() {
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             );

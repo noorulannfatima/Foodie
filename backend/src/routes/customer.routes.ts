@@ -4,6 +4,7 @@ import { requireRole } from '../middleware/requireRole';
 import {
   getHome,
   getRestaurantDetail,
+  getMenuItemDetail,
   searchRestaurants,
   getCart,
   getCartSuggestions,
@@ -20,7 +21,7 @@ import {
   reorder,
   trackOrder,
 } from '../controllers/customer.controller';
-import { submitOrderReview } from '../controllers/review.controller';
+import { submitOrderReview, getMenuItemReviews } from '../controllers/review.controller';
 import {
   getPreferences,
   updatePreferences,
@@ -58,6 +59,8 @@ router.post('/addresses/:id/default', requireRole('customer'), setDefaultAddress
 
 // Restaurants
 router.get('/restaurants/:id', getRestaurantDetail);
+router.get('/restaurants/:id/items/:itemId', getMenuItemDetail);
+router.get('/restaurants/:id/items/:itemId/reviews', getMenuItemReviews);
 
 // Search
 router.get('/search', searchRestaurants);

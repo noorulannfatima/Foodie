@@ -7,6 +7,8 @@ import Restaurant from '../models/restaurant';
 import DeliveryPerson from '../models/deliveryperson';
 import Review, { REVIEW_COMMENT_MAX_LENGTH } from '../models/review';
 import { notifyRestaurant } from '../services/push.service';
+import { listItemReviews } from '../services/itemReviews.service';
+import Menu from '../models/menu';
 import {
   recalculateDeliveryRating,
   recalculateRestaurantRatings,
@@ -199,6 +201,42 @@ export async function submitOrderReview(req: AuthRequest, res: Response): Promis
     }
     console.error('Submit review error:', error);
     res.status(500).json({ message: 'Server error submitting review' });
+  }
+}
+
+/**
+ * GET /api/customer/restaurants/:id/items/:itemId/reviews?rating=5&page=1&limit=20
+ * Written reviews of one dish, newest first. `rating` keeps one star count.
+ */
+export async function getMenuItemReviews(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const restaurantId = req.params.id as string;
+    const itemId = req.params.itemId as string;
+    const { page, limit, skip } = parsePagination(req.query);
+
+    let rating: number | undefined;
+    if (req.query.rating !== undefined) {
+      rating = Number(req.query.rating);
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        res.status(400).json({ message: 'rating must be a whole number from 1 to 5' });
+        return;
+      }
+    }
+
+    const exists =
+      mongoose.Types.ObjectId.isValid(restaurantId) &&
+      mongoose.Types.ObjectId.isValid(itemId) &&
+      (await Menu.exists({ restaurant: restaurantId, 'items._id': itemId }));
+    if (!exists) {
+      res.status(404).json({ message: 'Dish not found' });
+      return;
+    }
+
+    const { reviews, total } = await listItemReviews(restaurantId, itemId, { rating, skip, limit });
+    res.json({ reviews, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Menu item reviews error:', error);
+    res.status(500).json({ message: 'Server error fetching reviews' });
   }
 }
 

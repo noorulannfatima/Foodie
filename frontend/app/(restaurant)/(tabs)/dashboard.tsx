@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { useAppThemeColors, Fonts } from '@/constants/theme';
 import { Loader } from '@/components/atoms';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { formatRestaurantCurrency, getOrderTimeAgo } from '@/components/pages/restaurant/shared/orderUtils';
 import {
   KitchenOverviewHero,
@@ -75,6 +76,12 @@ export default function RestaurantDashboard() {
     fetchRecentReviews();
   }, [fetchDashboard, fetchRecentReviews]);
 
+  const pullRefresh = useCallback(
+    () => Promise.all([fetchDashboard(), fetchRecentReviews()]),
+    [fetchDashboard, fetchRecentReviews],
+  );
+  const { refreshing, onRefresh: onPullRefresh } = usePullToRefresh(pullRefresh);
+
   // Refetch whenever the tab regains focus, so new orders and reviews show up
   useFocusEffect(onRefresh);
 
@@ -95,7 +102,12 @@ export default function RestaurantDashboard() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={dashboardLoading} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl
+            refreshing={refreshing}
+            onRefresh={onPullRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.brand]}
+          />}
         contentContainerStyle={styles.scrollContent}
       >
         <KitchenOverviewHero

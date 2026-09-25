@@ -50,6 +50,8 @@ export default function CustomerLayout() {
 
         {/* Restaurant detail */}
         <Stack.Screen name="restaurant/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="dish/[itemId]" options={{ headerShown: false }} />
+        <Stack.Screen name="dish/reviews" options={{ headerShown: false }} />
 
         {/* Profile sub-screens */}
         <Stack.Screen name="personal-information" options={{ headerShown: false }} />

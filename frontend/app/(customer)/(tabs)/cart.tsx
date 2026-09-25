@@ -109,7 +109,12 @@ export default function CustomerCart() {
           reordering={reordering}
           onReorder={handleReorder}
           onOpenOrder={(id) => router.push({ pathname: '/(customer)/order/[id]', params: { id } })}
-          onPopularItemPress={(item) => router.push(`/(customer)/restaurant/${item.restaurant._id}`)}
+          onPopularItemPress={(item) =>
+            router.push({
+              pathname: '/(customer)/dish/[itemId]',
+              params: { itemId: item.menuItem, restaurantId: item.restaurant._id },
+            })
+          }
         />
       </SafeAreaView>
     );

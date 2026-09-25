@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Modal, Alert } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRestaurantStore, OrderItem } from '@/stores/restaurantStore';
 import { Loader } from '@/components/atoms';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
 import {
   RestaurantOrdersStatsBar,
@@ -27,16 +28,14 @@ export default function RestaurantOrders() {
     if (activeFilter !== 'All') {
       params.status = activeFilter === 'Completed' ? 'Delivered' : activeFilter;
     }
-    fetchOrders(params);
+    return fetchOrders(params);
   }, [activeFilter, fetchOrders]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
 
-  const onRefresh = useCallback(() => {
-    loadOrders();
-  }, [loadOrders]);
+  const { refreshing, onRefresh } = usePullToRefresh(loadOrders);
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
@@ -90,7 +89,9 @@ export default function RestaurantOrders() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={ordersLoading} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.brand]} />
+        }
         contentContainerStyle={styles.ordersList}
       >
         {ordersLoading && orders.length === 0 ? (

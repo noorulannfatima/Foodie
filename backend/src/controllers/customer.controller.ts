@@ -9,6 +9,7 @@ import Review from '../models/review';
 import { notifyRestaurant } from '../services/push.service';
 import { roundedAverage } from '../services/rating.service';
 import { rollbackUnpaidOrder } from '../services/orderRollback.service';
+import { itemReviewSummary } from '../services/itemReviews.service';
 import { formatPKR, roundPKR } from '../utils/currency';
 
 // ---------------------------------------------------------------------------
@@ -139,6 +140,45 @@ export async function getRestaurantDetail(req: AuthRequest, res: Response): Prom
   } catch (error) {
     console.error('Restaurant detail error:', error);
     res.status(500).json({ message: 'Server error fetching restaurant' });
+  }
+}
+
+/**
+ * GET /api/customer/restaurants/:id/items/:itemId
+ * One dish for the dish detail page: the dish, its restaurant's status, the
+ * star breakdown and the newest written reviews.
+ */
+export async function getMenuItemDetail(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const restaurantId = req.params.id as string;
+    const itemId = req.params.itemId as string;
+    if (!mongoose.Types.ObjectId.isValid(restaurantId) || !mongoose.Types.ObjectId.isValid(itemId)) {
+      res.status(404).json({ message: 'Dish not found' });
+      return;
+    }
+
+    const [restaurant, item] = await Promise.all([
+      Restaurant.findById(restaurantId).select('name isActive isBusy'),
+      findMenuItem(restaurantId, itemId),
+    ]);
+    if (!restaurant || !item) {
+      res.status(404).json({ message: 'Dish not found' });
+      return;
+    }
+
+    res.json({
+      item: toCustomerMenuItem(item),
+      restaurant: {
+        _id: restaurant._id.toString(),
+        name: restaurant.name,
+        isActive: restaurant.isActive,
+        isBusy: restaurant.isBusy,
+      },
+      reviews: await itemReviewSummary(restaurantId, itemId),
+    });
+  } catch (error) {
+    console.error('Menu item detail error:', error);
+    res.status(500).json({ message: 'Server error fetching dish' });
   }
 }
 

@@ -44,6 +44,47 @@ export interface ActiveOrder {
   isReviewed: boolean;
 }
 
+/** A dish as customers see it (averageRating is derived from reviews). */
+export interface CustomerMenuItem {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  discountedPrice?: number;
+  image: string[];
+  category: string;
+  isVegetarian: boolean;
+  isVegan: boolean;
+  isGlutenFree: boolean;
+  spiceLevel?: 'Mild' | 'Medium' | 'Hot' | 'Extra Hot';
+  preparationTime: number;
+  calories?: number;
+  isAvailable: boolean;
+  averageRating: number;
+  ratingCount: number;
+}
+
+/** One customer's rating (and comment) of one dish. */
+export interface DishReview {
+  id: string;
+  customerFirstName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface MenuItemDetail {
+  item: CustomerMenuItem;
+  restaurant: { _id: string; name: string; isActive: boolean; isBusy: boolean };
+  reviews: {
+    /** Number of ratings per star, keys "1"–"5". */
+    breakdown: Record<'1' | '2' | '3' | '4' | '5', number>;
+    /** Reviews with a comment; ratings without one only count in the breakdown. */
+    writtenCount: number;
+    latest: DishReview[];
+  };
+}
+
 /** A delivery address saved to the customer's profile. */
 export interface SavedAddress {
   _id: string;
@@ -180,6 +221,34 @@ export const customerAPI = {
     const res = await fetch(`${BASE_URL}/api/customer/restaurants/${id}`, {
       headers: await getAuthHeaders(),
     });
+    return handleResponse(res);
+  },
+
+  /** One dish with its review summary, for the dish detail page. */
+  getMenuItemDetail: async (restaurantId: string, itemId: string): Promise<MenuItemDetail> => {
+    const res = await fetch(`${BASE_URL}/api/customer/restaurants/${restaurantId}/items/${itemId}`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  /** Written reviews of one dish, newest first; `rating` keeps one star count. */
+  getMenuItemReviews: async (
+    restaurantId: string,
+    itemId: string,
+    params: { rating?: number; page?: number; limit?: number } = {},
+  ): Promise<{
+    reviews: DishReview[];
+    pagination: { page: number; limit: number; total: number; pages: number };
+  }> => {
+    const query = new URLSearchParams();
+    if (params.rating) query.set('rating', String(params.rating));
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    const res = await fetch(
+      `${BASE_URL}/api/customer/restaurants/${restaurantId}/items/${itemId}/reviews?${query.toString()}`,
+      { headers: await getAuthHeaders() },
+    );
     return handleResponse(res);
   },
 
