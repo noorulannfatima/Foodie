@@ -23,6 +23,32 @@ function normalizePreferences(prefs: any) {
   };
 }
 
+/**
+ * Today / this week (Monday start) / this month, summed from delivered history.
+ * Derived on every read so the periods roll over by themselves; the stored
+ * counters of the same name are never reset and must not be trusted.
+ */
+function periodEarnings(history: Array<{ status?: string; earnings?: number; createdAt?: Date }> = []) {
+  const now = new Date();
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+  const weekStart = new Date(dayStart);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const monthStart = new Date(dayStart);
+  monthStart.setDate(1);
+
+  const totals = { today: 0, thisWeek: 0, thisMonth: 0 };
+  for (const h of history) {
+    if (h.status !== 'delivered' || !h.createdAt) continue;
+    const at = new Date(h.createdAt);
+    const amount = h.earnings ?? 0;
+    if (at >= dayStart) totals.today += amount;
+    if (at >= weekStart) totals.thisWeek += amount;
+    if (at >= monthStart) totals.thisMonth += amount;
+  }
+  return totals;
+}
+
 function enrichProfileResponse(dp: any) {
   const stats = dp.stats as { totalDeliveries?: number; completedDeliveries?: number };
   const completionRate =
@@ -31,6 +57,7 @@ function enrichProfileResponse(dp: any) {
       : 100;
   return {
     ...dp,
+    earnings: { ...dp.earnings, ...periodEarnings(dp.deliveryHistory) },
     preferences: normalizePreferences(dp.preferences),
     completionRate,
     tierLabel: (stats.totalDeliveries ?? 0) >= 500 ? 'MESSENGER TIER' : 'COURIER',
@@ -82,6 +109,9 @@ export async function getMe(req: AuthRequest, res: Response): Promise<void> {
     res.status(500).json({ message: 'Server error' });
   }
 }
+
+/** Unassigned orders in these statuses are offered to riders. */
+const REQUESTABLE_STATUSES = ['Confirmed', 'Preparing', 'Ready'] as const;
 
 const ACTIVE_DRIVER_STATUSES = [
   'Confirmed',
@@ -361,9 +391,7 @@ export async function getActiveOrder(req: AuthRequest, res: Response): Promise<v
     const uid = new mongoose.Types.ObjectId(req.user!.id);
     const order = await Order.findOne({
       deliveryPerson: uid,
-      status: {
-        $in: ['Confirmed', 'Preparing', 'Ready', 'PickedUp', 'OutForDelivery'],
-      },
+      status: { $in: [...ACTIVE_DRIVER_STATUSES] },
     })
       .populate('restaurant', 'name image logo address')
       .sort({ updatedAt: -1 })
@@ -387,8 +415,8 @@ export async function getActiveOrder(req: AuthRequest, res: Response): Promise<v
 export async function getOrderRequests(req: AuthRequest, res: Response): Promise<void> {
   try {
     const orders = await Order.find({
-      $or: [{ deliveryPerson: null }, { deliveryPerson: { $exists: false } }],
-      status: { $in: ['Confirmed', 'Ready'] },
+      deliveryPerson: null,
+      status: { $in: [...REQUESTABLE_STATUSES] },
     })
       .populate('restaurant', 'name image logo address estimatedDeliveryTime')
       .sort({ createdAt: -1 })
@@ -441,29 +469,71 @@ export async function getOrderHistory(req: AuthRequest, res: Response): Promise<
 
 /**
  * POST /api/delivery/orders/:id/accept
+ *
+ * The order is claimed with a single conditional update, so when two riders
+ * accept at once only one write matches. A rider holds one delivery at a time.
  */
 export async function acceptOrder(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
-    const order = await Order.findOne({
-      _id: id,
-      $or: [{ deliveryPerson: null }, { deliveryPerson: { $exists: false } }],
-      status: { $in: ['Confirmed', 'Ready'] },
-    });
-    if (!order) {
-      res.status(400).json({ message: 'Order unavailable' });
+    const uid = new mongoose.Types.ObjectId(req.user!.id);
+    const dp = await DeliveryPerson.findById(uid).select('isOnline isActive');
+    if (!dp) {
+      res.status(404).json({ message: 'Delivery profile not found' });
       return;
     }
-    await order.assignDeliveryPerson(req.user!.id);
+    if (!dp.isActive) {
+      res.status(403).json({ message: 'Your account is deactivated' });
+      return;
+    }
+    if (!dp.isOnline) {
+      res.status(403).json({ message: 'Go online to accept orders' });
+      return;
+    }
+
+    const busy = () =>
+      Order.countDocuments({ deliveryPerson: uid, status: { $in: [...ACTIVE_DRIVER_STATUSES] } });
+    const finishFirst = () =>
+      res.status(409).json({ message: 'Finish your current delivery before accepting another' });
+
+    if ((await busy()) > 0) {
+      finishFirst();
+      return;
+    }
+
+    const order = await Order.findOneAndUpdate(
+      { _id: req.params.id, deliveryPerson: null, status: { $in: [...REQUESTABLE_STATUSES] } },
+      { $set: { deliveryPerson: uid } },
+      { returnDocument: 'after' },
+    );
+    if (!order) {
+      res.status(409).json({ message: 'Order is no longer available' });
+      return;
+    }
+
+    // Two accepts from the same rider can both pass the check above; give this one back
+    if ((await busy()) > 1) {
+      await Order.updateOne({ _id: order._id, deliveryPerson: uid }, { $set: { deliveryPerson: null } });
+      finishFirst();
+      return;
+    }
+
+    await Order.updateOne(
+      { _id: order._id },
+      { $push: { timeline: { status: 'Assigned', timestamp: new Date(), note: 'Delivery person assigned' } } },
+    );
     res.json({ ok: true, orderId: String(order._id) });
   } catch (e) {
+    if (e instanceof mongoose.Error.CastError) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
     console.error('acceptOrder:', e);
     res.status(500).json({ message: 'Server error' });
   }
 }
 
 const NEXT_STATUS_FROM: Record<string, string[]> = {
-  PickedUp: ['Confirmed', 'Preparing', 'Ready'],
+  PickedUp: ['Ready'],
   OutForDelivery: ['PickedUp'],
   Delivered: ['OutForDelivery'],
 };
@@ -494,7 +564,11 @@ export async function patchOrderStatus(req: AuthRequest, res: Response): Promise
     const prev = order.status;
     const mustBe = NEXT_STATUS_FROM[status];
     if (!mustBe.includes(prev)) {
-      res.status(400).json({ message: `Cannot move order to ${status} from ${prev}` });
+      const message =
+        status === 'PickedUp' && (prev === 'Confirmed' || prev === 'Preparing')
+          ? 'The restaurant has not marked this order ready yet'
+          : `Cannot move order to ${status} from ${prev}`;
+      res.status(400).json({ message });
       return;
     }
 

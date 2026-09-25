@@ -73,10 +73,11 @@ export default function ActiveDeliveryCard({ order, busy, onAdvance, onNavigate 
           <Text style={styles.navText}>Navigate</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, (pressed || busy) && styles.pressed]}
+          style={({ pressed }) => [styles.primaryBtn, (pressed || busy) && styles.pressed, !step.next && styles.waiting]}
           onPress={onAdvance}
           disabled={busy || !step.next}
           accessibilityRole="button"
+          accessibilityState={{ disabled: busy || !step.next, busy }}
         >
           {busy ? (
             <ActivityIndicator color="#fff" />
@@ -262,6 +263,9 @@ function createStyles(c: AppColors) {
     },
     pressed: {
       opacity: 0.75,
+    },
+    waiting: {
+      opacity: 0.5,
     },
   });
 }

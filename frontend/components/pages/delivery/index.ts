@@ -9,6 +9,6 @@ export { default as DeliverySegmentedTabs } from './DeliverySegmentedTabs';
 export { default as DeliveryStatTile } from './DeliveryStatTile';
 export { default as WeeklyEarningsChart } from './WeeklyEarningsChart';
 export { formatDeliveryCurrency } from './formatDeliveryCurrency';
-export { getDeliveryStep } from './deliveryStatus';
+export { getDeliveryStep, isAwaitingPickup } from './deliveryStatus';
 export { useDeliveryReviewPalette } from './useDeliveryReviewPalette';
 export { default as DeliverySettingsSection } from './DeliverySettingsSection';

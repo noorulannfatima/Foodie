@@ -94,7 +94,6 @@ export interface IOrder extends Document {
   
   // Methods
   updateStatus(newStatus: string, note?: string): Promise<IOrder>;
-  assignDeliveryPerson(deliveryPersonId: string): Promise<IOrder>;
   calculateTotal(): number;
   canBeCancelled(): boolean;
 }
@@ -402,23 +401,6 @@ orderSchema.methods.updateStatus = async function (
     this.actualDeliveryTime = new Date();
     this.payment.status = "Completed";
   }
-  
-  return await (this as any).save();
-};
-
-/**
- * Assign delivery person to order
- */
-orderSchema.methods.assignDeliveryPerson = async function (
-  deliveryPersonId: string
-): Promise<IOrder> {
-  this.deliveryPerson = new mongoose.Types.ObjectId(deliveryPersonId);
-  
-  this.timeline.push({
-    status: "Assigned",
-    timestamp: new Date(),
-    note: "Delivery person assigned",
-  });
   
   return await (this as any).save();
 };

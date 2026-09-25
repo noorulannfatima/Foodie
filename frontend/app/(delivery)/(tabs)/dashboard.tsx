@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Linking, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Linking, Platform, Alert, AppState } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
@@ -15,8 +15,12 @@ import {
   DeliveryStatTile,
   formatDeliveryCurrency,
   getDeliveryStep,
+  isAwaitingPickup,
   useDeliveryReviewPalette,
 } from '@/components/pages/delivery';
+
+/** How often to check whether the restaurant has marked the order ready. */
+const READY_POLL_MS = 15000;
 
 export default function DeliveryDashboard() {
   const insets = useSafeAreaInsets();
@@ -80,6 +84,24 @@ export default function DeliveryDashboard() {
     useCallback(() => {
       load();
     }, [load]),
+  );
+
+  // Pickup unlocks when the restaurant marks the order ready, and nothing pushes
+  // that to the rider, so poll while waiting (focused + foregrounded only)
+  const waitingForFood = active ? isAwaitingPickup(active.status) : false;
+  useFocusEffect(
+    useCallback(() => {
+      if (!waitingForFood) return;
+      const handle = setInterval(async () => {
+        if (AppState.currentState !== 'active') return;
+        try {
+          setActive((await deliveryAPI.getActiveOrder()).order);
+        } catch {
+          /* try again next tick */
+        }
+      }, READY_POLL_MS);
+      return () => clearInterval(handle);
+    }, [waitingForFood]),
   );
 
   const onRefresh = () => {

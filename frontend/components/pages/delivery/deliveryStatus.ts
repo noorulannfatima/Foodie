@@ -28,11 +28,26 @@ export function getDeliveryStep(status: string): {
       headingToCustomer: true,
     };
   }
+  if (status === 'Ready') {
+    return {
+      label: 'Ready for pickup',
+      tint: ORDER_STATUS_COLORS.Ready,
+      next: 'PickedUp',
+      actionLabel: 'Mark picked up',
+      headingToCustomer: false,
+    };
+  }
+  // Confirmed / Preparing: pickup unlocks once the restaurant marks it ready
   return {
-    label: status === 'Ready' ? 'Ready for pickup' : 'Being prepared',
-    tint: status === 'Ready' ? ORDER_STATUS_COLORS.Ready : ORDER_STATUS_COLORS.Preparing,
-    next: 'PickedUp',
-    actionLabel: 'Mark picked up',
+    label: 'Being prepared',
+    tint: ORDER_STATUS_COLORS.Preparing,
+    next: null,
+    actionLabel: 'Waiting for restaurant',
     headingToCustomer: false,
   };
+}
+
+/** The rider is assigned but the food isn't ready to collect yet. */
+export function isAwaitingPickup(status: string): boolean {
+  return status === 'Confirmed' || status === 'Preparing';
 }

@@ -51,7 +51,8 @@ export interface IDeliveryPerson extends Document {
     onTimeDeliveryRate: number; // Percentage of on-time deliveries
   };
   
-  // Earnings
+  // Earnings. today/thisWeek/thisMonth are legacy counters that were never
+  // reset; the API derives them from deliveryHistory instead.
   earnings: {
     total: number;
     today: number;
@@ -522,9 +523,6 @@ deliveryPersonSchema.methods.updateEarnings = async function (
   amount: number
 ): Promise<IDeliveryPerson> {
   this.earnings.total += amount;
-  this.earnings.today += amount;
-  this.earnings.thisWeek += amount;
-  this.earnings.thisMonth += amount;
   this.earnings.pending += amount;
   
   return await (this as any).save();
@@ -564,27 +562,6 @@ deliveryPersonSchema.statics.findTopRated = function (limit: number = 10) {
   return this.find({ isActive: true, isVerified: true })
     .sort({ "stats.averageRating": -1, "stats.totalDeliveries": -1 })
     .limit(limit);
-};
-
-/**
- * Reset daily earnings (to be called by cron job)
- */
-deliveryPersonSchema.statics.resetDailyEarnings = async function () {
-  await this.updateMany({}, { $set: { "earnings.today": 0 } });
-};
-
-/**
- * Reset weekly earnings (to be called by cron job)
- */
-deliveryPersonSchema.statics.resetWeeklyEarnings = async function () {
-  await this.updateMany({}, { $set: { "earnings.thisWeek": 0 } });
-};
-
-/**
- * Reset monthly earnings (to be called by cron job)
- */
-deliveryPersonSchema.statics.resetMonthlyEarnings = async function () {
-  await this.updateMany({}, { $set: { "earnings.thisMonth": 0 } });
 };
 
 // ========== Virtual Properties ==========

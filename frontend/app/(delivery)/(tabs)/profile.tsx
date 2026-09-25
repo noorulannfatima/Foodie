@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Image,
   RefreshControl,
   Alert,
   Modal,
@@ -18,7 +17,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { BRAND_RED_TINT, Fonts, tintBg, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 import { Loader } from '@/components/atoms';
 import {
   DeliveryPageHeading,
@@ -36,12 +35,6 @@ import { useAppThemeStore } from '@/stores/appThemeStore';
 
 const VEHICLE_TYPES = ['Bicycle', 'Bike', 'Scooter', 'Car'] as const;
 type TabId = 'account' | 'settings';
-
-function formatSince(iso: string | undefined, locale: string) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString(locale, { month: 'short', year: 'numeric' });
-}
 
 function localeForLang(lang: DeliveryLanguage): string {
   if (lang === 'ur') return 'ur-PK';
@@ -255,8 +248,6 @@ export default function DeliveryProfileScreen() {
   };
 
   const notif = useDeliveryPreferencesStore((s) => s.notificationsEnabled);
-  const rating = p?.stats?.totalRatings ? p.stats.averageRating.toFixed(1) : null;
-  const reliability = `${p?.completionRate ?? 0}%`;
   const locale = localeForLang(storeLang);
 
   const inputProps = {
@@ -305,61 +296,6 @@ export default function DeliveryProfileScreen() {
 
         {tab === 'account' ? (
           <>
-            <View style={styles.heroCard}>
-              <View style={styles.avatarBlock}>
-                {p?.profileImage ? (
-                  <Image source={{ uri: p.profileImage }} style={styles.bigAvatar} />
-                ) : (
-                  <View style={[styles.bigAvatar, styles.avatarPh]}>
-                    <Ionicons name="person" size={40} color={c.muted} />
-                  </View>
-                )}
-                <Pressable
-                  style={styles.editFab}
-                  onPress={openEdit}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('updateAccount')}
-                  hitSlop={8}
-                >
-                  <Ionicons name="pencil" size={14} color="#fff" />
-                </Pressable>
-              </View>
-              <Text style={styles.name}>{p?.name ?? '—'}</Text>
-              <View style={styles.badgeRow}>
-                <View style={styles.tierPill}>
-                  <Text style={styles.tierText}>{p?.tierLabel ?? 'COURIER'}</Text>
-                </View>
-                {p?.isVerified ? (
-                  <View style={styles.verifiedPill}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                    <Text style={styles.verifiedText}>Verified</Text>
-                  </View>
-                ) : null}
-              </View>
-              <View style={styles.stats3}>
-                <View style={styles.statCol}>
-                  <Text style={styles.statN}>{p?.stats?.totalDeliveries ?? 0}</Text>
-                  <Text style={styles.statL}>{t('totalOrders')}</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statCol}>
-                  <View style={styles.rateRow}>
-                    <Ionicons name="star" size={14} color="#F59E0B" />
-                    <Text style={styles.statN}>{rating ?? 'New'}</Text>
-                  </View>
-                  <Text style={styles.statL}>Rating</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statCol}>
-                  <Text style={styles.statN}>{reliability}</Text>
-                  <Text style={styles.statL}>{t('reliability')}</Text>
-                </View>
-              </View>
-              <Text style={styles.since}>
-                {t('memberSince')} {formatSince(p?.createdAt, locale)}
-              </Text>
-            </View>
-
             <Section title={t('personalInfo')} icon="person-outline" sx={styles} c={c}>
               <Row label={t('name')} value={p?.name ?? '—'} sx={styles} />
               <Row label={t('email')} value={p?.email ?? '—'} sx={styles} />
@@ -635,77 +571,6 @@ function createProfileStyles(c: AppColors) {
     root: { flex: 1, backgroundColor: c.screenBackground },
     content: { padding: 20, paddingBottom: 40 },
     tabsWrap: { marginTop: -8, marginBottom: 16 },
-    heroCard: {
-      backgroundColor: c.card,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: c.border,
-      padding: 20,
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    avatarBlock: { marginBottom: 12 },
-    bigAvatar: { width: 88, height: 88, borderRadius: 44 },
-    avatarPh: {
-      backgroundColor: c.screenBackground,
-      borderWidth: 1,
-      borderColor: c.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    editFab: {
-      position: 'absolute',
-      right: -2,
-      bottom: -2,
-      backgroundColor: c.brand,
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 3,
-      borderColor: c.card,
-    },
-    name: { fontFamily: Fonts.brandBlack, fontSize: 22, color: c.text, textAlign: 'center' },
-    badgeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      marginTop: 8,
-    },
-    tierPill: {
-      backgroundColor: tintBg(c.brand, BRAND_RED_TINT, c.isDark),
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    tierText: { fontFamily: Fonts.brandBold, fontSize: 11, color: c.primary, letterSpacing: 0.5 },
-    verifiedPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      backgroundColor: tintBg('#10B981', '#DCFCE7', c.isDark),
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    verifiedText: { fontFamily: Fonts.brandBold, fontSize: 11, color: '#10B981' },
-    stats3: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'stretch',
-      marginTop: 18,
-      paddingTop: 16,
-      borderTopWidth: 1,
-      borderTopColor: c.border,
-    },
-    statCol: { flex: 1, alignItems: 'center' },
-    statDivider: { width: 1, height: 28, backgroundColor: c.border },
-    rateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    statN: { fontFamily: Fonts.brandBlack, fontSize: 18, color: c.text, fontVariant: ['tabular-nums'] },
-    statL: { fontFamily: Fonts.brand, fontSize: 12, color: c.muted, marginTop: 2, textAlign: 'center' },
-    since: { fontFamily: Fonts.brand, fontSize: 12, color: c.muted, marginTop: 14 },
     section: {
       backgroundColor: c.card,
       borderRadius: 16,
