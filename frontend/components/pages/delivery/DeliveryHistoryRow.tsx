@@ -30,12 +30,14 @@ export default function DeliveryHistoryRow({ order }: { order: DeliveryOrderPayl
         <Text style={styles.amount}>+{formatDeliveryCurrency(order.driverEarnings ?? order.estPayout)}</Text>
       </View>
       <View style={styles.foot}>
-        <Text style={styles.meta}>#{order.orderNumber}</Text>
+        {/* Only the long order number shrinks; the time and badge always stay whole */}
+        <Text style={[styles.meta, styles.orderNumber]} numberOfLines={1} ellipsizeMode="middle">
+          #{order.orderNumber}
+        </Text>
         {when ? (
-          <>
-            <Text style={styles.meta}>•</Text>
-            <Text style={styles.meta}>{when}</Text>
-          </>
+          <Text style={[styles.meta, styles.fixed]} numberOfLines={1}>
+            •  {when}
+          </Text>
         ) : null}
         <View style={[styles.badge, { backgroundColor: `${tint}20` }]}>
           <Text style={[styles.badgeText, { color: tint }]}>Delivered</Text>
@@ -54,6 +56,7 @@ function createStyles(c: AppColors) {
       marginBottom: 10,
       borderWidth: 1,
       borderColor: c.border,
+      overflow: 'hidden',
     },
     head: {
       flexDirection: 'row',
@@ -77,14 +80,22 @@ function createStyles(c: AppColors) {
     foot: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      gap: 8,
     },
     meta: {
       fontFamily: Fonts.brand,
       fontSize: 13,
       color: c.muted,
     },
+    orderNumber: {
+      flex: 1,
+      minWidth: 0,
+    },
+    fixed: {
+      flexShrink: 0,
+    },
     badge: {
+      flexShrink: 0,
       marginLeft: 'auto',
       paddingHorizontal: 10,
       paddingVertical: 4,
