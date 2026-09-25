@@ -333,6 +333,9 @@ export async function unregisterPushToken(req: AuthRequest, res: Response): Prom
 
 // ========== Orders ==========
 
+/** What a restaurant may see of the rider assigned to its order. */
+const ASSIGNED_RIDER_FIELDS = 'name phone vehicle profileImage';
+
 /**
  * GET /restaurant/orders
  * Query params: status, page, limit
@@ -354,6 +357,7 @@ export async function getOrders(req: AuthRequest, res: Response): Promise<void> 
     const [orders, total] = await Promise.all([
       Order.find(query)
         .populate('customer', 'name email phone')
+        .populate('deliveryPerson', ASSIGNED_RIDER_FIELDS)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum),
@@ -383,7 +387,9 @@ export async function getOrderDetail(req: AuthRequest, res: Response): Promise<v
     const order = await Order.findOne({
       _id: req.params.id as string,
       restaurant: req.user!.id,
-    }).populate('customer', 'name email phone');
+    })
+      .populate('customer', 'name email phone')
+      .populate('deliveryPerson', ASSIGNED_RIDER_FIELDS);
 
     if (!order) {
       res.status(404).json({ message: 'Order not found' });

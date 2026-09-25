@@ -520,3 +520,27 @@ describe('PATCH /api/delivery/orders/:id/status → Delivered', () => {
     expect((await Order.findById(order._id))!.payment.status).toBe('Pending');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Restaurant sees the assigned rider
+// ---------------------------------------------------------------------------
+
+describe('restaurant order endpoints', () => {
+  it('include the assigned rider without private fields', async () => {
+    const { rider } = await createRider({ name: 'Bilal Ahmed' });
+    const order = await createOrder('Preparing', { deliveryPerson: rider._id });
+    const token = generateToken(String(order.restaurant), 'restaurant');
+
+    const list = await request(app).get('/restaurant/orders').set('Authorization', `Bearer ${token}`);
+    const detail = await request(app)
+      .get(`/restaurant/orders/${String(order._id)}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    for (const dp of [list.body.orders[0].deliveryPerson, detail.body.order.deliveryPerson]) {
+      expect(dp).toMatchObject({ name: 'Bilal Ahmed', phone: rider.phone, vehicle: { plateNumber: rider.vehicle.plateNumber } });
+      expect(dp.password).toBeUndefined();
+      expect(dp.deliveryHistory).toBeUndefined();
+      expect(dp.email).toBeUndefined();
+    }
+  });
+});
