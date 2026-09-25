@@ -1,6 +1,6 @@
 // app/(customer)/restaurant/[id].tsx
 // This screen displays the details of a restaurant and its menu
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
   Alert,
   StatusBar,
   Dimensions,
-  ActivityIndicator,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +24,9 @@ import { Loader } from '@/components/atoms';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_HEIGHT = 220;
+const TOP_BAR_HEIGHT = 52; // Below the status bar
+const CATEGORY_BAR_HEIGHT = 48;
+const CART_FOOTER_HEIGHT = 56;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,6 +87,26 @@ export default function RestaurantDetailScreen() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuByCategory, setMenuByCategory] = useState<Record<string, MenuItemData[]>>({});
   const [activeCategory, setActiveCategory] = useState<string>('');
+
+  // Scroll-driven chrome: the compact top bar fades in once the banner is gone,
+  // and a pinned copy of the category tabs replaces the inline one below it.
+  const scrollRef = useRef<ScrollView>(null);
+  const [categoryBarY, setCategoryBarY] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
+  const [tabsPinned, setTabsPinned] = useState(false);
+  const topBarHeight = insets.top + TOP_BAR_HEIGHT;
+
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    setCollapsed(y > BANNER_HEIGHT - topBarHeight);
+    setTabsPinned(categoryBarY > 0 && y >= categoryBarY - topBarHeight);
+  };
+
+  const selectCategory = (name: string) => {
+    setActiveCategory(name);
+    // Start the new category at the top instead of mid-list
+    if (tabsPinned) scrollRef.current?.scrollTo({ y: categoryBarY - topBarHeight, animated: false });
+  };
 
   useEffect(() => {
     if (id) fetchData();
@@ -145,171 +169,212 @@ export default function RestaurantDetailScreen() {
   const bannerImage = restaurant.image?.[0];
   const cartCount = itemCount();
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle={c.isDark ? 'light-content' : 'dark-content'} />
-
-      {/* Banner */}
-      <View style={styles.bannerContainer}>
-        {bannerImage ? (
-          <Image source={{ uri: bannerImage }} style={styles.banner} />
-        ) : (
-          <View style={[styles.banner, styles.bannerPlaceholder]}>
-            <Ionicons name="restaurant" size={60} color="rgba(255,255,255,0.3)" />
-          </View>
-        )}
-        <View style={styles.bannerOverlay} />
-
-        {/* Back button */}
-        <TouchableOpacity
-          style={[styles.backBtn, { top: insets.top + 8 }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-
-        {/* Banner Info */}
-        <View style={styles.bannerInfo}>
-          {restaurant.isPremium && (
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumText}>PREMIUM DELIVERY</Text>
-            </View>
-          )}
-          <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={12} color="#F59E0B" />
-            <Text style={styles.ratingText}>{restaurant.averageRating.toFixed(1)}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Restaurant Info */}
-      <View style={styles.infoSection}>
-        <Text style={styles.restaurantName}>{restaurant.name}</Text>
-        <Text style={styles.restaurantDesc} numberOfLines={2}>{restaurant.description}</Text>
-
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={14} color={c.muted} />
-            <Text style={styles.metaText}>{restaurant.estimatedDeliveryTime} min</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="bicycle-outline" size={14} color={c.muted} />
-            <Text style={styles.metaText}>
-              {restaurant.deliveryFee === 0 ? 'Free' : formatCurrency(restaurant.deliveryFee)}
-            </Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="receipt-outline" size={14} color={c.muted} />
-            <Text style={styles.metaText}>Min {formatCurrency(restaurant.minimumOrder)}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Category Tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryBar}
-        contentContainerStyle={styles.categoryBarContent}
-      >
-        {categories.map((cat) => (
+  const categoryTabs = (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.categoryBarContent}
+    >
+      {categories.map((cat) => {
+        const active = activeCategory === cat.name;
+        return (
           <TouchableOpacity
             key={cat._id}
-            style={[styles.categoryTab, activeCategory === cat.name && styles.categoryTabActive]}
-            onPress={() => setActiveCategory(cat.name)}
+            style={[styles.categoryTab, active && styles.categoryTabActive]}
+            onPress={() => selectCategory(cat.name)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
           >
-            <Text style={[styles.categoryTabText, activeCategory === cat.name && styles.categoryTabTextActive]}>
+            <Text style={[styles.categoryTabText, active && styles.categoryTabTextActive]}>
               {cat.name}
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        );
+      })}
+    </ScrollView>
+  );
 
-      {/* Menu Items */}
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle={collapsed && !c.isDark ? 'dark-content' : 'light-content'} />
+
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.menuContent}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingBottom: cartCount > 0 ? CART_FOOTER_HEIGHT + Math.max(insets.bottom, 12) + 24 : 32,
+        }}
       >
-        {categories.map((cat) => {
-          if (activeCategory && activeCategory !== cat.name) return null;
-          const items = menuByCategory[cat.name] || [];
-          if (items.length === 0) return null;
-
-          return (
-            <View key={cat._id}>
-              <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>{cat.name}</Text>
-                {cat.description && (
-                  <Text style={styles.categorySubtitle}>{cat.description}</Text>
-                )}
-              </View>
-
-              {items.map((item) => (
-                <View key={item._id} style={styles.menuItem}>
-                  {item.image?.[0] && (
-                    <Image source={{ uri: item.image[0] }} style={styles.menuItemImage} />
-                  )}
-                  <View style={styles.menuItemBody}>
-                    <View style={styles.menuItemRow}>
-                      <Text style={styles.menuItemName}>{item.name}</Text>
-                      <Text style={styles.menuItemPrice}>
-                        {formatCurrency(item.discountedPrice || item.price)}
-                      </Text>
-                    </View>
-
-                    {item.ratingCount > 0 && (
-                      <View
-                        style={styles.menuItemRating}
-                        accessible
-                        accessibilityLabel={`Rated ${item.averageRating.toFixed(1)} out of 5 from ${item.ratingCount} review${item.ratingCount === 1 ? '' : 's'}`}
-                      >
-                        <Ionicons name="star" size={12} color="#FFA94D" />
-                        <Text style={styles.menuItemRatingValue}>{item.averageRating.toFixed(1)}</Text>
-                        <Text style={styles.menuItemRatingCount}>({item.ratingCount})</Text>
-                      </View>
-                    )}
-
-                    <Text style={styles.menuItemDesc} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-
-                    {/* Tags */}
-                    <View style={styles.menuItemTags}>
-                      {item.isVegetarian && <Text style={styles.tagBadge}>VEG</Text>}
-                      {item.isVegan && <Text style={styles.tagBadge}>VEGAN</Text>}
-                      {item.isGlutenFree && <Text style={styles.tagBadge}>GF</Text>}
-                    </View>
-
-                    <TouchableOpacity
-                      style={[styles.addBtn, !item.isAvailable && styles.addBtnDisabled]}
-                      onPress={() => item.isAvailable && handleAddToCart(item)}
-                      disabled={!item.isAvailable}
-                    >
-                      <Ionicons name="cart-outline" size={16} color="#fff" />
-                      <Text style={styles.addBtnText}>
-                        {item.isAvailable ? 'Add to Cart' : 'Unavailable'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
+        {/* Banner */}
+        <View style={styles.bannerContainer}>
+          {bannerImage ? (
+            <Image source={{ uri: bannerImage }} style={styles.banner} />
+          ) : (
+            <View style={[styles.banner, styles.bannerPlaceholder]}>
+              <Ionicons name="restaurant" size={60} color="rgba(255,255,255,0.3)" />
             </View>
-          );
-        })}
+          )}
+          <View style={styles.bannerOverlay} />
 
-        {categories.length === 0 && (
-          <View style={styles.emptyMenu}>
-            <Ionicons name="restaurant-outline" size={48} color={c.muted} />
-            <Text style={styles.emptyMenuText}>No menu items available</Text>
+          <View style={styles.bannerInfo}>
+            {restaurant.isPremium && (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumText}>PREMIUM DELIVERY</Text>
+              </View>
+            )}
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={12} color="#F59E0B" />
+              <Text style={styles.ratingText}>{restaurant.averageRating.toFixed(1)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Restaurant Info */}
+        <View style={styles.infoSection}>
+          <Text style={styles.restaurantName}>{restaurant.name}</Text>
+          <Text style={styles.restaurantDesc} numberOfLines={2}>{restaurant.description}</Text>
+
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons name="time-outline" size={14} color={c.muted} />
+              <Text style={styles.metaText}>{restaurant.estimatedDeliveryTime} min</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="bicycle-outline" size={14} color={c.muted} />
+              <Text style={styles.metaText}>
+                {restaurant.deliveryFee === 0 ? 'Free' : formatCurrency(restaurant.deliveryFee)}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="receipt-outline" size={14} color={c.muted} />
+              <Text style={styles.metaText}>Min {formatCurrency(restaurant.minimumOrder)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Category Tabs (inline; a pinned copy takes over once scrolled past) */}
+        {categories.length > 0 && (
+          <View
+            style={[styles.categoryBar, tabsPinned && styles.hidden]}
+            onLayout={(e) => setCategoryBarY(e.nativeEvent.layout.y)}
+          >
+            {categoryTabs}
           </View>
         )}
+
+        {/* Menu Items */}
+        <View style={styles.menuContent}>
+          {categories.map((cat) => {
+            if (activeCategory && activeCategory !== cat.name) return null;
+            const items = menuByCategory[cat.name] || [];
+            if (items.length === 0) return null;
+
+            return (
+              <View key={cat._id}>
+                <View style={styles.categoryHeader}>
+                  <Text style={styles.categoryTitle}>{cat.name}</Text>
+                  {cat.description && (
+                    <Text style={styles.categorySubtitle}>{cat.description}</Text>
+                  )}
+                </View>
+
+                {items.map((item) => (
+                  <View key={item._id} style={styles.menuItem}>
+                    {item.image?.[0] && (
+                      <Image source={{ uri: item.image[0] }} style={styles.menuItemImage} />
+                    )}
+                    <View style={styles.menuItemBody}>
+                      <View style={styles.menuItemRow}>
+                        <Text style={styles.menuItemName}>{item.name}</Text>
+                        <Text style={styles.menuItemPrice}>
+                          {formatCurrency(item.discountedPrice || item.price)}
+                        </Text>
+                      </View>
+
+                      {item.ratingCount > 0 && (
+                        <View
+                          style={styles.menuItemRating}
+                          accessible
+                          accessibilityLabel={`Rated ${item.averageRating.toFixed(1)} out of 5 from ${item.ratingCount} review${item.ratingCount === 1 ? '' : 's'}`}
+                        >
+                          <Ionicons name="star" size={12} color="#FFA94D" />
+                          <Text style={styles.menuItemRatingValue}>{item.averageRating.toFixed(1)}</Text>
+                          <Text style={styles.menuItemRatingCount}>({item.ratingCount})</Text>
+                        </View>
+                      )}
+
+                      <Text style={styles.menuItemDesc} numberOfLines={2}>
+                        {item.description}
+                      </Text>
+
+                      {/* Tags */}
+                      <View style={styles.menuItemTags}>
+                        {item.isVegetarian && <Text style={styles.tagBadge}>VEG</Text>}
+                        {item.isVegan && <Text style={styles.tagBadge}>VEGAN</Text>}
+                        {item.isGlutenFree && <Text style={styles.tagBadge}>GF</Text>}
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.addBtn, !item.isAvailable && styles.addBtnDisabled]}
+                        onPress={() => item.isAvailable && handleAddToCart(item)}
+                        disabled={!item.isAvailable}
+                      >
+                        <Ionicons name="cart-outline" size={16} color="#fff" />
+                        <Text style={styles.addBtnText}>
+                          {item.isAvailable ? 'Add to Cart' : 'Unavailable'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+
+          {categories.length === 0 && (
+            <View style={styles.emptyMenu}>
+              <Ionicons name="restaurant-outline" size={48} color={c.muted} />
+              <Text style={styles.emptyMenuText}>No menu items available</Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
+
+      {/* Compact top bar, shown once the banner has scrolled away */}
+      {collapsed && (
+        <View style={[styles.topBar, { height: topBarHeight, paddingTop: insets.top }]}>
+          <Text style={styles.topBarTitle} numberOfLines={1}>
+            {restaurant.name}
+          </Text>
+        </View>
+      )}
+
+      {/* Pinned category tabs */}
+      {tabsPinned && (
+        <View style={[styles.categoryBar, styles.pinnedCategoryBar, { top: topBarHeight }]}>
+          {categoryTabs}
+        </View>
+      )}
+
+      {/* Back button: floats over the banner, then sits in the top bar */}
+      <TouchableOpacity
+        style={[styles.backBtn, collapsed && styles.backBtnCollapsed, { top: insets.top + 8 }]}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+      >
+        <Ionicons name="arrow-back" size={22} color={collapsed ? c.text : '#fff'} />
+      </TouchableOpacity>
 
       {/* Cart Footer */}
       {cartCount > 0 && (
         <TouchableOpacity
-          style={[styles.cartFooter, { paddingBottom: insets.bottom + 12 }]}
+          style={[styles.cartFooter, { bottom: Math.max(insets.bottom, 12) }]}
           onPress={() => router.push('/(customer)/(tabs)/cart')}
+          accessibilityRole="button"
+          accessibilityLabel={`View cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
         >
           <View style={styles.cartBadge}>
             <Text style={styles.cartBadgeText}>{cartCount}</Text>
@@ -370,6 +435,26 @@ function createRestaurantDetailStyles(c: AppColors) {
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  backBtnCollapsed: {
+    backgroundColor: 'transparent',
+  },
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    paddingHorizontal: 64, // Clear of the back button on both sides
+    backgroundColor: c.customerSurface,
+    borderBottomWidth: 1,
+    borderBottomColor: c.border,
+  },
+  topBarTitle: {
+    fontFamily: Fonts.brandBlack,
+    fontSize: 17,
+    color: c.text,
+    textAlign: 'center',
   },
   bannerInfo: {
     position: 'absolute',
@@ -438,19 +523,27 @@ function createRestaurantDetailStyles(c: AppColors) {
     color: c.muted,
   },
   categoryBar: {
+    height: CATEGORY_BAR_HEIGHT,
     borderBottomWidth: 1,
     borderBottomColor: c.border,
-    maxHeight: 48,
     backgroundColor: c.customerSurface,
+  },
+  pinnedCategoryBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  hidden: {
+    opacity: 0,
   },
   categoryBarContent: {
     paddingHorizontal: 16,
     gap: 4,
-    alignItems: 'center',
   },
   categoryTab: {
+    height: CATEGORY_BAR_HEIGHT - 1,
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
@@ -460,6 +553,7 @@ function createRestaurantDetailStyles(c: AppColors) {
   categoryTabText: {
     fontFamily: Fonts.brand,
     fontSize: 14,
+    lineHeight: 20,
     color: c.muted,
   },
   categoryTabTextActive: {
@@ -468,7 +562,6 @@ function createRestaurantDetailStyles(c: AppColors) {
   },
   menuContent: {
     padding: 16,
-    paddingBottom: 100,
     backgroundColor: c.customerBodyBg,
   },
   categoryHeader: {
@@ -597,16 +690,19 @@ function createRestaurantDetailStyles(c: AppColors) {
   },
   cartFooter: {
     position: 'absolute',
-    bottom: 0,
     left: 16,
     right: 16,
+    height: CART_FOOTER_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: c.secondary,
+    backgroundColor: c.brand,
     borderRadius: 14,
     paddingHorizontal: 16,
-    paddingTop: 14,
-    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
   },
   cartBadge: {
     width: 26,

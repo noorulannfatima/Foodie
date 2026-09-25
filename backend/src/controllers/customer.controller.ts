@@ -8,6 +8,7 @@ import Cart from '../models/cart';
 import Review from '../models/review';
 import { notifyRestaurant } from '../services/push.service';
 import { roundedAverage } from '../services/rating.service';
+import { rollbackUnpaidOrder } from '../services/orderRollback.service';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -457,49 +458,63 @@ export async function createOrder(req: AuthRequest, res: Response): Promise<void
     const tipAmount = Math.max(0, Number(tip) || 0);
     const total = subtotal + deliveryFee + tax + tipAmount;
 
-    // ----- Persist (atomic-ish: create order, then close cart) -------------
-    const order = await Order.create({
-      customer: req.user!.id,
-      restaurant: restaurant._id,
-      items: cart.items.map((item) => ({
-        menuItem: item.menuItem,
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        customizations: item.customizations,
-        specialInstructions: item.specialInstructions,
-      })),
-      deliveryAddress: {
-        street,
-        city,
-        zipCode,
-        latitude: deliveryAddress.latitude,
-        longitude: deliveryAddress.longitude,
-        instructions: deliveryAddress.instructions,
-      },
-      pricing: {
-        subtotal,
-        deliveryFee,
-        tax,
-        discount: 0,
-        tip: tipAmount,
-        total,
-      },
-      payment: {
-        method: paymentMethod,
-        status: 'Pending',
-      },
-      status: 'Pending',
-      estimatedPreparationTime: restaurant.estimatedDeliveryTime || 30,
-      estimatedDeliveryTime: new Date(
-        Date.now() + (restaurant.estimatedDeliveryTime || 30) * 60000,
-      ),
-      specialInstructions,
-    });
+    // ----- Persist (atomic: create order + close cart, or neither) ---------
+    const session = await mongoose.startSession();
+    let order!: InstanceType<typeof Order>;
+    try {
+      await session.withTransaction(async () => {
+        [order] = await Order.create(
+          [
+            {
+              customer: req.user!.id,
+              restaurant: restaurant._id,
+              items: cart.items.map((item) => ({
+                menuItem: item.menuItem,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+                customizations: item.customizations,
+                specialInstructions: item.specialInstructions,
+              })),
+              deliveryAddress: {
+                street,
+                city,
+                zipCode,
+                latitude: deliveryAddress.latitude,
+                longitude: deliveryAddress.longitude,
+                instructions: deliveryAddress.instructions,
+              },
+              pricing: {
+                subtotal,
+                deliveryFee,
+                tax,
+                discount: 0,
+                tip: tipAmount,
+                total,
+              },
+              payment: {
+                method: paymentMethod,
+                status: 'Pending',
+              },
+              status: 'Pending',
+              estimatedPreparationTime: restaurant.estimatedDeliveryTime || 30,
+              estimatedDeliveryTime: new Date(
+                Date.now() + (restaurant.estimatedDeliveryTime || 30) * 60000,
+              ),
+              specialInstructions,
+              cart: cart._id,
+            },
+          ],
+          { session },
+        );
 
-    // Mark the cart as completed so the next addToCart starts fresh.
-    cart.status = 'Completed';
-    await cart.save();
+        // Mark the cart as completed so the next addToCart starts fresh.
+        cart.status = 'Completed';
+        await cart.save({ session });
+      });
+    } finally {
+      await session.endSession();
+    }
 
     const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
     void notifyRestaurant(restaurant._id, 'newOrders', {
@@ -601,6 +616,46 @@ export async function getOrderDetail(req: AuthRequest, res: Response): Promise<v
 // ---------------------------------------------------------------------------
 // Order actions: cancel, reorder, track (reviews live in review.controller)
 // ---------------------------------------------------------------------------
+
+/**
+ * POST /api/customer/orders/:id/rollback
+ * Undo a checkout whose payment step failed: cancel the unpaid order and
+ * restore the cart it was created from. Body: { reason? }
+ */
+export async function rollbackOrder(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const orderId = req.params.id as string;
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      res.status(400).json({ message: 'Invalid order id' });
+      return;
+    }
+
+    const result = await rollbackUnpaidOrder(orderId, {
+      customerId: req.user!.id,
+      reason: req.body?.reason || 'Checkout did not complete',
+    });
+
+    if (!result.rolledBack) {
+      if (result.reason === 'not_found') {
+        res.status(404).json({ message: 'Order not found' });
+      } else {
+        res.status(409).json({ message: 'Order is already confirmed or paid and cannot be rolled back' });
+      }
+      return;
+    }
+
+    void notifyRestaurant(result.order.restaurant, 'orderCancellations', {
+      title: 'Order cancelled',
+      body: `Order #${result.order.orderNumber} was cancelled: checkout did not complete`,
+      data: { type: 'order_cancelled', orderId: result.order._id.toString() },
+    });
+
+    res.json({ order: result.order, cartRestored: result.cartRestored });
+  } catch (error: any) {
+    console.error('Rollback order error:', error);
+    res.status(500).json({ message: 'Server error rolling back order' });
+  }
+}
 
 /**
  * POST /api/customer/orders/:id/cancel

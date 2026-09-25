@@ -115,10 +115,41 @@ export default function CustomerCart() {
         <CheckoutModal
           onClose={() => setCheckoutVisible(false)}
           onPlaceOrder={async (data) => {
+            // Set once the backend has created the order. From that point the
+            // server cart is closed, so if any later step fails we undo the
+            // whole checkout: cancel the order and restore the cart.
+            let order: any = null;
+
+            const undoCheckout = async (title: string, message: string) => {
+              const placedOrder = order;
+              setCheckoutVisible(false);
+              try {
+                await customerAPI.rollbackOrder(placedOrder._id, message);
+              } catch {
+                // Already rolled back server-side, or no longer undoable —
+                // the cart refresh below tells us which.
+              }
+              await useCartStore.getState().fetchCart();
+              const restored = (useCartStore.getState().cart?.items.length ?? 0) > 0;
+              if (restored) {
+                Alert.alert(title, `${message}\n\nYour order was not placed and your cart has been restored.`);
+              } else {
+                Alert.alert(title, `${message}\n\nOrder #${placedOrder.orderNumber} could not be undone.`, [
+                  {
+                    text: 'View Order',
+                    onPress: () =>
+                      router.replace({
+                        pathname: '/(customer)/order/[id]',
+                        params: { id: placedOrder._id },
+                      }),
+                  },
+                ]);
+              }
+            };
             try {
               // 1. Create the order on the backend in "Pending" payment state.
               const result = await customerAPI.createOrder(data);
-              const order = result.order;
+              order = result.order;
 
               // 2. Branch on payment method. Both branches refresh the cart and
               //    bounce the user back to the home screen on success.
@@ -160,12 +191,9 @@ export default function CustomerCart() {
                     ]
                   );
                 } else if (outcome.kind === 'cancelled') {
-                  Alert.alert(
-                    'Payment Cancelled',
-                    `Order #${order.orderNumber} is awaiting payment. You can retry from your orders.`
-                  );
+                  await undoCheckout('Payment Cancelled', 'You cancelled the payment.');
                 } else {
-                  Alert.alert(
+                  await undoCheckout(
                     'Payment Failed',
                     outcome.reason
                       ? `Safepay reported: ${outcome.reason}.`
@@ -195,7 +223,11 @@ export default function CustomerCart() {
               );
             } catch (err: unknown) {
               const message = err instanceof Error ? err.message : 'Failed to place order';
-              Alert.alert('Error', message);
+              if (!order) {
+                Alert.alert('Error', message);
+                return;
+              }
+              await undoCheckout('Checkout Failed', message);
             }
           }}
         />

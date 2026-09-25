@@ -14,6 +14,7 @@ import {
   getOrders,
   getOrderDetail,
   cancelOrder,
+  rollbackOrder,
   reorder,
   trackOrder,
 } from '../controllers/customer.controller';
@@ -47,6 +48,7 @@ router.get('/orders/:id', getOrderDetail);
 
 // Order actions
 router.post('/orders/:id/cancel', cancelOrder);
+router.post('/orders/:id/rollback', rollbackOrder);
 router.post('/orders/:id/review', requireRole('customer'), submitOrderReview);
 router.post('/orders/:id/reorder', reorder);
 router.get('/orders/:id/track', trackOrder);

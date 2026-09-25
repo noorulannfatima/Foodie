@@ -9,6 +9,7 @@ import {
   parseWebhookPayload,
   verifyWebhookSignature,
 } from '../services/safepay.service';
+import { rollbackUnpaidOrder } from '../services/orderRollback.service';
 
 /**
  * Payment controller — handles the two payment methods supported by the app:
@@ -63,17 +64,33 @@ export async function initiateSafepayPayment(req: AuthRequest, res: Response): P
     // Pull lightweight customer info to display on the Safepay checkout.
     const user = await User.findById(req.user!.id).select('name email phone');
 
-    const { tracker, checkoutUrl } = await createTracker({
-      amount: order.pricing.total,
-      currency: 'PKR',
-      orderId: order._id.toString(),
-      description: `Foodie order ${order.orderNumber}`,
-      customer: {
-        name: (user as any)?.name,
-        email: (user as any)?.email,
-        phone: (user as any)?.phone,
-      },
-    });
+    let session;
+    try {
+      session = await createTracker({
+        amount: order.pricing.total,
+        currency: 'PKR',
+        orderId: order._id.toString(),
+        description: `Foodie order ${order.orderNumber}`,
+        customer: {
+          name: (user as any)?.name,
+          email: (user as any)?.email,
+          phone: (user as any)?.phone,
+        },
+      });
+    } catch (providerError: any) {
+      // Payment never started, so undo the checkout: cancel the order and
+      // give the customer their cart back to retry.
+      console.error(`[Payment] Safepay tracker failed for order ${order.orderNumber}:`, providerError);
+      const rollback = await rollbackUnpaidOrder(order._id.toString(), {
+        reason: 'Online payment could not be started',
+      });
+      res.status(502).json({
+        message: 'Could not start online payment. Your cart has been restored — please try again.',
+        rolledBack: rollback.rolledBack,
+      });
+      return;
+    }
+    const { tracker, checkoutUrl } = session;
 
     // Save the tracker so the webhook can find this order later.
     order.payment.method = 'Safepay';
@@ -139,11 +156,18 @@ export async function verifySafepayPayment(req: AuthRequest, res: Response): Pro
       order.payment.status = 'Completed';
       order.payment.paidAt = new Date();
       order.status = 'Confirmed';
-    } else if (isFailureState(state)) {
-      order.payment.status = 'Failed';
     }
 
     await order.save();
+
+    // A declined/expired payment undoes the checkout so the cart comes back.
+    if (isFailureState(state)) {
+      const rollback = await rollbackUnpaidOrder(order._id.toString(), {
+        reason: `Safepay payment ${state.toLowerCase()}`,
+      });
+      res.json({ status: 'Failed', state, order: rollback.order ?? order });
+      return;
+    }
 
     res.json({ status: order.payment.status, state, order });
   } catch (error: any) {
@@ -217,16 +241,16 @@ export async function safepayWebhook(req: Request, res: Response): Promise<void>
         timestamp: new Date(),
         note: 'Payment confirmed via Safepay',
       });
-    } else if (isFailureState(event.state) || event.event === 'payment.failed') {
-      order.payment.status = 'Failed';
-      order.timeline.push({
-        status: order.status,
-        timestamp: new Date(),
-        note: 'Safepay payment failed',
-      });
     }
 
     await order.save();
+
+    if (
+      order.payment.status !== 'Completed' &&
+      (isFailureState(event.state) || event.event === 'payment.failed')
+    ) {
+      await rollbackUnpaidOrder(order._id.toString(), { reason: 'Safepay payment failed' });
+    }
     res.status(200).json({ received: true });
   } catch (error: any) {
     console.error('[Payment] safepayWebhook error:', error);

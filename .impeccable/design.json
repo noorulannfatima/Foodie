@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T17:23:04.128732+00:00",
+  "title": "Design System: Foodie",
+  "extensions": {
+    "colorMeta": {
+      "brand-red": {
+        "role": "primary",
+        "displayName": "Oxblood Red",
+        "canonical": "#7d0606",
+        "tonalRamp": [
+          "#2a0202",
+          "#4a0404",
+          "#7d0606",
+          "#a31d1d",
+          "#c44444",
+          "#e26464",
+          "#f0b3b3",
+          "#f6e7e7"
+        ]
+      },
+      "brand-red-tint": {
+        "role": "primary",
+        "displayName": "Blush Wash"
+      },
+      "brand-red-on-dark": {
+        "role": "primary",
+        "displayName": "Lifted Red"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#090801",
+          "#1f1f1f",
+          "#333333",
+          "#4d4d4d",
+          "#666666",
+          "#999999",
+          "#cccccc",
+          "#e6e6e6"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink"
+      },
+      "faint-ink": {
+        "role": "neutral",
+        "displayName": "Faint Ink"
+      },
+      "counter": {
+        "role": "neutral",
+        "displayName": "Counter"
+      },
+      "slip": {
+        "role": "neutral",
+        "displayName": "Slip"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline"
+      },
+      "night-counter": {
+        "role": "neutral",
+        "displayName": "Night Counter"
+      },
+      "night-slip": {
+        "role": "neutral",
+        "displayName": "Night Slip"
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Night Hairline"
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink"
+      },
+      "night-muted-ink": {
+        "role": "neutral",
+        "displayName": "Night Muted Ink"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero metric amount only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page title on every tab screen."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings."
+      },
+      "card-title": {
+        "displayName": "Card title",
+        "purpose": "First line of cards; button labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, addresses, metadata."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Stat labels, badges, field labels."
+      },
+      "eyebrow-metric": {
+        "displayName": "Metric label",
+        "purpose": "Label inside the hero card and above settings groups."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 -4px 24px rgba(0,0,0,0.12)",
+        "purpose": "Bottom sheets, modals and FABs only. Content surfaces are never shadowed."
+      }
+    ],
+    "motion": [
+      {
+        "name": "segment-spring",
+        "value": "spring(tension 80, friction 10)",
+        "purpose": "Segmented-tab pill slide."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action on a screen or card.",
+      "html": "<button class=\"ds-btn-primary\">Mark picked up</button>",
+      "css": ".ds-btn-primary{background:#7d0606;color:#fff;font-family:Nunito,sans-serif;font-weight:700;font-size:15px;border:0;border-radius:12px;min-height:48px;padding:0 24px;cursor:pointer;transition:opacity .15s}.ds-btn-primary:hover{opacity:.9}.ds-btn-primary:active{opacity:.75}.ds-btn-primary:focus-visible{outline:2px solid #7d0606;outline-offset:2px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action beside a primary.",
+      "html": "<button class=\"ds-btn-outline\">Navigate</button>",
+      "css": ".ds-btn-outline{background:#fff;color:#090801;font-family:Nunito,sans-serif;font-weight:700;font-size:14px;border:1px solid #E5E5E5;border-radius:12px;min-height:48px;padding:0 16px;cursor:pointer}.ds-btn-outline:hover{background:#F8F9FA}.ds-btn-outline:focus-visible{outline:2px solid #7d0606;outline-offset:2px}"
+    },
+    {
+      "name": "Hero Metric Card",
+      "kind": "card",
+      "refersTo": "hero-metric-card",
+      "description": "The one red block on a dashboard.",
+      "html": "<div class=\"ds-hero\"><div class=\"ds-hero-l\">TODAY'S EARNINGS</div><div class=\"ds-hero-v\">$128.40</div><div class=\"ds-hero-f\">6 deliveries today</div></div>",
+      "css": ".ds-hero{background:#7d0606;border-radius:16px;padding:24px;font-family:Nunito,sans-serif;color:#fff;max-width:340px}.ds-hero-l{font-weight:700;font-size:12px;letter-spacing:1px;opacity:.75;margin-bottom:8px}.ds-hero-v{font-weight:900;font-size:36px;font-variant-numeric:tabular-nums;margin-bottom:12px}.ds-hero-f{font-size:14px;opacity:.85}"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "card",
+      "refersTo": "stat-tile",
+      "description": "Small bordered metric in a row of three.",
+      "html": "<div class=\"ds-stat\"><div class=\"ds-stat-l\">THIS WEEK</div><div class=\"ds-stat-v\">$412.00</div></div>",
+      "css": ".ds-stat{background:#fff;border:1px solid #E5E5E5;border-radius:12px;padding:14px;font-family:Nunito,sans-serif;width:110px}.ds-stat-l{font-weight:700;font-size:10px;letter-spacing:.5px;color:#666;margin-bottom:6px}.ds-stat-v{font-weight:900;font-size:22px;color:#090801;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Order List Card",
+      "kind": "card",
+      "refersTo": "list-card",
+      "description": "Order row with status badge.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-h\"><span class=\"ds-card-t\">#1042</span><span class=\"ds-badge\">Ready</span></div><div class=\"ds-card-m\">3 items \u2022 $24.50 \u2022 5m ago</div></div>",
+      "css": ".ds-card{background:#fff;border:1px solid #E5E5E5;border-radius:12px;padding:16px;font-family:Nunito,sans-serif;max-width:340px}.ds-card-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.ds-card-t{font-weight:700;font-size:15px;color:#090801}.ds-badge{background:#10B98120;color:#10B981;font-weight:700;font-size:11px;text-transform:uppercase;border-radius:12px;padding:4px 10px}.ds-card-m{font-size:13px;color:#666}"
+    },
+    {
+      "name": "Segmented Tabs",
+      "kind": "nav",
+      "refersTo": "segmented-tabs",
+      "description": "Sliding brand pill between 2-3 views.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-i ds-on\">Requests</button><button class=\"ds-seg-i\">History</button></div>",
+      "css": ".ds-seg{display:flex;background:#fff;border:1px solid #E5E5E5;border-radius:12px;height:44px;padding:4px;gap:4px;max-width:340px;font-family:Nunito,sans-serif}.ds-seg-i{flex:1;border:0;background:transparent;border-radius:9px;font-weight:700;font-size:13px;color:#666;cursor:pointer}.ds-seg-i:hover{color:#090801}.ds-on{background:#7d0606;color:#fff}.ds-on:hover{color:#fff}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "Filters and option pickers; inverted ink when selected.",
+      "html": "<button class=\"ds-chip ds-chip-on\">All</button> <button class=\"ds-chip\">Preparing</button>",
+      "css": ".ds-chip{background:#fff;border:1px solid #E5E5E5;border-radius:20px;padding:8px 16px;font-family:Nunito,sans-serif;font-weight:700;font-size:13px;color:#666;cursor:pointer}.ds-chip:hover{border-color:#090801}.ds-chip-on{background:#090801;border-color:#090801;color:#fff}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Form field on counter fill.",
+      "html": "<label class=\"ds-lbl\">PLATE NUMBER<input class=\"ds-input\" placeholder=\"ABC-123\"></label>",
+      "css": ".ds-lbl{display:flex;flex-direction:column;gap:6px;font-family:Nunito,sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;color:#666;max-width:300px}.ds-input{background:#F8F9FA;border:1px solid #E5E5E5;border-radius:10px;padding:11px 12px;font-family:Nunito,sans-serif;font-size:15px;color:#090801;letter-spacing:0}.ds-input:focus{outline:none;border-color:#7d0606}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Foodie App Design",
+    "overview": "**Creative North Star: \"Foodie App Design\"**\n\nFoodie is one app with three front doors (customer, restaurant, delivery) and one visual language. Every screen is a quiet off-white page holding plain white cards with hairline borders, set in Nunito. Brand red is the only loud colour. It marks the one thing on a screen that matters most: the headline number, the primary action, the selected tab. Everything else is ink, muted ink and hairlines.\n\nThe system is flat and dense. People use these screens between tasks: a courier at a red light, a cook between tickets, a hungry customer. So hierarchy comes from type weight and a single red element, not from decoration. Screens start directly with a large page title. There is no coloured app bar.\n\nThe restaurant and delivery apps are the reference implementation. The customer app still uses an older navy/blue palette (`customer*` tokens in `constants/theme.ts`) and is migrating to this system screen by screen.",
+    "keyCharacteristics": [
+      "Off-white page, white bordered cards, no shadows on content.",
+      "Nunito everywhere: Black for titles and numbers, Bold for labels and actions, Regular for body.",
+      "Brand red appears once or twice per screen, never as decoration.",
+      "Order status is always a tinted badge in the shared status colours.",
+      "Light and dark mode come from the same tokens via `useAppThemeColors()`."
+    ],
+    "rules": [
+      {
+        "name": "The One Red Rule",
+        "body": "Brand red fills at most one dominant element per screen (the hero card *or* a primary button group) plus the active tab and switches. If two red blocks compete, one of them becomes an outline button.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token-Only Rule",
+        "body": "Screens never hard-code hex values. Read colours from `useAppThemeColors()` (`c.text`, `c.muted`, `c.card`, `c.border`, `c.screenBackground`, `c.brand`, `c.primary`) and status hues from `ORDER_STATUS_COLORS`. `#fff` on brand red is the one allowed literal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fill-vs-Text Red Rule",
+        "body": "Use `c.brand` for backgrounds, `c.primary` for red text, icons and links. Never put `c.brand` text on a dark surface.",
+        "section": "colors"
+      },
+      {
+        "name": "The Family-Not-Weight Rule",
+        "body": "Set weight by choosing a Nunito family (`Fonts.brand`, `Fonts.brandBold`, `Fonts.brandBlack`), never with `fontWeight`. A `fontWeight` on a Nunito family falls back to the system font on Android.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Money Rule",
+        "body": "Every currency value or count that can change uses `fontVariant: ['tabular-nums']`.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Content surfaces are separated by a hairline border, never a shadow. Shadows are reserved for things that float above the page: bottom sheets, modals and floating action buttons.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No-Nesting Rule",
+        "body": "A card never sits inside another card. Inside a card, group with hairline dividers or a Counter-filled inset.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** start every tab screen with the 28px Nunito Black page title on the counter background.",
+      "**Do** read every colour from `useAppThemeColors()` and every status colour from `ORDER_STATUS_COLORS`.",
+      "**Do** use the shared components (`Switch`, `Loader`, `DeliverySegmentedTabs`, `DeliveryStatTile`, `DeliveryEmptyState`, `RecentReviewsSection`) before writing new ones.",
+      "**Do** show real data only: when a number isn't available, show \"\u2014\", \"New\" or an empty state.",
+      "**Do** give every loading, empty, error and busy state a designed treatment.",
+      "**Do** add `accessibilityRole` and a spoken label to every custom pressable."
+    ],
+    "donts": [
+      "**Don't** add coloured app bars or navy headers; the old delivery `DeliveryHeader` was removed for this reason.",
+      "**Don't** use the `customer*` tokens (`customerBodyBg`, `customerNeutral`, `customerTextPrimary`\u2026) in new work. They are legacy and being migrated away.",
+      "**Don't** put shadows on cards, tiles or list rows.",
+      "**Don't** nest cards, or add a coloured left/right accent stripe to a card.",
+      "**Don't** use emoji as icons; use Ionicons outline.",
+      "**Don't** ship placeholder numbers, fake trends (\"+12%\"), mock maps or buttons that do nothing.",
+      "**Don't** set `fontWeight` on text; pick the Nunito family instead.",
+      "**Don't** introduce radii outside 10 / 12 / 16 / 20."
+    ]
+  }
+}

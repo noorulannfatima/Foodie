@@ -83,6 +83,10 @@ export interface IOrder extends Document {
   // Additional Information
   specialInstructions?: string;
   cancellationReason?: string;
+
+  // Cart this order was checked out from — lets an unpaid order be rolled
+  // back and its cart restored if payment fails.
+  cart?: mongoose.Types.ObjectId;
   
   // Timestamps
   createdAt: Date;
@@ -326,6 +330,11 @@ const orderSchema = new mongoose.Schema<IOrder>(
     cancellationReason: {
       type: String,
       trim: true,
+    },
+
+    cart: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cart",
     },
 
   },

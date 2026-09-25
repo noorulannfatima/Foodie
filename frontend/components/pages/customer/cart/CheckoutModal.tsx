@@ -11,7 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import { BRAND_RED_TINT, Fonts, tintBg, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 // Two payment options the backend supports end-to-end:
 //   - Safepay  (online card / wallet via hosted checkout)
@@ -73,16 +73,19 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+        <TouchableOpacity
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close checkout"
+          hitSlop={8}
+        >
+          <Ionicons name="close" size={24} color={c.text} />
         </TouchableOpacity>
-        <Text style={styles.headerLogo}>FOODIE</Text>
+        <Text style={styles.headerTitle}>Checkout</Text>
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Checkout</Text>
-        <Text style={styles.subtitle}>Finalize your gourmet selection</Text>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -124,10 +127,18 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
             return (
               <TouchableOpacity
                 key={p.key}
-                style={[styles.paymentOption, active && styles.paymentOptionActive]}
+                style={[
+                  styles.paymentOption,
+                  active && [
+                    styles.paymentOptionActive,
+                    { backgroundColor: tintBg(c.brand, BRAND_RED_TINT, c.isDark) },
+                  ],
+                ]}
                 onPress={() => setPaymentMethod(p.key as CheckoutPaymentMethod)}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: active }}
               >
-                <Ionicons name={p.icon} size={20} color={active ? c.text : c.muted} />
+                <Ionicons name={p.icon} size={20} color={active ? c.primary : c.muted} />
                 <View style={styles.paymentTextWrap}>
                   <Text style={[styles.paymentLabel, active && styles.paymentLabelActive]}>
                     {p.label}
@@ -170,7 +181,12 @@ export default function CheckoutModal({ onClose, onPlaceOrder }: CheckoutModalPr
           <Text style={styles.placeBtnText}>{placing ? 'Placing Order...' : 'Place Order'}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.secureText}>SECURE PAYMENT POWERED BY FOODIEPAY</Text>
+        {paymentMethod === 'Safepay' ? (
+          <View style={styles.secureRow}>
+            <Ionicons name="lock-closed-outline" size={12} color={c.muted} />
+            <Text style={styles.secureText}>Card and wallet payments are processed securely by Safepay</Text>
+          </View>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -183,38 +199,27 @@ function createStyles(c: AppColors) {
       backgroundColor: c.customerBodyBg,
     },
     header: {
-      backgroundColor: c.navBar,
+      backgroundColor: c.customerSurface,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 20,
-      paddingVertical: 14,
-      paddingTop: 50,
+      paddingTop: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
     },
     headerSpacer: {
       width: 24,
     },
-    headerLogo: {
+    headerTitle: {
       fontSize: 18,
       fontFamily: Fonts.brandBlack,
-      color: '#FFFFFF',
-      letterSpacing: 3,
+      color: c.text,
     },
     content: {
       padding: 20,
       paddingBottom: 40,
-    },
-    title: {
-      fontFamily: Fonts.brandBlack,
-      fontSize: 28,
-      color: c.text,
-      marginBottom: 4,
-    },
-    subtitle: {
-      fontFamily: Fonts.brand,
-      fontSize: 14,
-      color: c.muted,
-      marginBottom: 24,
     },
     section: {
       marginBottom: 24,
@@ -265,8 +270,8 @@ function createStyles(c: AppColors) {
       backgroundColor: c.customerSurface,
     },
     paymentOptionActive: {
-      borderColor: c.text,
-      borderWidth: 2,
+      borderColor: c.brand,
+      borderWidth: 1.5,
     },
     paymentTextWrap: {
       flex: 1,
@@ -301,13 +306,17 @@ function createStyles(c: AppColors) {
       fontSize: 16,
       color: '#fff',
     },
+    secureRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: 12,
+    },
     secureText: {
       fontFamily: Fonts.brand,
-      fontSize: 10,
+      fontSize: 12,
       color: c.muted,
-      textAlign: 'center',
-      marginTop: 12,
-      letterSpacing: 1,
     },
   });
 }

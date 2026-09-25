@@ -117,6 +117,19 @@ export const customerAPI = {
     return handleResponse(res);
   },
 
+  /**
+   * Undo a checkout whose payment step failed: the backend cancels the
+   * unpaid order and restores the cart it came from.
+   */
+  rollbackOrder: async (orderId: string, reason?: string) => {
+    const res = await fetch(`${BASE_URL}/api/customer/orders/${orderId}/rollback`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+    return handleResponse(res);
+  },
+
   getOrders: async (params?: { status?: string; page?: number }) => {
     const query = new URLSearchParams();
     if (params?.status) query.set('status', params.status);
