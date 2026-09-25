@@ -19,12 +19,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { BRAND_RED_TINT, Fonts, tintBg, useAppThemeColors, type AppColors } from '@/constants/theme';
-import { Loader, Switch } from '@/components/atoms';
-import { DeliveryPageHeading, DeliverySegmentedTabs } from '@/components/pages/delivery';
+import { Loader } from '@/components/atoms';
 import {
-  DELIVERY_LANGUAGE_LABELS,
-  deliveryProfileT,
-} from '@/constants/deliveryProfileStrings';
+  DeliveryPageHeading,
+  DeliverySegmentedTabs,
+  DeliverySettingsSection,
+} from '@/components/pages/delivery';
+import { deliveryProfileT } from '@/constants/deliveryProfileStrings';
 import { deliveryAPI, type DeliveryProfile } from '@/services/api/delivery.api';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -428,64 +429,17 @@ export default function DeliveryProfileScreen() {
             </Pressable>
           </>
         ) : (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.groupTitle}>{t('appearance').toUpperCase()}</Text>
-              <View style={styles.switchRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.setLabel}>{t('darkMode')}</Text>
-                  <Text style={styles.setHint}>{t('darkModeHint')}</Text>
-                </View>
-                <Switch value={darkMode} onValueChange={(v) => patchPref({ darkMode: v })} />
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.groupTitle}>{t('general').toUpperCase()}</Text>
-              <View style={styles.switchRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.setLabel}>{t('notifications')}</Text>
-                  <Text style={styles.setHint}>{t('notificationsHint')}</Text>
-                </View>
-                <Switch value={notif} onValueChange={(v) => patchPref({ notificationsEnabled: v })} />
-              </View>
-              <View style={styles.divider} />
-              <Text style={[styles.setLabel, { marginBottom: 10 }]}>{t('language')}</Text>
-              <View style={styles.langRow}>
-                {(Object.keys(DELIVERY_LANGUAGE_LABELS) as DeliveryLanguage[]).map((code) => {
-                  const on = storeLang === code;
-                  return (
-                    <Pressable
-                      key={code}
-                      style={[styles.langChip, on && styles.langChipActive]}
-                      onPress={() => patchPref({ language: code })}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: on }}
-                    >
-                      <Text style={[styles.langChipText, on && styles.langChipTextActive]}>
-                        {DELIVERY_LANGUAGE_LABELS[code]}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          </>
+          <DeliverySettingsSection
+            language={storeLang}
+            darkMode={darkMode}
+            notificationsEnabled={notif}
+            appVersion={appVersion}
+            onDarkModeChange={(v) => patchPref({ darkMode: v })}
+            onNotificationsChange={(v) => patchPref({ notificationsEnabled: v })}
+            onLanguageChange={(code) => patchPref({ language: code })}
+            onLogout={onLogout}
+          />
         )}
-
-        <Pressable
-          style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.7 }]}
-          onPress={onLogout}
-          accessibilityRole="button"
-        >
-          <Ionicons name="log-out-outline" size={20} color={c.primary} />
-          <Text style={styles.logoutText}>{t('logOut')}</Text>
-        </Pressable>
-        {appVersion ? (
-          <Text style={styles.ver}>
-            {t('appVersion')} {appVersion}
-          </Text>
-        ) : null}
       </ScrollView>
 
       <Modal visible={editOpen} animationType="slide" transparent>
@@ -813,44 +767,6 @@ function createProfileStyles(c: AppColors) {
       backgroundColor: c.card,
     },
     dangerOutlineText: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.primary },
-    switchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 12,
-    },
-    divider: { height: 1, backgroundColor: c.border, marginVertical: 16 },
-    setLabel: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.text },
-    setHint: { fontFamily: Fonts.brand, fontSize: 13, color: c.muted, marginTop: 2 },
-    langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    langChip: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      backgroundColor: c.card,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    langChipActive: { backgroundColor: c.text, borderColor: c.text },
-    langChipText: { fontFamily: Fonts.brandBold, fontSize: 13, color: c.muted },
-    langChipTextActive: { color: c.background },
-    logoutBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      minHeight: 48,
-      borderRadius: 12,
-      marginTop: 8,
-    },
-    logoutText: { fontFamily: Fonts.brandBold, fontSize: 15, color: c.primary },
-    ver: {
-      fontFamily: Fonts.brand,
-      textAlign: 'center',
-      marginTop: 4,
-      fontSize: 12,
-      color: c.muted,
-    },
     modalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.5)',

@@ -7,16 +7,15 @@ import {
     TextInput,
     ScrollView,
     SafeAreaView,
-    StatusBar,
     Alert,
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppThemeColors, type AppColors } from '@/constants/theme';
+import CustomerScreenHeader from '@/components/pages/customer/CustomerScreenHeader';
 
 const STATUS = { error: '#EF4444', success: '#10B981' } as const;
 
@@ -217,18 +216,7 @@ export default function PersonalInformation() {
 
     return (
         <SafeAreaView style={styles.safe}>
-            <StatusBar barStyle="light-content" backgroundColor={c.customerNeutral} />
-
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                    <Ionicons name="arrow-back" size={22} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Personal Information</Text>
-                <View style={{ width: 22 }} />
-            </View>
+            <CustomerScreenHeader title={'Personal Information'} />
 
             <KeyboardAvoidingView
                 style={styles.flex}
@@ -333,13 +321,8 @@ export default function PersonalInformation() {
 
 function createMainStyles(c: AppColors) {
     return StyleSheet.create({
-        safe: { flex: 1, backgroundColor: c.customerNeutral },
+        safe: { flex: 1, backgroundColor: c.customerBodyBg },
         flex: { flex: 1 },
-        header: {
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-            paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14,
-        },
-        headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
         scroll: { flex: 1, backgroundColor: c.customerBodyBg },
         scrollInner: { padding: 16, paddingBottom: 40 },
 

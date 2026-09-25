@@ -8,6 +8,7 @@ import { paymentAPI } from '@/services/api/payment.api';
 import { payWithSafepay } from '@/services/safepay';
 import { Loader } from '@/components/atoms';
 import { useAppThemeColors } from '@/constants/theme';
+import { customerHeaderBg } from '@/components/pages/customer/CustomerHeader';
 import {
   CartHeader,
   CartScreenHeading,
@@ -25,9 +26,9 @@ export default function CustomerCart() {
     useCartStore();
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const c = useAppThemeColors();
-  // Header has no bar of its own; the safe area matches the body below it.
-  const emptySafe = [styles.safe, { backgroundColor: c.customerBodyBg }];
-  const filledSafe = [styles.safe, { backgroundColor: '#fff' }];
+  // Header has no bar of its own; the safe area and body share the page color
+  // so the screen reads as one surface in both light and dark mode.
+  const safe = [styles.safe, { backgroundColor: customerHeaderBg(c, 'page') }];
 
   useEffect(() => {
     fetchCart();
@@ -47,7 +48,7 @@ export default function CustomerCart() {
 
   if (loading && !cart) {
     return (
-      <SafeAreaView style={filledSafe} edges={['top']}>
+      <SafeAreaView style={safe} edges={['top']}>
         <View style={styles.loadingContainer}>
           <Loader />
         </View>
@@ -57,7 +58,7 @@ export default function CustomerCart() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <SafeAreaView style={emptySafe} edges={['top']}>
+      <SafeAreaView style={safe} edges={['top']}>
         <CartHeader />
         <CartEmptyState onBrowseRestaurants={() => router.push('/(customer)/(tabs)/home')} />
       </SafeAreaView>
@@ -70,7 +71,7 @@ export default function CustomerCart() {
   const totalAmt = total();
 
   return (
-    <SafeAreaView style={filledSafe} edges={['top']}>
+    <SafeAreaView style={safe} edges={['top']}>
 
       <CartHeader
         showClearAction
@@ -87,7 +88,10 @@ export default function CustomerCart() {
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        <CartScreenHeading restaurantName={cart.restaurant?.name} />
+        <CartScreenHeading
+          restaurantName={cart.restaurant?.name}
+          itemCount={cart.items.reduce((n, i) => n + i.quantity, 0)}
+        />
 
         {cart.items.map((item) => (
           <CartLineItem
@@ -109,7 +113,10 @@ export default function CustomerCart() {
         />
       </ScrollView>
 
-      <CartCheckoutBar onCheckout={() => setCheckoutVisible(true)} />
+      <CartCheckoutBar
+        total={formatCartCurrency(totalAmt)}
+        onCheckout={() => setCheckoutVisible(true)}
+      />
 
       <Modal visible={checkoutVisible} animationType="slide" presentationStyle="pageSheet">
         <CheckoutModal
@@ -244,14 +251,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   body: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   bodyContent: {
-    padding: 20,
-    paddingBottom: 100,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 32,
   },
 });

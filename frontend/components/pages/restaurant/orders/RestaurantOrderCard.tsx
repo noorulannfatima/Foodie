@@ -34,7 +34,6 @@ export default function RestaurantOrderCard({
 
   return (
     <TouchableOpacity style={styles.orderCard} onPress={onPress}>
-      <View style={[styles.orderStatusBar, { backgroundColor: statusColor }]} />
       <View style={styles.orderCardBody}>
         <View style={styles.orderCardHeader}>
           <View style={styles.orderIdRow}>
@@ -48,7 +47,7 @@ export default function RestaurantOrderCard({
           </View>
         </View>
 
-        <Text style={styles.customerName}>{order.customer?.name ?? 'Customer'}</Text>
+        <Text style={styles.customerName} numberOfLines={1}>{order.customer?.name ?? 'Customer'}</Text>
         <View style={styles.orderMeta}>
           <Text style={styles.metaText}>{order.items.length} Items</Text>
           <Text style={styles.metaDot}>•</Text>
@@ -87,19 +86,13 @@ export default function RestaurantOrderCard({
 function createStyles(c: AppColors) {
   return StyleSheet.create({
     orderCard: {
-      flexDirection: 'row',
       backgroundColor: c.card,
       borderRadius: 12,
-      marginBottom: 12,
-      overflow: 'hidden',
+      marginBottom: 10,
       borderWidth: 1,
       borderColor: c.border,
     },
-    orderStatusBar: {
-      width: 4,
-    },
     orderCardBody: {
-      flex: 1,
       padding: 16,
     },
     orderCardHeader: {
@@ -109,11 +102,13 @@ function createStyles(c: AppColors) {
       marginBottom: 6,
     },
     orderIdRow: {
+      flexShrink: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
     },
     orderNumber: {
+      flexShrink: 1,
       fontFamily: Fonts.brandBlack,
       fontSize: 15,
       color: c.text,
@@ -125,7 +120,7 @@ function createStyles(c: AppColors) {
     },
     statusBadgeText: {
       fontFamily: Fonts.brandBold,
-      fontSize: 10,
+      fontSize: 11,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
@@ -139,7 +134,6 @@ function createStyles(c: AppColors) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      marginBottom: 12,
     },
     metaText: {
       fontFamily: Fonts.brand,
@@ -161,13 +155,15 @@ function createStyles(c: AppColors) {
     actionRow: {
       flexDirection: 'row',
       gap: 10,
+      marginTop: 12,
     },
     declineBtn: {
       flex: 1,
-      paddingVertical: 10,
-      borderRadius: 8,
-      borderWidth: 1.5,
-      borderColor: c.primary,
+      minHeight: 44,
+      justifyContent: 'center',
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.border,
       alignItems: 'center',
     },
     declineBtnText: {
@@ -177,8 +173,9 @@ function createStyles(c: AppColors) {
     },
     acceptBtn: {
       flex: 1,
-      paddingVertical: 10,
-      borderRadius: 8,
+      minHeight: 44,
+      justifyContent: 'center',
+      borderRadius: 10,
       backgroundColor: c.brand,
       alignItems: 'center',
     },

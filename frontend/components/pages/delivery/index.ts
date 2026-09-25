@@ -11,3 +11,4 @@ export { default as WeeklyEarningsChart } from './WeeklyEarningsChart';
 export { formatDeliveryCurrency } from './formatDeliveryCurrency';
 export { getDeliveryStep } from './deliveryStatus';
 export { useDeliveryReviewPalette } from './useDeliveryReviewPalette';
+export { default as DeliverySettingsSection } from './DeliverySettingsSection';

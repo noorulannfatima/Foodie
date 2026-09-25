@@ -35,18 +35,21 @@ function createStyles(c: AppColors) {
   // Inverted ink: near-black in light mode, near-white in dark mode.
   const activeBg = c.text;
   return StyleSheet.create({
+    // Never let the order list below squeeze this row (it clipped the chip labels)
     filterContainer: {
-      maxHeight: 48,
-      paddingLeft: 16,
+      flexGrow: 0,
+      flexShrink: 0,
     },
     filterContent: {
       gap: 8,
-      paddingRight: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 6,
       alignItems: 'center',
     },
     filterChip: {
+      height: 36,
+      justifyContent: 'center',
       paddingHorizontal: 16,
-      paddingVertical: 8,
       borderRadius: 20,
       backgroundColor: c.card,
       borderWidth: 1,

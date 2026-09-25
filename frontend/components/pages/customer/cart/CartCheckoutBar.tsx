@@ -1,46 +1,71 @@
 import { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
 
 export interface CartCheckoutBarProps {
   onCheckout: () => void;
+  /** Formatted order total, shown on the button so it's visible without scrolling. */
+  total?: string;
 }
 
-export default function CartCheckoutBar({ onCheckout }: CartCheckoutBarProps) {
+export default function CartCheckoutBar({ onCheckout, total }: CartCheckoutBarProps) {
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <View style={styles.checkoutBar}>
-      <TouchableOpacity style={styles.checkoutBtn} onPress={onCheckout}>
-        <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
-        <Ionicons name="arrow-forward" size={18} color="#fff" />
-      </TouchableOpacity>
+    <View style={styles.bar}>
+      <Pressable
+        onPress={onCheckout}
+        accessibilityRole="button"
+        accessibilityLabel={total ? `Checkout, total ${total}` : 'Checkout'}
+        style={({ pressed }) => [styles.btn, pressed && styles.pressed]}
+      >
+        <Text style={styles.btnText}>Checkout</Text>
+        <View style={styles.right}>
+          {total ? <Text style={styles.total}>{total}</Text> : null}
+          <Ionicons name="arrow-forward" size={18} color="#fff" />
+        </View>
+      </Pressable>
     </View>
   );
 }
 
 function createStyles(c: AppColors) {
   return StyleSheet.create({
-    checkoutBar: {
-      padding: 16,
-      backgroundColor: c.customerSurface,
+    bar: {
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      backgroundColor: c.card,
       borderTopWidth: 1,
       borderTopColor: c.border,
     },
-    checkoutBtn: {
+    btn: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: c.secondary,
-      borderRadius: 14,
-      paddingVertical: 16,
-      gap: 8,
+      justifyContent: 'space-between',
+      minHeight: 52,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      backgroundColor: c.brand,
     },
-    checkoutBtnText: {
+    pressed: {
+      opacity: 0.85,
+    },
+    btnText: {
       fontFamily: Fonts.brandBold,
       fontSize: 16,
       color: '#fff',
+    },
+    right: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    total: {
+      fontFamily: Fonts.brandBlack,
+      fontSize: 16,
+      color: '#fff',
+      fontVariant: ['tabular-nums'],
     },
   });
 }

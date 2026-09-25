@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     ScrollView,
     SafeAreaView,
-    StatusBar,
     Alert,
     Modal,
     TextInput,
@@ -14,8 +13,8 @@ import {
     Platform,
 } from 'react-native';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useAppThemeColors, type AppColors } from '@/constants/theme';
+import CustomerScreenHeader from '@/components/pages/customer/CustomerScreenHeader';
 
 const STATUS = { error: '#EF4444', success: '#10B981' } as const;
 
@@ -361,18 +360,7 @@ export default function PaymentMethods() {
 
     return (
         <SafeAreaView style={styles.safe}>
-            <StatusBar barStyle="light-content" backgroundColor={c.customerNeutral} />
-
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                    <Ionicons name="arrow-back" size={22} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Payment Methods</Text>
-                <View style={{ width: 22 }} />
-            </View>
+            <CustomerScreenHeader title="Payment Methods" />
 
             <ScrollView
                 style={styles.scroll}
@@ -425,12 +413,7 @@ export default function PaymentMethods() {
 
 function createMainStyles(c: AppColors) {
     return StyleSheet.create({
-        safe: { flex: 1, backgroundColor: c.customerNeutral },
-        header: {
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-            paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14,
-        },
-        headerTitle: { fontSize: 17, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
+        safe: { flex: 1, backgroundColor: c.customerBodyBg },
         scroll: { flex: 1, backgroundColor: c.customerBodyBg },
         scrollInner: { padding: 16, paddingBottom: 40 },
 

@@ -47,7 +47,13 @@ type Keys =
   | 'logOut'
   | 'appVersion'
   | 'verifiedOnFile'
-  | 'expires';
+  | 'expires'
+  | 'preferences'
+  | 'about'
+  | 'chooseLanguage'
+  | 'languageSheetHint'
+  | 'close'
+  | 'version';
 
 const STR: Record<DeliveryLanguage, Record<Keys, string>> = {
   en: {
@@ -99,6 +105,12 @@ const STR: Record<DeliveryLanguage, Record<Keys, string>> = {
     appVersion: 'APP VERSION',
     verifiedOnFile: 'Verified • On file',
     expires: 'Expires',
+    preferences: 'PREFERENCES',
+    about: 'ABOUT',
+    chooseLanguage: 'Choose language',
+    languageSheetHint: 'Menus, buttons and messages in the delivery app will use this language.',
+    close: 'Close',
+    version: 'Version',
   },
   es: {
     profileTitle: 'Perfil',
@@ -149,6 +161,12 @@ const STR: Record<DeliveryLanguage, Record<Keys, string>> = {
     appVersion: 'VERSIÓN',
     verifiedOnFile: 'Verificado • Archivo',
     expires: 'Vence',
+    preferences: 'PREFERENCIAS',
+    about: 'ACERCA DE',
+    chooseLanguage: 'Elegir idioma',
+    languageSheetHint: 'Los menús, botones y mensajes de la app de reparto usarán este idioma.',
+    close: 'Cerrar',
+    version: 'Versión',
   },
   fr: {
     profileTitle: 'Profil',
@@ -199,6 +217,12 @@ const STR: Record<DeliveryLanguage, Record<Keys, string>> = {
     appVersion: 'VERSION',
     verifiedOnFile: 'Vérifié • Dossier',
     expires: 'Expire',
+    preferences: 'PRÉFÉRENCES',
+    about: 'À PROPOS',
+    chooseLanguage: 'Choisir la langue',
+    languageSheetHint: 'Les menus, boutons et messages de l’app de livraison utiliseront cette langue.',
+    close: 'Fermer',
+    version: 'Version',
   },
   ur: {
     profileTitle: 'پروفائل',
@@ -248,6 +272,12 @@ const STR: Record<DeliveryLanguage, Record<Keys, string>> = {
     appVersion: 'ورژن',
     verifiedOnFile: 'تصدیق شدہ • فائل',
     expires: 'ختم',
+    preferences: 'ترجیحات',
+    about: 'معلومات',
+    chooseLanguage: 'زبان منتخب کریں',
+    languageSheetHint: 'ڈیلیوری ایپ کے مینو، بٹن اور پیغامات اسی زبان میں ہوں گے۔',
+    close: 'بند کریں',
+    version: 'ورژن',
   },
 };
 

@@ -20,21 +20,13 @@ export default function CartTotalsBreakdown({
   const c = useAppThemeColors();
   const styles = useMemo(() => createStyles(c), [c]);
   return (
-    <View style={styles.priceCard}>
-      <View style={styles.priceRow}>
-        <Text style={styles.priceLabel}>Subtotal</Text>
-        <Text style={styles.priceValue}>{formatCurrency(subtotal)}</Text>
-      </View>
-      <View style={styles.priceRow}>
-        <Text style={styles.priceLabel}>Delivery Fee</Text>
-        <Text style={styles.priceValue}>{formatCurrency(deliveryFee)}</Text>
-      </View>
-      <View style={styles.priceRow}>
-        <Text style={styles.priceLabel}>Taxes & Fees</Text>
-        <Text style={styles.priceValue}>{formatCurrency(tax)}</Text>
-      </View>
-      <View style={styles.priceDivider} />
-      <View style={styles.priceRow}>
+    <View style={styles.card}>
+      <Text style={styles.heading}>ORDER SUMMARY</Text>
+      <Row styles={styles} label="Subtotal" value={formatCurrency(subtotal)} />
+      <Row styles={styles} label="Delivery fee" value={formatCurrency(deliveryFee)} />
+      <Row styles={styles} label="Taxes & fees" value={formatCurrency(tax)} />
+      <View style={styles.divider} />
+      <View style={styles.row}>
         <Text style={styles.totalLabel}>Total</Text>
         <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
       </View>
@@ -42,34 +34,60 @@ export default function CartTotalsBreakdown({
   );
 }
 
+function Row({
+  styles,
+  label,
+  value,
+}: {
+  styles: ReturnType<typeof createStyles>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.value}>{value}</Text>
+    </View>
+  );
+}
+
 function createStyles(c: AppColors) {
   return StyleSheet.create({
-    priceCard: {
-      backgroundColor: c.isDark ? c.card : '#F8F9FA',
+    card: {
+      backgroundColor: c.card,
       borderRadius: 16,
-      padding: 20,
-      marginTop: 24,
-      borderWidth: c.isDark ? 1 : 0,
+      borderWidth: 1,
       borderColor: c.border,
+      padding: 20,
+      marginTop: 14,
     },
-    priceRow: {
+    heading: {
+      fontFamily: Fonts.brandBold,
+      fontSize: 12,
+      color: c.muted,
+      letterSpacing: 1,
+      marginBottom: 8,
+    },
+    row: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 10,
+      alignItems: 'baseline',
+      paddingVertical: 5,
     },
-    priceLabel: {
+    label: {
       fontFamily: Fonts.brand,
       fontSize: 14,
       color: c.muted,
     },
-    priceValue: {
+    value: {
       fontFamily: Fonts.brandBold,
       fontSize: 14,
       color: c.text,
+      fontVariant: ['tabular-nums'],
     },
-    priceDivider: {
-      borderBottomWidth: 1,
-      borderBottomColor: c.border,
+    divider: {
+      height: 1,
+      backgroundColor: c.border,
       marginVertical: 10,
     },
     totalLabel: {
@@ -80,7 +98,8 @@ function createStyles(c: AppColors) {
     totalValue: {
       fontFamily: Fonts.brandBlack,
       fontSize: 20,
-      color: c.primary,
+      color: c.text,
+      fontVariant: ['tabular-nums'],
     },
   });
 }

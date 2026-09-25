@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   RefreshControl,
   Animated,
@@ -16,6 +15,7 @@ import { router } from 'expo-router';
 import { customerAPI } from '@/services/api/customer.api';
 import ReviewModal from '@/components/organisms/Modals/ReviewModal';
 import { Fonts, useAppThemeColors, type AppColors } from '@/constants/theme';
+import CustomerScreenHeader from '@/components/pages/customer/CustomerScreenHeader';
 
 interface OrderListItem {
   _id: string;
@@ -162,18 +162,7 @@ export default function OrderHistoryScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={c.navBar} />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order History</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <CustomerScreenHeader title="Order History" />
 
       {loading ? (
         <View style={styles.center}>
@@ -219,21 +208,7 @@ export default function OrderHistoryScreen() {
 
 function createStyles(c: AppColors) {
   return StyleSheet.create({
-    safe: { flex: 1, backgroundColor: c.navBar },
-    header: {
-      backgroundColor: c.navBar,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingVertical: 14,
-    },
-    headerTitle: {
-      fontFamily: Fonts.brandBold,
-      fontSize: 16,
-      color: '#fff',
-      letterSpacing: 1,
-    },
+    safe: { flex: 1, backgroundColor: c.customerBodyBg },
     listWrap: { flex: 1, backgroundColor: c.customerBodyBg },
     listContent: { padding: 16, paddingBottom: 32 },
     card: {
