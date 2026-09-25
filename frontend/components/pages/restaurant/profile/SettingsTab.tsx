@@ -16,6 +16,7 @@ import { useAppThemeStore } from '@/stores/appThemeStore';
 import { useRestaurantStore } from '@/stores/restaurantStore';
 import StoreInformationModal from '@/components/organisms/StoreInformationModal';
 import NotificationPreferencesModal from './NotificationPreferencesModal';
+import PayoutsBillingModal from '../payouts/PayoutsBillingModal';
 
 export interface SettingsTabProps {
   refreshing: boolean;
@@ -32,6 +33,7 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
 
   const [storeInfoModalVisible, setStoreInfoModalVisible] = useState(false);
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
+  const [payoutsModalVisible, setPayoutsModalVisible] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -172,7 +174,11 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
           <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingsItem} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.settingsItem}
+          activeOpacity={0.85}
+          onPress={() => setPayoutsModalVisible(true)}
+        >
           <View
             style={[styles.settingsIcon, { backgroundColor: tintBg('#F59E0B', '#FEF3C7', isDark) }]}
           >
@@ -180,7 +186,7 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
           </View>
           <View style={styles.settingsInfo}>
             <Text style={styles.settingsItemTitle}>Payouts & Billing</Text>
-            <Text style={styles.settingsItemSub}>Manage bank accounts and invoices</Text>
+            <Text style={styles.settingsItemSub}>Earnings, payout account & history</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
         </TouchableOpacity>
@@ -206,6 +212,15 @@ export default function SettingsTab({ refreshing, onRefresh, onLogout }: Setting
         onRequestClose={() => setNotificationsModalVisible(false)}
       >
         <NotificationPreferencesModal onClose={() => setNotificationsModalVisible(false)} />
+      </Modal>
+
+      <Modal
+        visible={payoutsModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setPayoutsModalVisible(false)}
+      >
+        <PayoutsBillingModal onClose={() => setPayoutsModalVisible(false)} />
       </Modal>
     </>
   );

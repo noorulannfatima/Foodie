@@ -1,6 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL as BASE_URL } from './baseUrl';
 import type { RestaurantReviewsResponse } from './review.types';
+import type {
+  Payout,
+  PayoutAccount,
+  PayoutAccountInput,
+  PayoutHistoryPage,
+  PayoutOrderRow,
+  RestaurantPayoutSummary,
+} from './payout.types';
 
 async function getAuthHeaders() {
   const token = await AsyncStorage.getItem('token');
@@ -74,6 +82,37 @@ export const restaurantAPI = {
       body: JSON.stringify(data),
     });
     return handleResponse(res);
+  },
+
+  // ========== Payouts & Billing ==========
+  getPayoutSummary: async (): Promise<RestaurantPayoutSummary> => {
+    const res = await fetch(`${BASE_URL}/restaurant/payouts/summary`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  getPayouts: async (page = 1, limit = 20): Promise<PayoutHistoryPage> => {
+    const res = await fetch(`${BASE_URL}/restaurant/payouts?page=${page}&limit=${limit}`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  getPayout: async (id: string): Promise<{ payout: Payout; orders: PayoutOrderRow[] }> => {
+    const res = await fetch(`${BASE_URL}/restaurant/payouts/${id}`, {
+      headers: await getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  updatePayoutAccount: async (input: PayoutAccountInput): Promise<PayoutAccount> => {
+    const res = await fetch(`${BASE_URL}/restaurant/payouts/account`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(input),
+    });
+    return (await handleResponse(res)).payoutAccount;
   },
 
   // ========== Push Notifications ==========

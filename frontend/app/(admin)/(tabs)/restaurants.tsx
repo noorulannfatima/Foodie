@@ -8,6 +8,7 @@ import {
   RestaurantPayoutSheet,
   StatusBadge,
   formatPKR,
+  formatPercent,
   useAdminStyles,
 } from '@/components/pages/admin';
 
@@ -93,7 +94,7 @@ export default function AdminRestaurantsScreen() {
               <View style={styles.row}>
                 <Text style={styles.rowSub}>
                   {item.address?.city ? `${item.address.city} · ` : ''}
-                  {Math.round(item.commissionRate * 1000) / 10}% commission ·{' '}
+                  {formatPercent(item.commissionRate)} commission ·{' '}
                   {item.unsettled.orderCount} unsettled
                 </Text>
                 <StatusBadge status={item.payoutAccount?.status ?? 'None'} />

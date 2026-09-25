@@ -79,8 +79,11 @@ export async function signup(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Payout terms are set by admins, never by the account holder
+    const { commissionRate, payoutAccount, ...data } = req.body;
+
     // Create the document (password hashing is handled in model pre-save hooks)
-    const user = await Model.create(req.body);
+    const user = await Model.create(data);
 
     // Generate response token
     const token = generateToken(String(user._id), role);

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Fonts, tintBg } from '@/constants/theme';
 import { useAppThemeStore } from '@/stores/appThemeStore';
-import type { PayoutAccountStatus, PayoutStatus } from '@/services/api/admin.types';
+import type { PayoutAccountStatus, PayoutStatus } from '@/services/api/payout.types';
 
 type Status = PayoutStatus | PayoutAccountStatus | 'None';
 

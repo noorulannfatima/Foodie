@@ -3,12 +3,11 @@ import request from 'supertest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from '../src/app';
 import { generateToken } from '../src/middleware/auth';
-import User from '../src/models/user';
-import Restaurant from '../src/models/restaurant';
 import Order from '../src/models/order';
 import Admin from '../src/models/admin';
 import Payout from '../src/models/payout';
 import * as push from '../src/services/push.service';
+import { bankAccount, makeOrder, makeRestaurant } from './helpers/payoutFixtures';
 import { generatePayouts } from '../src/services/payout.service';
 
 let mongo: MongoMemoryServer;
@@ -37,76 +36,11 @@ afterEach(async () => {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-let seq = 0;
-
-async function makeRestaurant(overrides: Record<string, unknown> = {}) {
-  seq += 1;
-  return Restaurant.create({
-    name: `Karachi Kitchen ${seq}`,
-    email: `restaurant${seq}@test.com`,
-    password: 'password123',
-    description: 'Home-style Pakistani food',
-    phone: '0300 1234567',
-    address: { street: '1 Main St', city: 'Karachi', zipCode: '74000' },
-    cuisineTypes: ['Pakistani'],
-    ...overrides,
-  });
-}
-
-function bankAccount() {
-  return {
-    method: 'Bank',
-    accountTitle: 'Karachi Kitchen Pvt Ltd',
-    bankName: 'Meezan Bank',
-    iban: 'PK36MEZN0001230104567890',
-  };
-}
-
-let customerId: mongoose.Types.ObjectId | null = null;
-
-async function makeOrder(
-  restaurant: { _id: mongoose.Types.ObjectId | unknown },
-  opts: {
-    subtotal: number;
-    method?: string;
-    status?: string;
-    paymentStatus?: string;
-    deliveredAt?: Date;
-  }
-) {
-  seq += 1;
-  if (!customerId) {
-    const customer = await User.create({
-      name: 'Ayesha Khan',
-      email: `customer${seq}@test.com`,
-      password: 'password123',
-    });
-    customerId = customer._id as mongoose.Types.ObjectId;
-  }
-  const status = opts.status ?? 'Delivered';
-  return Order.create({
-    orderNumber: `ORD-${seq}`,
-    customer: customerId,
-    restaurant: restaurant._id as mongoose.Types.ObjectId,
-    items: [{ menuItem: new mongoose.Types.ObjectId(), name: 'Biryani', quantity: 1, price: opts.subtotal }],
-    deliveryAddress: { street: '2 Side St', city: 'Karachi', zipCode: '74000' },
-    pricing: { subtotal: opts.subtotal, deliveryFee: 100, tax: 0, tip: 50, total: opts.subtotal + 150 },
-    payment: {
-      method: opts.method ?? 'Safepay',
-      status: opts.paymentStatus ?? (status === 'Delivered' ? 'Completed' : 'Pending'),
-    },
-    status,
-    actualDeliveryTime: status === 'Delivered' ? opts.deliveredAt ?? new Date() : undefined,
-    estimatedPreparationTime: 20,
-    estimatedDeliveryTime: new Date(),
-  });
-}
-
 let adminToken: string | null = null;
 
 async function adminReq(method: 'get' | 'post' | 'patch', path: string, body?: object) {
   if (!adminToken) {
-    const admin = await Admin.create({ name: 'Ops', email: `ops${seq}@foodie.pk`, password: 'secret123' });
+    const admin = await Admin.create({ name: 'Ops', email: 'ops-fixture@foodie.pk', password: 'secret123' });
     adminToken = generateToken(String(admin._id), 'admin');
   }
   const req = request(app)[method](path).set('Authorization', `Bearer ${adminToken}`);
@@ -114,8 +48,7 @@ async function adminReq(method: 'get' | 'post' | 'patch', path: string, body?: o
 }
 
 afterEach(() => {
-  // Collections are wiped between tests, so cached ids would dangle
-  customerId = null;
+  // Collections are wiped between tests, so the cached admin would dangle
   adminToken = null;
 });
 

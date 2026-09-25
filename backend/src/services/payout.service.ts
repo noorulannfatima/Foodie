@@ -134,6 +134,29 @@ export async function generatePayouts(periodEnd: Date = new Date()): Promise<IPa
   return created;
 }
 
+export interface PayoutOrderRow {
+  _id: string;
+  orderNumber: string;
+  subtotal: number;
+  method: string;
+  deliveredAt: Date;
+}
+
+/** The orders settled in a payout, newest first, trimmed to what the payout screens show. */
+export async function getPayoutOrderRows(orderIds: mongoose.Types.ObjectId[]): Promise<PayoutOrderRow[]> {
+  const orders = await Order.find({ _id: { $in: orderIds } })
+    .select('orderNumber pricing.subtotal payment.method actualDeliveryTime updatedAt')
+    .sort({ actualDeliveryTime: -1 })
+    .lean();
+  return orders.map((o) => ({
+    _id: String(o._id),
+    orderNumber: o.orderNumber,
+    subtotal: o.pricing.subtotal,
+    method: o.payment.method,
+    deliveredAt: o.actualDeliveryTime ?? o.updatedAt,
+  }));
+}
+
 async function findPayoutOrThrow(id: string) {
   if (!mongoose.isValidObjectId(id)) throw new PayoutError(400, 'Invalid payout id');
   const payout = await Payout.findById(id);

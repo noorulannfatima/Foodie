@@ -19,7 +19,6 @@ import { AdminStatBox, formatPKR, useAdminStyles } from '@/components/pages/admi
 export default function AdminOverviewScreen() {
   const { styles, colors } = useAdminStyles();
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,20 +78,6 @@ export default function AdminOverviewScreen() {
         { text: 'Generate', onPress: runGenerate },
       ],
     );
-  };
-
-  const confirmLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)');
-        },
-      },
-    ]);
   };
 
   return (
@@ -167,11 +152,6 @@ export default function AdminOverviewScreen() {
             </Text>
           </>
         ) : null}
-
-        <TouchableOpacity style={[styles.outlineBtn, { marginTop: 24 }]} onPress={confirmLogout}>
-          <Ionicons name="log-out-outline" size={18} color={colors.primary} />
-          <Text style={styles.outlineBtnText}>SIGN OUT</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

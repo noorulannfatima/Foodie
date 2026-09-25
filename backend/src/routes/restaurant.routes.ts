@@ -21,6 +21,12 @@ import {
   toggleItemAvailability,
 } from '../controllers/restaurant.controller';
 import { getRestaurantReviews } from '../controllers/review.controller';
+import {
+  getPayoutSummary,
+  getPayoutHistory,
+  getPayoutDetail,
+  updatePayoutAccount,
+} from '../controllers/restaurantPayout.controller';
 
 const router = Router();
 
@@ -51,6 +57,12 @@ router.put('/orders/:id/status', updateOrderStatus);
 
 // Reviews
 router.get('/reviews', getRestaurantReviews);
+
+// Payouts & billing (summary/account before :id so they aren't read as ids)
+router.get('/payouts/summary', getPayoutSummary);
+router.put('/payouts/account', updatePayoutAccount);
+router.get('/payouts', getPayoutHistory);
+router.get('/payouts/:id', getPayoutDetail);
 
 // Menu
 router.get('/menu', getMenu);

@@ -2,10 +2,10 @@ import { Response } from 'express';
 import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
 import Restaurant from '../models/restaurant';
-import Order from '../models/order';
 import Payout from '../models/payout';
 import {
   generatePayouts as generatePayoutsForPeriod,
+  getPayoutOrderRows,
   getUnsettledSummaries,
   markPayoutFailed,
   markPayoutPaid,
@@ -234,21 +234,7 @@ export async function getPayout(req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
-    const orders = await Order.find({ _id: { $in: payout.orders } })
-      .select('orderNumber pricing.subtotal payment.method actualDeliveryTime updatedAt')
-      .sort({ actualDeliveryTime: -1 })
-      .lean();
-
-    res.json({
-      payout,
-      orders: orders.map((o) => ({
-        _id: String(o._id),
-        orderNumber: o.orderNumber,
-        subtotal: o.pricing.subtotal,
-        method: o.payment.method,
-        deliveredAt: o.actualDeliveryTime ?? o.updatedAt,
-      })),
-    });
+    res.json({ payout, orders: await getPayoutOrderRows(payout.orders) });
   } catch (error) {
     handleError(res, error, 'payout detail');
   }

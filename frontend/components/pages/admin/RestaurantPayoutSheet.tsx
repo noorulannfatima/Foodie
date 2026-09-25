@@ -12,8 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { adminAPI } from '@/services/api/admin.api';
 import type { AdminRestaurant } from '@/services/api/admin.types';
-import StatusBadge from './StatusBadge';
-import SettlementBreakdown from './SettlementBreakdown';
+import { StatusBadge, SettlementBreakdown, formatPercent } from '../payouts';
 import PromptSheet from './PromptSheet';
 import { useAdminStyles } from './useAdminStyles';
 
@@ -50,7 +49,7 @@ export default function RestaurantPayoutSheet({ restaurant, onClose, onChanged }
     try {
       const commissionRate = await adminAPI.setCommission(restaurant._id, value / 100);
       onChanged({ ...restaurant, commissionRate });
-      Alert.alert('Saved', `Commission is now ${toPercentText(commissionRate)}%. It applies to the next payout run.`);
+      Alert.alert('Saved', `Commission is now ${formatPercent(commissionRate)}. It applies to the next payout run.`);
     } catch (e: any) {
       Alert.alert('Could not save', e.message);
     } finally {
@@ -188,6 +187,7 @@ export default function RestaurantPayoutSheet({ restaurant, onClose, onChanged }
             <SettlementBreakdown
               settlement={restaurant.unsettled}
               commissionRate={restaurant.commissionRate}
+              perspective="admin"
             />
           </View>
         </ScrollView>

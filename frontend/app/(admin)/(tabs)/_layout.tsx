@@ -3,11 +3,14 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, useAppThemeColors } from '@/constants/theme';
+import { adminT } from '@/constants/adminStrings';
+import { useAppLanguageStore } from '@/stores/appLanguageStore';
 
 export default function AdminTabsLayout() {
   const insets = useSafeAreaInsets();
   const c = useAppThemeColors();
   const bottomPad = Math.max(insets.bottom, 8);
+  const language = useAppLanguageStore((s) => s.language);
 
   return (
     <>
@@ -33,7 +36,7 @@ export default function AdminTabsLayout() {
         <Tabs.Screen
           name="overview"
           options={{
-            title: 'Overview',
+            title: adminT(language, 'tabOverview'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="speedometer-outline" size={size} color={color} />
             ),
@@ -42,16 +45,25 @@ export default function AdminTabsLayout() {
         <Tabs.Screen
           name="payouts"
           options={{
-            title: 'Payouts',
+            title: adminT(language, 'tabPayouts'),
             tabBarIcon: ({ color, size }) => <Ionicons name="cash-outline" size={size} color={color} />,
           }}
         />
         <Tabs.Screen
           name="restaurants"
           options={{
-            title: 'Restaurants',
+            title: adminT(language, 'tabRestaurants'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="storefront-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: adminT(language, 'tabSettings'),
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
             ),
           }}
         />

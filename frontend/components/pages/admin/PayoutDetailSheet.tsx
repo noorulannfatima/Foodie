@@ -11,10 +11,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { adminAPI } from '@/services/api/admin.api';
 import type { AdminPayout, PayoutOrderRow } from '@/services/api/admin.types';
-import StatusBadge from './StatusBadge';
-import SettlementBreakdown from './SettlementBreakdown';
+import { StatusBadge, SettlementBreakdown } from '../payouts';
 import PromptSheet from './PromptSheet';
-import { formatPKR, formatPeriod, formatShortDate, maskAccountNumber } from './format';
+import { formatPKR, formatPeriod, formatShortDate, maskAccountNumber } from '../payouts/format';
 import { useAdminStyles } from './useAdminStyles';
 
 interface PayoutDetailSheetProps {
@@ -119,7 +118,7 @@ export default function PayoutDetailSheet({ payoutId, onClose, onChanged }: Payo
             </View>
 
             <View style={styles.card}>
-              <SettlementBreakdown settlement={payout} commissionRate={payout.commissionRate} />
+              <SettlementBreakdown settlement={payout} commissionRate={payout.commissionRate} perspective="admin" />
             </View>
 
             {payout.status !== 'Paid' ? (

@@ -14,7 +14,7 @@ const ANDROID_CHANNELS = {
   default: 'default',
 } as const;
 
-export type RestaurantPushType = 'new_order' | 'order_cancelled' | 'new_review';
+export type RestaurantPushType = 'new_order' | 'order_cancelled' | 'new_review' | 'payout';
 
 // Show notifications as banners with sound even while the app is open —
 // a new order should never go unnoticed because the app happens to be in front.
@@ -110,6 +110,8 @@ export function getRestaurantPushRoute(data: unknown) {
       return '/(restaurant)/(tabs)/orders' as const;
     case 'new_review':
       return '/(restaurant)/reviews' as const;
+    case 'payout':
+      return '/(restaurant)/(tabs)/profile' as const;
     default:
       return null;
   }

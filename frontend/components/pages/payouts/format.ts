@@ -17,3 +17,8 @@ export function maskAccountNumber(value?: string): string {
   if (!value) return '—';
   return `•••• ${value.slice(-4)}`;
 }
+
+/** `0.15` → `15%`, `0.125` → `12.5%`. */
+export function formatPercent(rate: number): string {
+  return `${Math.round(rate * 1000) / 10}%`;
+}
