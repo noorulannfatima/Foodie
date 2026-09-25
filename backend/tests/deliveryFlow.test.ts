@@ -454,3 +454,69 @@ describe('POST /api/delivery/orders/:id/release', () => {
     expect((await release(token, order._id, reason)).status).toBe(400);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Cash on delivery
+// ---------------------------------------------------------------------------
+
+describe('PATCH /api/delivery/orders/:id/status → Delivered', () => {
+  it('refuses a cash order until the rider confirms the cash', async () => {
+    const { rider, token } = await createRider();
+    const order = await createOrder('OutForDelivery', { deliveryPerson: rider._id });
+
+    const res = await setStatus(token, order._id, 'Delivered');
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('CASH_CONFIRMATION_REQUIRED');
+    const saved = await Order.findById(order._id);
+    expect(saved!.status).toBe('OutForDelivery');
+    expect(saved!.payment.status).toBe('Pending');
+  });
+
+  it('completes the cash payment and records who holds the cash', async () => {
+    const { rider, token } = await createRider();
+    const order = await createOrder('OutForDelivery', { deliveryPerson: rider._id });
+
+    const res = await setStatus(token, order._id, 'Delivered', { cashCollected: true });
+
+    expect(res.status).toBe(200);
+    const saved = await Order.findById(order._id);
+    expect(saved!.status).toBe('Delivered');
+    expect(saved!.payment.status).toBe('Completed');
+    expect(saved!.payment.paidAt).toBeInstanceOf(Date);
+    expect(String(saved!.payment.collectedBy)).toBe(String(rider._id));
+    const dp = await DeliveryPerson.findById(rider._id);
+    expect(dp!.deliveryHistory[0].cashCollected).toBe(200);
+  });
+
+  it('leaves a paid online order as it is and needs no cash confirmation', async () => {
+    const { rider, token } = await createRider();
+    const paidAt = new Date('2026-01-01');
+    const order = await createOrder('OutForDelivery', {
+      deliveryPerson: rider._id,
+      payment: { method: 'Safepay', status: 'Completed', paidAt },
+    });
+
+    const res = await setStatus(token, order._id, 'Delivered');
+
+    expect(res.status).toBe(200);
+    const saved = await Order.findById(order._id);
+    expect(saved!.payment.status).toBe('Completed');
+    expect(saved!.payment.paidAt).toEqual(paidAt);
+    expect(saved!.payment.collectedBy).toBeUndefined();
+    const dp = await DeliveryPerson.findById(rider._id);
+    expect(dp!.deliveryHistory[0].cashCollected).toBe(0);
+  });
+
+  it('does not mark an unpaid online order as paid just because it was delivered', async () => {
+    const { rider, token } = await createRider();
+    const order = await createOrder('OutForDelivery', {
+      deliveryPerson: rider._id,
+      payment: { method: 'Safepay', status: 'Pending' },
+    });
+
+    expect((await setStatus(token, order._id, 'Delivered')).status).toBe(200);
+
+    expect((await Order.findById(order._id))!.payment.status).toBe('Pending');
+  });
+});

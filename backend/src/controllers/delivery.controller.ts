@@ -634,7 +634,7 @@ const NEXT_STATUS_FROM: Record<string, string[]> = {
 export async function patchOrderStatus(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const { status } = req.body as { status?: string };
+    const { status, cashCollected } = req.body as { status?: string; cashCollected?: unknown };
     const allowed = ['PickedUp', 'OutForDelivery', 'Delivered'] as const;
     if (!status || !allowed.includes(status as (typeof allowed)[number])) {
       res.status(400).json({ message: 'status must be PickedUp, OutForDelivery, or Delivered' });
@@ -662,6 +662,21 @@ export async function patchOrderStatus(req: AuthRequest, res: Response): Promise
     }
 
     if (status === 'Delivered') {
+      // A cash order is only paid once the rider says they have the money
+      const cash = cashToCollect(order);
+      if (cash > 0) {
+        if (cashCollected !== true) {
+          res.status(400).json({
+            code: 'CASH_CONFIRMATION_REQUIRED',
+            message: `Collect ${formatPKR(cash)} in cash before completing this delivery`,
+          });
+          return;
+        }
+        order.payment.status = 'Completed';
+        order.payment.paidAt = new Date();
+        order.payment.collectedBy = new mongoose.Types.ObjectId(req.user!.id);
+      }
+
       const payout = estDriverPayout(order.pricing);
       await order.updateStatus('Delivered', 'Delivered by courier');
       let dp = await DeliveryPerson.findById(req.user!.id);
@@ -674,6 +689,7 @@ export async function patchOrderStatus(req: AuthRequest, res: Response): Promise
             restaurant: order.restaurant,
             customer: order.customer,
             earnings: payout,
+            cashCollected: cash,
             distance: 1,
             duration: Math.max(
               1,
